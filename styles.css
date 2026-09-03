@@ -108,6 +108,90 @@ h1, h2, h3 {
 
 .header-actions { display: flex; align-items: center; gap: 14px; }
 
+.cat-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.cat-menu-btn:hover { background: var(--navy-light); }
+
+.cat-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 58, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 90;
+}
+.cat-menu-overlay.is-open { opacity: 1; pointer-events: auto; }
+
+.cat-menu-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(360px, 88vw);
+  background: #fff;
+  z-index: 91;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  box-shadow: 20px 0 40px -20px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.cat-menu-panel.is-open { transform: translateX(0); }
+
+.cat-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.cat-menu-head h3 { margin: 0; font-size: 1.3rem; }
+.cat-menu-close {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 4px;
+}
+.cat-menu-label {
+  margin: 18px 24px 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.cat-menu-list { padding: 0 8px 16px; }
+.cat-menu-list li { border-bottom: 1px solid var(--border); }
+.cat-menu-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px;
+  font-weight: 600;
+  color: var(--navy);
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+.cat-menu-list a:hover { background: var(--bg-alt); }
+.cat-menu-list a span { color: var(--gold-dark); font-size: 1.2rem; }
+
 .btn {
   display: inline-flex;
   align-items: center;
