@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compra Empresa | Mega Safety Chile</title>
+<meta name="description" content="Portal B2B de Mega Safety Chile: cotiza productos por volumen para tu empresa. Sin precios públicos, cotización personalizada.">
+<link rel="icon" href="assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="compra-empresa.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">MEGA</span><span class="brand-mark brand-mark--accent">SAFETY</span>
+      <span class="brand-sub">CHILE</span>
+    </a>
+    <span class="b2b-badge">Portal Empresa · B2B</span>
+    <div class="header-actions">
+      <a href="index.html" class="btn btn--outline">Volver al sitio</a>
+      <button class="btn btn--primary cart-btn" id="cart-open-btn">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+        Mi cotización <span id="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Paso 1: Inicio -->
+  <section id="step-inicio" class="b2b-step">
+    <div class="container">
+      <div class="b2b-hero">
+        <p class="eyebrow">Compra Empresa</p>
+        <h1>Cotiza para tu empresa</h1>
+        <p class="b2b-hero-text">Selecciona los productos y cantidades que necesitas y recibe una cotización personalizada de Mega Safety Chile.</p>
+      </div>
+
+      <div class="b2b-options">
+        <button class="b2b-option" data-scroll="#catalogo">
+          <div class="b2b-option-icon">🔍</div>
+          <h3>Buscar productos</h3>
+          <p>Encuentra productos por nombre o marca.</p>
+        </button>
+        <button class="b2b-option" data-scroll="#catalogo">
+          <div class="b2b-option-icon">📂</div>
+          <h3>Explorar por categorías</h3>
+          <p>Navega el catálogo completo por línea de producto.</p>
+        </button>
+        <button class="b2b-option" id="upload-option-btn">
+          <div class="b2b-option-icon">📎</div>
+          <h3>Subir listado para cotizar</h3>
+          <p>Adjunta tu Excel, PDF o imagen con lo que necesitas.</p>
+        </button>
+      </div>
+
+      <div class="upload-panel" id="upload-panel" hidden>
+        <label for="upload-file">Adjuntar archivo (Excel, PDF o imagen, máx. 5MB)</label>
+        <input type="file" id="upload-file" accept=".xlsx,.xls,.csv,.pdf,image/*">
+        <p class="upload-hint" id="upload-hint"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Paso 2: Catálogo -->
+  <section id="catalogo" class="b2b-step section--alt">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Catálogo B2B</p>
+        <h2>Selecciona tus productos</h2>
+      </div>
+
+      <div class="catalog-controls">
+        <input type="search" id="search-input" placeholder="Buscar por nombre, marca o SKU..." aria-label="Buscar productos">
+        <div class="cat-filter-chips" id="cat-filter-chips">
+          <button class="chip is-active" data-cat="all">Todos</button>
+        </div>
+      </div>
+
+      <div class="product-grid" id="product-grid"></div>
+      <p class="empty-state" id="empty-state" hidden>No se encontraron productos con ese criterio.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- Panel: Mi Cotización -->
+<div class="cat-menu-overlay" id="cart-overlay"></div>
+<aside class="cart-panel" id="cart-panel" aria-hidden="true">
+  <div class="cat-menu-head">
+    <h3>Mi cotización</h3>
+    <button class="cat-menu-close" id="cart-close-btn" aria-label="Cerrar">&times;</button>
+  </div>
+  <div class="cart-items" id="cart-items"></div>
+  <p class="cart-empty" id="cart-empty">Aún no has agregado productos.</p>
+  <div class="cart-footer">
+    <button class="btn btn--outline" id="cart-continue-btn">Seguir agregando productos</button>
+    <button class="btn btn--primary" id="cart-request-btn" disabled>Solicitar cotización</button>
+  </div>
+</aside>
+
+<!-- Panel: Formulario Empresa -->
+<div class="cat-menu-overlay" id="form-overlay"></div>
+<aside class="cart-panel form-panel" id="form-panel" aria-hidden="true">
+  <div class="cat-menu-head">
+    <h3>Datos de tu empresa</h3>
+    <button class="cat-menu-close" id="form-close-btn" aria-label="Cerrar">&times;</button>
+  </div>
+  <form id="quote-form" class="quote-form">
+    <label>Razón social *<input type="text" name="razon_social" required></label>
+    <label>RUT *<input type="text" name="rut" required placeholder="76.123.456-7"></label>
+    <label>Nombre de contacto *<input type="text" name="nombre_contacto" required></label>
+    <label>Teléfono / WhatsApp *<input type="tel" name="telefono" required placeholder="+56 9 ...."></label>
+    <label>Correo *<input type="email" name="correo" required></label>
+    <div class="form-row">
+      <label>Comuna<input type="text" name="comuna"></label>
+      <label>Región<input type="text" name="region"></label>
+    </div>
+    <label class="checkbox-row"><input type="checkbox" name="requiere_despacho"> Requiere despacho</label>
+    <label>Observaciones<textarea name="observaciones" rows="3"></textarea></label>
+    <p class="form-note" id="form-note"></p>
+    <button type="submit" class="btn btn--primary" id="form-submit-btn">Enviar solicitud de cotización</button>
+  </form>
+</aside>
+
+<!-- Panel: Confirmación -->
+<div class="cat-menu-overlay" id="confirm-overlay"></div>
+<aside class="cart-panel confirm-panel" id="confirm-panel" aria-hidden="true">
+  <div class="cat-menu-head">
+    <h3>Solicitud enviada</h3>
+    <button class="cat-menu-close" id="confirm-close-btn" aria-label="Cerrar">&times;</button>
+  </div>
+  <div class="confirm-body">
+    <div class="confirm-check">✓</div>
+    <h4 id="confirm-code">Solicitud MS-000000</h4>
+    <p>Recibimos tu solicitud. Nuestro equipo comercial te contactará pronto con la cotización.</p>
+    <a href="index.html" class="btn btn--primary">Volver al sitio</a>
+  </div>
+</aside>
+
+<script src="script.js"></script>
+<script src="compra-empresa.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+[
+  { "id": "p001", "category_id": "cat-seguridad-industrial", "name": "Casco de seguridad tipo I", "brand": "3M", "description": "Casco con suspensión de 4 puntos, ajuste tipo matraca, ranuras para accesorios.", "certifications": ["ANSI Z89.1"] },
+  { "id": "p002", "category_id": "cat-seguridad-industrial", "name": "Guante anticorte nivel 5", "brand": "Ansell", "description": "Fibra de alto rendimiento, palma recubierta en nitrilo, alta destreza.", "certifications": ["EN 388"] },
+  { "id": "p003", "category_id": "cat-seguridad-industrial", "name": "Lentes de seguridad antiempañantes", "brand": "3M", "description": "Policarbonato, protección UV, tratamiento antirrayas.", "certifications": ["ANSI Z87.1"] },
+  { "id": "p004", "category_id": "cat-seguridad-industrial", "name": "Bota de seguridad con puntera de acero", "brand": "Bata Industrials", "description": "Cuero graso, suela antideslizante y resistente a hidrocarburos.", "certifications": ["ASTM F2413"] },
+  { "id": "p005", "category_id": "cat-seguridad-industrial", "name": "Arnés de cuerpo completo 4 argollas", "brand": "3M DBI-SALA", "description": "Para trabajo en altura, correas ajustables, argolla dorsal y pectorales.", "certifications": ["ANSI Z359.11"] },
+  { "id": "p006", "category_id": "cat-seguridad-industrial", "name": "Respirador media cara con filtros", "brand": "3M", "description": "Silicona hipoalergénica, incluye filtros para gases y vapores orgánicos.", "certifications": ["NIOSH"] },
+
+  { "id": "p010", "category_id": "cat-herramientas", "name": "Taladro percutor inalámbrico 20V", "brand": "TOTAL Tools", "description": "Motor brushless, incluye 2 baterías y cargador rápido.", "certifications": [] },
+  { "id": "p011", "category_id": "cat-herramientas", "name": "Juego de llaves combinadas 8-24mm", "brand": "TOTAL Tools", "description": "Set de 12 piezas, acero al cromo vanadio.", "certifications": [] },
+  { "id": "p012", "category_id": "cat-herramientas", "name": "Amoladora angular 4.5\"", "brand": "TOTAL Tools", "description": "850W, protector de disco ajustable, empuñadura antivibración.", "certifications": [] },
+  { "id": "p013", "category_id": "cat-herramientas", "name": "Multímetro digital industrial", "brand": "Fluke", "description": "Medición de voltaje, corriente y continuidad, categoría CAT III.", "certifications": [] },
+
+  { "id": "p020", "category_id": "cat-abrasivos", "name": "Disco de corte metal 7\"", "brand": "Norton", "description": "Uso general para acero y aleaciones, alta velocidad de corte.", "certifications": [] },
+  { "id": "p021", "category_id": "cat-abrasivos", "name": "Disco de desbaste grano 24", "brand": "Norton", "description": "Ideal para desbaste rápido de soldaduras y superficies.", "certifications": [] },
+  { "id": "p022", "category_id": "cat-abrasivos", "name": "Lija en rollo grano 80", "brand": "3M", "description": "Óxido de aluminio, respaldo de tela flexible.", "certifications": [] },
+
+  { "id": "p030", "category_id": "cat-soldadura", "name": "Máquina de soldar Inverter MMA 200A", "brand": "Blackweld", "description": "Portátil, factor de servicio alto, ideal para faena.", "certifications": [] },
+  { "id": "p031", "category_id": "cat-soldadura", "name": "Máquina MIG/MAG 250A", "brand": "Blackweld", "description": "Soldadura continua, alimentador de alambre integrado.", "certifications": [] },
+  { "id": "p032", "category_id": "cat-soldadura", "name": "Electrodo E6013 punto azul", "brand": "JD Importadora", "description": "Caja de 5kg, uso general en acero al carbono.", "certifications": [] },
+  { "id": "p033", "category_id": "cat-soldadura", "name": "Antorcha MIG repuesto", "brand": "Hyp", "description": "Compatible con máquinas MIG estándar, incluye consumibles.", "certifications": [] },
+
+  { "id": "p040", "category_id": "cat-vial", "name": "Cono vial reflectante 70cm", "brand": "SafeRoad", "description": "PVC flexible, base ancha, banda reflectante 3M.", "certifications": [] },
+  { "id": "p041", "category_id": "cat-vial", "name": "Cinta de peligro 70mm x 200m", "brand": "SafeRoad", "description": "Amarilla/negra, alta visibilidad, para delimitación de áreas.", "certifications": [] },
+  { "id": "p042", "category_id": "cat-vial", "name": "Baliza solar intermitente", "brand": "SafeRoad", "description": "Carga solar, luz LED ámbar, uso en faena vial nocturna.", "certifications": [] },
+
+  { "id": "p050", "category_id": "cat-loto", "name": "Candado de seguridad LOTO", "brand": "Master Lock", "description": "Cuerpo de nylon, llave única, identificación personalizable.", "certifications": [] },
+  { "id": "p051", "category_id": "cat-loto", "name": "Kit de bloqueo eléctrico", "brand": "Master Lock", "description": "Incluye bloqueadores de disyuntor, candados y etiquetas.", "certifications": [] },
+  { "id": "p052", "category_id": "cat-loto", "name": "Estación de bloqueo LOTO portátil", "brand": "Master Lock", "description": "Organizador mural con espacio para candados y tarjetas.", "certifications": [] },
+
+  { "id": "p060", "category_id": "cat-iluminacion", "name": "Proyector LED 100W", "brand": "Philips", "description": "IP65, alta eficiencia, para iluminación de faena exterior.", "certifications": [] },
+  { "id": "p061", "category_id": "cat-iluminacion", "name": "Luminaria de emergencia autónoma", "brand": "Philips", "description": "Batería de respaldo, encendido automático ante corte de energía.", "certifications": [] },
+  { "id": "p062", "category_id": "cat-iluminacion", "name": "Linterna de casco recargable", "brand": "Kbeen", "description": "LED de alta potencia, batería recargable USB, resistente a golpes.", "certifications": [] },
+
+  { "id": "p070", "category_id": "cat-ropa", "name": "Overol de trabajo drill", "brand": "Mega Safety", "description": "Tela drill reforzada, múltiples bolsillos, cierre resistente.", "certifications": [] },
+  { "id": "p071", "category_id": "cat-ropa", "name": "Chaleco geólogo alta visibilidad", "brand": "Mega Safety", "description": "Cintas reflectantes 3M, bolsillos múltiples, tela transpirable.", "certifications": [] },
+  { "id": "p072", "category_id": "cat-ropa", "name": "Parka térmica impermeable", "brand": "Mega Safety", "description": "Forro polar interior, exterior impermeable, capucha ajustable.", "certifications": [] }
+]
