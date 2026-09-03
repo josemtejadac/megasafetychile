@@ -67,7 +67,10 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 76px;
+  gap: 16px;
+  min-height: 76px;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 .brand {
   display: flex;
@@ -75,8 +78,9 @@ h1, h2, h3 {
   gap: 6px;
   font-family: var(--font-head);
   font-weight: 800;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .brand-mark { color: var(--navy); }
 .brand-mark--accent { color: var(--gold-dark); }
@@ -88,13 +92,14 @@ h1, h2, h3 {
   align-self: center;
 }
 
-.main-nav { display: flex; gap: 32px; }
+.main-nav { display: flex; gap: 22px; flex-shrink: 0; }
 .main-nav a {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: var(--navy);
   position: relative;
   padding: 6px 0;
+  white-space: nowrap;
 }
 .main-nav a::after {
   content: "";
@@ -106,7 +111,7 @@ h1, h2, h3 {
 }
 .main-nav a:hover::after { width: 100%; }
 
-.header-actions { display: flex; align-items: center; gap: 14px; }
+.header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
 .cat-menu-btn {
   display: flex;
@@ -116,11 +121,13 @@ h1, h2, h3 {
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: background 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .cat-menu-btn:hover { background: var(--navy-light); }
 
