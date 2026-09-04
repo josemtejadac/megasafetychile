@@ -377,6 +377,96 @@ h1, h2, h3 {
   box-shadow: 0 20px 50px -12px rgba(0,0,0,0.4);
 }
 
+/* Promo carousel */
+.promo-carousel {
+  position: relative;
+  overflow: hidden;
+  background: var(--navy);
+}
+.promo-track {
+  display: flex;
+  transition: transform 0.5s ease;
+}
+.promo-slide {
+  flex: 0 0 100%;
+  position: relative;
+  min-height: 320px;
+  display: flex;
+  align-items: flex-end;
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+}
+.promo-slide-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(11,31,58,0.95) 0%, rgba(11,31,58,0.65) 45%, rgba(11,31,58,0.15) 100%);
+}
+.promo-slide-content {
+  position: relative;
+  z-index: 1;
+  padding: 40px 56px;
+  max-width: 560px;
+}
+.promo-eyebrow {
+  font-family: var(--font-head);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-size: 0.8rem;
+  margin: 0 0 8px;
+}
+.promo-slide-content h2 { color: #fff; font-size: clamp(1.5rem, 3vw, 2.1rem); margin: 0 0 10px; }
+.promo-text { color: #d8e0ee; font-size: 0.95rem; margin: 0 0 20px; max-width: 42ch; }
+
+.promo-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.15s ease;
+}
+.promo-arrow:hover { background: rgba(255,255,255,0.3); }
+.promo-arrow--prev { left: 16px; }
+.promo-arrow--next { right: 16px; }
+
+.promo-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+.promo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  padding: 0;
+}
+.promo-dot.is-active { background: var(--gold); width: 22px; border-radius: 4px; }
+
+@media (max-width: 760px) {
+  .promo-slide { min-height: 260px; }
+  .promo-slide-content { padding: 24px; max-width: 100%; }
+  .promo-slide-overlay { background: linear-gradient(180deg, rgba(11,31,58,0.35) 0%, rgba(11,31,58,0.95) 75%); }
+  .promo-arrow { display: none; }
+}
+
 /* Strip */
 .strip { background: var(--navy-light); }
 .strip-inner {

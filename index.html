@@ -80,6 +80,13 @@
     </div>
   </section>
 
+  <section class="promo-carousel" id="promo-carousel" aria-label="Promociones destacadas">
+    <div class="promo-track" id="promo-track"></div>
+    <button class="promo-arrow promo-arrow--prev" id="promo-prev" aria-label="Anterior">‹</button>
+    <button class="promo-arrow promo-arrow--next" id="promo-next" aria-label="Siguiente">›</button>
+    <div class="promo-dots" id="promo-dots"></div>
+  </section>
+
   <section class="strip">
     <div class="container strip-inner">
       <div class="strip-item"><strong>Seguridad</strong> industrial</div>
@@ -417,6 +424,7 @@
 <script src="script.js"></script>
 <script src="account.js"></script>
 <script src="category-photos.js"></script>
+<script src="promo-carousel.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
