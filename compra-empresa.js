@@ -59,6 +59,7 @@ async function loadProducts() {
   } else {
     products = data.map((p) => ({
       id: p.id,
+      sku: p.sku,
       category_id: p.category_id,
       name: p.name,
       brand: p.brand,
@@ -156,9 +157,68 @@ function renderGrid() {
         addBtn.classList.remove("is-added");
       }, 1200);
     });
+    card.querySelector(".product-thumb").addEventListener("click", () => openProductDetail(p));
+    card.querySelector(".product-name").addEventListener("click", () => openProductDetail(p));
     grid.appendChild(card);
   });
 }
+
+// ---------- Product detail ----------
+const detailPanel = document.getElementById("detail-panel");
+const detailOverlay = document.getElementById("detail-overlay");
+const detailBody = document.getElementById("detail-body");
+
+function openProductDetail(p) {
+  detailBody.innerHTML = `
+    <div class="detail-photo">
+      ${
+        p.image_url
+          ? `<img src="${p.image_url}" alt="">`
+          : `<svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`
+      }
+    </div>
+    <p class="detail-brand">${p.brand || CAT_LABEL[p.category_id] || ""}</p>
+    <h2 class="detail-name">${p.name}</h2>
+    ${p.sku ? `<p class="detail-sku">SKU: ${p.sku}</p>` : ""}
+    <p class="detail-desc">${p.description || "Sin descripción disponible."}</p>
+    ${
+      p.certifications && p.certifications.length
+        ? `<div class="detail-certs">${p.certifications.map((c) => `<span class="cert-badge">${c}</span>`).join("")}</div>`
+        : ""
+    }
+    <p class="detail-price ${p.price != null ? "has-price" : ""}">${
+      p.price != null ? "$" + Number(p.price).toLocaleString("es-CL") : "Precio empresa según volumen"
+    }</p>
+    <div class="detail-actions">
+      <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad">
+      <button class="add-btn" type="button">Agregar a cotización</button>
+    </div>
+  `;
+  const qtyInput = detailBody.querySelector(".qty-input");
+  const addBtn = detailBody.querySelector(".add-btn");
+  addBtn.addEventListener("click", () => {
+    const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
+    addToCart(p, qty);
+    addBtn.textContent = "Agregado ✓";
+    addBtn.classList.add("is-added");
+    setTimeout(() => {
+      addBtn.textContent = "Agregar a cotización";
+      addBtn.classList.remove("is-added");
+    }, 1200);
+  });
+
+  detailPanel.classList.add("is-open");
+  detailOverlay.classList.add("is-open");
+  detailPanel.setAttribute("aria-hidden", "false");
+}
+
+function closeProductDetail() {
+  detailPanel.classList.remove("is-open");
+  detailOverlay.classList.remove("is-open");
+  detailPanel.setAttribute("aria-hidden", "true");
+}
+document.getElementById("detail-close-btn").addEventListener("click", closeProductDetail);
+detailOverlay.addEventListener("click", closeProductDetail);
 
 searchInput.addEventListener("input", (e) => {
   searchTerm = e.target.value;
