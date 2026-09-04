@@ -246,4 +246,10 @@
   .b2b-options { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .b2b-badge { display: none; }
+  .header-actions .btn--outline { display: none; }
+  .account-btn span { display: none; }
+  .account-btn { padding: 9px; }
+  .cart-btn { padding: 10px 12px; font-size: 0; gap: 4px; }
+  .cart-btn svg { flex-shrink: 0; }
+  .cart-btn #cart-count { font-size: 0.75rem; }
 }
