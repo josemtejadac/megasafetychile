@@ -18,6 +18,7 @@ const CART_KEY = "msc_b2b_cart";
 
 let products = [];
 let activeCategory = "all";
+let activeSubcategory = null;
 let searchTerm = "";
 let sortMode = "relevancia";
 let attachment = null; // { filename, mime, base64 }
@@ -72,6 +73,7 @@ async function loadProducts() {
       image_url: p.image_url,
       colors: p.colors || [],
       sizes: p.sizes || [],
+      subcategory: p.subcategory,
     }));
   }
   renderChips();
@@ -93,31 +95,57 @@ function renderChips() {
     const btn = e.target.closest(".chip");
     if (!btn) return;
     activeCategory = btn.dataset.cat;
+    activeSubcategory = null;
     chipsEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-active", c === btn));
+    renderSubcategoryBanner();
     renderGrid();
   });
 
   const params = new URLSearchParams(window.location.search);
   const catParam = params.get("cat");
+  const subParam = params.get("sub");
   if (catParam && CAT_LABEL[catParam]) {
     activeCategory = catParam;
+    activeSubcategory = subParam || null;
     const allChip = chipsEl.querySelector('[data-cat="all"]');
     const targetChip = chipsEl.querySelector(`[data-cat="${catParam}"]`);
     if (allChip) allChip.classList.remove("is-active");
     if (targetChip) targetChip.classList.add("is-active");
+    renderSubcategoryBanner();
     setTimeout(() => {
       document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
     }, 150);
   }
 }
 
+function renderSubcategoryBanner() {
+  let banner = document.getElementById("subcategory-banner");
+  if (!activeSubcategory) {
+    if (banner) banner.remove();
+    return;
+  }
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "subcategory-banner";
+    banner.className = "subcategory-banner";
+    chipsEl.insertAdjacentElement("afterend", banner);
+  }
+  banner.innerHTML = `Mostrando: <strong>${activeSubcategory}</strong> <button type="button" id="clear-sub-btn">Ver toda la categoría ✕</button>`;
+  document.getElementById("clear-sub-btn").addEventListener("click", () => {
+    activeSubcategory = null;
+    renderSubcategoryBanner();
+    renderGrid();
+  });
+}
+
 function renderGrid() {
   const term = searchTerm.trim().toLowerCase();
   const filtered = products.filter((p) => {
     const matchesCat = activeCategory === "all" || p.category_id === activeCategory;
+    const matchesSub = !activeSubcategory || p.subcategory === activeSubcategory;
     const matchesTerm =
       !term || p.name.toLowerCase().includes(term) || (p.brand || "").toLowerCase().includes(term);
-    return matchesCat && matchesTerm;
+    return matchesCat && matchesSub && matchesTerm;
   });
 
   if (sortMode === "nombre-az") filtered.sort((a, b) => a.name.localeCompare(b.name, "es"));
