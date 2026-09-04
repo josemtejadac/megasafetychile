@@ -29,10 +29,11 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({ ok: false, error: "No autorizado" }), { status: 403 });
   }
 
-  const { email, name, role, commission_rate } = await request.json();
-  if (!email || !role) {
-    return new Response(JSON.stringify({ ok: false, error: "Falta email o rol" }), { status: 400 });
+  const { email, rut, name, role, commission_rate } = await request.json();
+  if (!email || !role || !rut) {
+    return new Response(JSON.stringify({ ok: false, error: "Falta email, RUT o rol" }), { status: 400 });
   }
+  const normalizedRut = rut.replace(/[.\s]/g, "").toUpperCase();
 
   // Look up the auth user id by email via the Admin API.
   const listRes = await fetch(
@@ -65,7 +66,15 @@ export async function onRequestPost({ request, env }) {
       Prefer: "resolution=merge-duplicates,return=representation",
     },
     body: JSON.stringify([
-      { user_id: match.id, name: name || null, role, commission_rate: commission_rate || 0, active: true },
+      {
+        user_id: match.id,
+        name: name || null,
+        role,
+        commission_rate: commission_rate || 0,
+        active: true,
+        rut: normalizedRut,
+        email: match.email,
+      },
     ]),
   });
   if (!upsertRes.ok) {

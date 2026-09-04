@@ -35,7 +35,7 @@
     <section id="login-view" class="admin-login">
       <h1>Ingresar al panel</h1>
       <form id="login-form" class="quote-form admin-login-form">
-        <label>Correo<input type="email" name="email" required autocomplete="username"></label>
+        <label>Correo (admin) o RUT (vendedor)<input type="text" name="identifier" required autocomplete="username"></label>
         <label>Contraseña<input type="password" name="password" required autocomplete="current-password"></label>
         <p class="form-note" id="login-note"></p>
         <button type="submit" class="btn btn--primary">Ingresar</button>
@@ -180,21 +180,22 @@
           <p class="admin-subtitle">Vendedores con acceso al panel y su % de comisión</p>
         </div>
       </div>
-      <p class="admin-help">Para agregar a alguien nuevo: créalo primero en Supabase → Authentication → Users (con Auto Confirm activado), luego vincúlalo aquí con su correo, nombre, rol y % de comisión.</p>
-      <form id="staff-form" class="quote-form" style="padding:0; margin-bottom:28px; max-width:520px;">
+      <p class="admin-help">Para agregar a alguien nuevo: créalo primero en Supabase → Authentication → Users (con Auto Confirm activado, correo real para el login inicial), luego vincúlalo aquí con su RUT (con el que iniciará sesión), nombre, rol y % de comisión.</p>
+      <form id="staff-form" class="quote-form" style="padding:0; margin-bottom:28px; max-width:600px;">
         <div class="form-row">
-          <label>Correo (ya creado en Supabase) *<input type="email" name="email" required></label>
-          <label>Nombre<input type="text" name="name"></label>
+          <label>Correo (el mismo creado en Supabase) *<input type="email" name="email" required></label>
+          <label>RUT (para iniciar sesión) *<input type="text" name="rut" placeholder="12345678-9" required></label>
         </div>
         <div class="form-row">
+          <label>Nombre<input type="text" name="name"></label>
           <label>Rol
             <select name="role">
               <option value="vendedor">Vendedor</option>
               <option value="admin">Admin</option>
             </select>
           </label>
-          <label>Comisión %<input type="number" name="commission_rate" min="0" max="100" step="0.1" value="0"></label>
         </div>
+        <label style="max-width:200px;">Comisión %<input type="number" name="commission_rate" min="0" max="100" step="0.1" value="2"></label>
         <p class="form-note" id="staff-note"></p>
         <button type="submit" class="btn btn--primary" style="width:fit-content;">Vincular</button>
       </form>
@@ -203,9 +204,12 @@
           <thead>
             <tr>
               <th>Nombre</th>
+              <th>RUT</th>
               <th>Correo</th>
               <th>Rol</th>
               <th>Comisión %</th>
+              <th>Vendido</th>
+              <th>Comisión ganada</th>
               <th>Activo</th>
               <th></th>
             </tr>

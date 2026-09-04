@@ -82,12 +82,25 @@ loginForm.addEventListener("submit", async (e) => {
   const fd = new FormData(loginForm);
   loginNote.textContent = "Ingresando...";
   loginNote.className = "form-note is-loading";
-  const { error } = await sbClient.auth.signInWithPassword({
-    email: fd.get("email"),
-    password: fd.get("password"),
+
+  const res = await fetch("/api/staff/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identifier: fd.get("identifier"), password: fd.get("password") }),
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    loginNote.textContent = data.error || "Correo/RUT o contraseña incorrectos.";
+    loginNote.className = "form-note is-error";
+    return;
+  }
+
+  const { error } = await sbClient.auth.setSession({
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
   });
   if (error) {
-    loginNote.textContent = "Correo o contraseña incorrectos.";
+    loginNote.textContent = "No se pudo iniciar sesión.";
     loginNote.className = "form-note is-error";
     return;
   }
@@ -546,20 +559,45 @@ async function loadStaff() {
     .order("role", { ascending: false });
   if (error) return;
 
+  const { data: sold } = await sbClient
+    .from("megasafety_b2b_quotes")
+    .select("claimed_by, sale_amount, commission_amount")
+    .eq("status", "vendida");
+
+  const totalsByUser = {};
+  (sold || []).forEach((q) => {
+    if (!q.claimed_by) return;
+    if (!totalsByUser[q.claimed_by]) totalsByUser[q.claimed_by] = { sold: 0, commission: 0 };
+    totalsByUser[q.claimed_by].sold += q.sale_amount || 0;
+    totalsByUser[q.claimed_by].commission += q.commission_amount || 0;
+  });
+
   staffTbody.innerHTML = "";
   data.forEach((s) => {
+    const totals = totalsByUser[s.user_id] || { sold: 0, commission: 0 };
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${s.name || "-"}</td>
-      <td>${s.user_id}</td>
+      <td>${s.rut || "-"}</td>
+      <td>${s.email || "-"}</td>
       <td>${s.role === "admin" ? "Admin" : "Vendedor"}</td>
       <td><input type="number" min="0" max="100" step="0.1" value="${s.commission_rate}" class="staff-rate-input" style="width:70px; padding:6px; border:1px solid var(--border); border-radius:6px;"></td>
+      <td>$${totals.sold.toLocaleString("es-CL")}</td>
+      <td>$${totals.commission.toLocaleString("es-CL")}</td>
       <td><span class="status-dot ${s.active ? "" : "is-off"}"></span></td>
-      <td><button class="row-edit-btn save-rate-btn" type="button">Guardar</button></td>
+      <td style="display:flex; gap:6px;">
+        <button class="row-edit-btn save-rate-btn" type="button">Guardar</button>
+        <button class="row-edit-btn delete-staff-btn" type="button">Eliminar</button>
+      </td>
     `;
     tr.querySelector(".save-rate-btn").addEventListener("click", async () => {
       const newRate = Number(tr.querySelector(".staff-rate-input").value) || 0;
       await sbClient.from("megasafety_admins").update({ commission_rate: newRate }).eq("user_id", s.user_id);
+      loadStaff();
+    });
+    tr.querySelector(".delete-staff-btn").addEventListener("click", async () => {
+      if (!confirm(`¿Quitar a ${s.name || s.email} del equipo? Perderá acceso al panel.`)) return;
+      await sbClient.from("megasafety_admins").delete().eq("user_id", s.user_id);
       loadStaff();
     });
     staffTbody.appendChild(tr);
@@ -578,6 +616,7 @@ staffForm.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({
         email: fd.get("email"),
+        rut: fd.get("rut"),
         name: fd.get("name"),
         role: fd.get("role"),
         commission_rate: Number(fd.get("commission_rate")) || 0,
