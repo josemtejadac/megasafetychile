@@ -6,6 +6,9 @@
 <title>Mega Safety Chile | Artículos de Seguridad Industrial</title>
 <meta name="description" content="Mega Safety Chile - Seguridad industrial, herramientas, soldadura, abrasivos, señalización vial, bloqueo LOTO, iluminación y ropa de trabajo para empresas en todo Chile.">
 <link rel="icon" href="assets/img/favicon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/icon-192.png">
+<meta name="theme-color" content="#0b1f3a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -414,5 +417,10 @@
 <script src="script.js"></script>
 <script src="account.js"></script>
 <script src="category-photos.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+</script>
 </body>
 </html>
