@@ -77,6 +77,11 @@ logoutBtn.addEventListener("click", async () => {
 // ---------- Product list ----------
 const tbody = document.getElementById("products-tbody");
 const emptyState = document.getElementById("admin-empty");
+const searchInput = document.getElementById("admin-search");
+const catFilter = document.getElementById("admin-cat-filter");
+const priceFilter = document.getElementById("admin-price-filter");
+
+let allProducts = [];
 
 async function loadProducts() {
   const { data, error } = await sbClient
@@ -85,18 +90,54 @@ async function loadProducts() {
     .order("category_id", { ascending: true })
     .order("sort_order", { ascending: true });
 
-  tbody.innerHTML = "";
   if (error) {
+    tbody.innerHTML = "";
     emptyState.hidden = false;
     emptyState.textContent = "Error cargando productos: " + error.message;
     return;
   }
-  emptyState.hidden = data.length > 0;
+  allProducts = data;
+  renderStats();
+  renderTable();
+}
 
-  data.forEach((p) => {
+function renderStats() {
+  document.getElementById("stat-total").textContent = allProducts.length;
+  document.getElementById("stat-active").textContent = allProducts.filter((p) => p.active).length;
+  document.getElementById("stat-priced").textContent = allProducts.filter((p) => p.price != null).length;
+  document.getElementById("stat-quote").textContent = allProducts.filter((p) => p.price == null).length;
+  document.getElementById("stat-photos").textContent = allProducts.filter((p) => p.image_url).length;
+}
+
+function renderTable() {
+  const term = searchInput.value.trim().toLowerCase();
+  const cat = catFilter.value;
+  const priceMode = priceFilter.value;
+
+  const filtered = allProducts.filter((p) => {
+    const matchesTerm =
+      !term ||
+      p.name.toLowerCase().includes(term) ||
+      (p.sku || "").toLowerCase().includes(term) ||
+      (p.brand || "").toLowerCase().includes(term);
+    const matchesCat = cat === "all" || p.category_id === cat;
+    const matchesPrice =
+      priceMode === "all" || (priceMode === "priced" ? p.price != null : p.price == null);
+    return matchesTerm && matchesCat && matchesPrice;
+  });
+
+  tbody.innerHTML = "";
+  emptyState.hidden = filtered.length > 0;
+
+  filtered.forEach((p) => {
     const tr = document.createElement("tr");
     if (!p.active) tr.className = "admin-row-inactive";
     tr.innerHTML = `
+      <td class="thumb-cell">${
+        p.image_url
+          ? `<img src="${p.image_url}" alt="">`
+          : `<div class="thumb-cell-placeholder"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div>`
+      }</td>
       <td><span class="status-dot ${p.active ? "" : "is-off"}"></span></td>
       <td>${p.sku || "-"}</td>
       <td>${p.name}</td>
@@ -111,6 +152,10 @@ async function loadProducts() {
     tbody.appendChild(tr);
   });
 }
+
+searchInput.addEventListener("input", renderTable);
+catFilter.addEventListener("change", renderTable);
+priceFilter.addEventListener("change", renderTable);
 
 // ---------- Product form ----------
 const productPanel = document.getElementById("product-panel");
@@ -133,6 +178,53 @@ function closeProductPanel() {
 document.getElementById("product-close-btn").addEventListener("click", closeProductPanel);
 productOverlay.addEventListener("click", closeProductPanel);
 
+// ---------- Photo upload ----------
+const photoPreview = document.getElementById("photo-preview");
+const photoInput = document.getElementById("photo-input");
+const photoHint = document.getElementById("photo-hint");
+const PLACEHOLDER_THUMB_SVG =
+  '<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>';
+
+function setPhotoPreview(url) {
+  photoPreview.innerHTML = url ? `<img src="${url}" alt="">` : PLACEHOLDER_THUMB_SVG;
+}
+
+function setPhotoFieldState(productId) {
+  if (productId) {
+    photoInput.disabled = false;
+    photoHint.textContent = "JPG o PNG, se sube directo al guardar el archivo.";
+  } else {
+    photoInput.disabled = true;
+    photoHint.textContent = "Guarda el producto primero para poder subir su foto.";
+  }
+}
+
+photoInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  const productId = productForm.elements.id.value;
+  if (!file || !productId) return;
+
+  photoHint.textContent = "Subiendo...";
+  try {
+    const { data: { session } } = await sbClient.auth.getSession();
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("product_id", productId);
+    const res = await fetch("/api/admin/upload-image", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: fd,
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Error al subir la foto");
+    setPhotoPreview(data.image_url);
+    photoHint.textContent = "Foto actualizada.";
+    loadProducts();
+  } catch (err) {
+    photoHint.textContent = err.message || "No se pudo subir la foto.";
+  }
+});
+
 document.getElementById("new-product-btn").addEventListener("click", () => {
   productForm.reset();
   productForm.elements.id.value = "";
@@ -140,6 +232,8 @@ document.getElementById("new-product-btn").addEventListener("click", () => {
   productPanelTitle.textContent = "Nuevo producto";
   deleteBtn.hidden = true;
   productNote.textContent = "";
+  setPhotoPreview(null);
+  setPhotoFieldState(null);
   openProductPanel();
 });
 
@@ -157,6 +251,8 @@ function openProductForm(p) {
   productForm.elements.active.checked = p.active;
   productPanelTitle.textContent = "Editar producto";
   deleteBtn.hidden = false;
+  setPhotoPreview(p.image_url);
+  setPhotoFieldState(p.id);
   productNote.textContent = "";
   openProductPanel();
 }

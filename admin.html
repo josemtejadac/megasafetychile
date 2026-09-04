@@ -45,14 +45,62 @@
     <!-- Panel -->
     <section id="panel-view" class="admin-panel" hidden>
       <div class="admin-panel-head">
-        <h1>Productos</h1>
+        <div>
+          <h1>Productos</h1>
+          <p class="admin-subtitle">Catálogo completo de Mega Safety Chile</p>
+        </div>
         <button class="btn btn--primary" id="new-product-btn">+ Nuevo producto</button>
+      </div>
+
+      <div class="admin-stats" id="admin-stats">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-label">Productos totales</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-active">0</span>
+          <span class="stat-label">Activos</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-priced">0</span>
+          <span class="stat-label">Con precio</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-quote">0</span>
+          <span class="stat-label">Solicitar cotización</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-photos">0</span>
+          <span class="stat-label">Con foto</span>
+        </div>
+      </div>
+
+      <div class="admin-controls">
+        <input type="search" id="admin-search" placeholder="Buscar por nombre, SKU o marca...">
+        <select id="admin-cat-filter">
+          <option value="all">Todas las categorías</option>
+          <option value="cat-seguridad-industrial">Seguridad industrial</option>
+          <option value="cat-herramientas">Herramientas y equipos</option>
+          <option value="cat-abrasivos">Abrasivos y discos</option>
+          <option value="cat-soldadura">Soldadura</option>
+          <option value="cat-vial">Seguridad vial y señalización</option>
+          <option value="cat-loto">Bloqueo L.O.T.O.</option>
+          <option value="cat-iluminacion">Iluminación industrial</option>
+          <option value="cat-ropa">Ropa de trabajo y corporativa</option>
+          <option value="cat-izaje">Izaje de carga</option>
+        </select>
+        <select id="admin-price-filter">
+          <option value="all">Todos los precios</option>
+          <option value="priced">Con precio</option>
+          <option value="quote">Solicitar cotización</option>
+        </select>
       </div>
 
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
             <tr>
+              <th></th>
               <th>Activo</th>
               <th>SKU</th>
               <th>Nombre</th>
@@ -65,7 +113,7 @@
           <tbody id="products-tbody"></tbody>
         </table>
       </div>
-      <p class="empty-state" id="admin-empty" hidden>No hay productos todavía.</p>
+      <p class="empty-state" id="admin-empty" hidden>No hay productos que coincidan con el filtro.</p>
     </section>
 
   </div>
@@ -80,6 +128,18 @@
   </div>
   <form id="product-form" class="quote-form">
     <input type="hidden" name="id">
+    <div class="photo-field">
+      <div class="photo-preview" id="photo-preview">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      </div>
+      <div class="photo-field-actions">
+        <label class="photo-upload-btn">
+          Subir foto
+          <input type="file" id="photo-input" accept="image/*" hidden>
+        </label>
+        <p class="photo-hint" id="photo-hint">Guarda el producto primero para poder subir su foto.</p>
+      </div>
+    </div>
     <label>SKU<input type="text" name="sku"></label>
     <label>Nombre *<input type="text" name="name" required></label>
     <label>Marca<input type="text" name="brand"></label>
