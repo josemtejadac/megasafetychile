@@ -74,14 +74,14 @@
   track.innerHTML = slidesData
     .map(
       (s) => `
-      <a class="promo-slide" href="${s.href}" style="background-image:url(${s.image_url})">
-        <div class="promo-slide-overlay"></div>
+      <a class="promo-slide" href="${s.href}">
         <div class="promo-slide-content">
           <p class="promo-eyebrow">${s.eyebrow}</p>
           <h2>${s.title}</h2>
           <p class="promo-text">${s.text}</p>
           <span class="btn btn--primary">Ver productos</span>
         </div>
+        <div class="promo-slide-photo" style="background-image:url(${s.image_url})"></div>
       </a>`
     )
     .join("");
