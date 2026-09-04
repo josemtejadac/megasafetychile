@@ -32,8 +32,8 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({ ok: false, error: "RESEND_API_KEY no configurada" }), { status: 500 });
   }
 
-  const html = buildOrderEmailHtml(order);
-  const pdfBase64 = buildOrderPdfBase64(order);
+  const html = buildOrderEmailHtml(order, request.url);
+  const pdfBase64 = await buildOrderPdfBase64(order, request.url);
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

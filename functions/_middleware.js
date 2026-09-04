@@ -77,6 +77,13 @@ export async function onRequest(context) {
     return next();
   }
 
+  // Never gate static assets — images, CSS, JS, fonts. These are hotlinked
+  // from outside the site too (e.g. the logo in transactional emails), so
+  // they must load with no preview cookie present.
+  if (url.pathname.startsWith("/assets/") || /\.(png|jpe?g|gif|svg|webp|ico|css|js|woff2?|ttf|pdf)$/i.test(url.pathname)) {
+    return next();
+  }
+
   // Visiting /preview?key=... with the right key sets a cookie and redirects home.
   if (url.pathname === "/preview") {
     const key = url.searchParams.get("key");
