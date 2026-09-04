@@ -1,40 +1,16 @@
 (function initPromoCarousel() {
+  const WA_NUMBER = "56983061338";
+  const waLink = (text) => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
+
   const SLIDES = [
-    {
-      icon: '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 3 6v6c0 5 3.8 9 9 10 5.2-1 9-5 9-10V6l-9-4Z"/><path d="m9 12 2 2 4-4"/></svg>',
-      eyebrow: "Izaje de carga",
-      title: "Cadenas y ganchos grado 80 certificados",
-      text: "Todo lo que necesitas para maniobras de izaje seguras: cadenas, grilletes, tensores, eslingas y tecles.",
-      href: "compra-empresa.html?cat=cat-izaje",
-    },
-    {
-      icon: '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-      eyebrow: "Bloqueo L.O.T.O.",
-      title: "Bloqueo y etiquetado, sin errores",
-      text: "Candados, dispositivos de bloqueo y kits completos para energía cero en tu faena.",
-      href: "compra-empresa.html?cat=cat-loto",
-    },
-    {
-      icon: '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="9" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
-      eyebrow: "Ropa de trabajo",
-      title: "Protección térmica para el terreno",
-      text: "Parkas, trajes impermeables y ropa térmica para faenas en cualquier condición climática.",
-      href: "compra-empresa.html?cat=cat-ropa&sub=" + encodeURIComponent("Ropa térmica e impermeable"),
-    },
-    {
-      icon: '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 22V12l8-8 8 8v10"/><path d="M9 22v-6h6v6"/></svg>',
-      eyebrow: "Seguridad industrial",
-      title: "Pisa seguro en cualquier terreno",
-      text: "Botas y botines de seguridad con puntera de acero, para construcción, minería e industria.",
-      href: "compra-empresa.html?cat=cat-seguridad-industrial&sub=" + encodeURIComponent("Calzado de seguridad"),
-    },
-    {
-      icon: '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>',
-      eyebrow: "Abrasivos y discos",
-      title: "Discos para cada tipo de corte",
-      text: "Discos de corte, desbaste y acabado para acero, inox y hormigón.",
-      href: "compra-empresa.html?cat=cat-abrasivos",
-    },
+    { img: "assets/img/promo/promo-1.jpg", alt: "Pack Básico $45.990", href: waLink("Hola, quiero cotizar el Pack Básico ($45.990 neto): pantalón cargo poplin + overol poplin + zapatos de seguridad Kbeen LI518.") },
+    { img: "assets/img/promo/promo-2.jpg", alt: "Pack Intermedio $53.990", href: waLink("Hola, quiero cotizar el Pack Intermedio ($53.990 neto): pantalón cargo gabardina + overol gabardina + polera piqué + zapatos Kbeen LI-518.") },
+    { img: "assets/img/promo/promo-3.jpg", alt: "Certificaciones de lentes de seguridad", href: "compra-empresa.html?cat=cat-seguridad-industrial&sub=" + encodeURIComponent("Protección visual y facial") },
+    { img: "assets/img/promo/promo-4.jpg", alt: "Guante Cabritilla Combinado $1.070", href: waLink("Hola, quiero cotizar el Guante Cabritilla Combinado ($1.070 neto, compra desde 100 unidades).") },
+    { img: "assets/img/promo/promo-5.jpg", alt: "Botín Impermeable Kbeen $16.990", href: waLink("Hola, quiero cotizar el Botín Impermeable Kbeen ($16.990 neto, compra mínima 10 pares).") },
+    { img: "assets/img/promo/promo-6.jpg", alt: "Parrilla Rodeo $67.990", href: waLink("Hola, quiero cotizar la Parrilla Rodeo 1/2 tambor con tapa ($67.990).") },
+    { img: "assets/img/promo/promo-7.jpg", alt: "Ropa de trabajo Poplín", href: waLink("Hola, quiero cotizar overoles/chalecos línea Poplín para mi equipo de trabajo.") },
+    { img: "assets/img/promo/promo-8.jpg", alt: "Pack Full $69.990", href: waLink("Hola, quiero cotizar el Pack Full ($69.990 neto): pantalón + overol + zapatos + 2 poleras/polerón.") },
   ];
 
   const track = document.getElementById("promo-track");
@@ -44,15 +20,9 @@
   const section = document.getElementById("promo-carousel");
 
   track.innerHTML = SLIDES.map(
-    (s, i) => `
-      <a class="promo-slide promo-slide--${i % 3}" href="${s.href}">
-        <div class="promo-slide-icon">${s.icon}</div>
-        <div class="promo-slide-content">
-          <p class="promo-eyebrow">${s.eyebrow}</p>
-          <h2>${s.title}</h2>
-          <p class="promo-text">${s.text}</p>
-          <span class="btn btn--primary">Ver productos</span>
-        </div>
+    (s) => `
+      <a class="promo-slide" href="${s.href}" target="${s.href.startsWith("http") ? "_blank" : "_self"}" rel="noopener">
+        <img src="${s.img}" alt="${s.alt}" loading="lazy">
       </a>`
   ).join("");
 
