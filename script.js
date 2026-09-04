@@ -40,6 +40,15 @@ catMenuOverlay.addEventListener("click", closeCatMenu);
 catMenuPanel.querySelectorAll("a").forEach((link) => {
   link.addEventListener("click", closeCatMenu);
 });
+
+catMenuPanel.querySelectorAll(".cat-menu-toggle").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const item = btn.closest(".cat-menu-item");
+    const wasOpen = item.classList.contains("is-open");
+    catMenuPanel.querySelectorAll(".cat-menu-item").forEach((i) => i.classList.remove("is-open"));
+    if (!wasOpen) item.classList.add("is-open");
+  });
+});
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeCatMenu();
 });

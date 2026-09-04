@@ -89,6 +89,19 @@ function renderChips() {
     chipsEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-active", c === btn));
     renderGrid();
   });
+
+  const params = new URLSearchParams(window.location.search);
+  const catParam = params.get("cat");
+  if (catParam && CAT_LABEL[catParam]) {
+    activeCategory = catParam;
+    const allChip = chipsEl.querySelector('[data-cat="all"]');
+    const targetChip = chipsEl.querySelector(`[data-cat="${catParam}"]`);
+    if (allChip) allChip.classList.remove("is-active");
+    if (targetChip) targetChip.classList.add("is-active");
+    setTimeout(() => {
+      document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
+    }, 150);
+  }
 }
 
 function renderGrid() {
