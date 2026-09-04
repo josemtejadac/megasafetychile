@@ -1,0 +1,42 @@
+.admin-main { padding: 48px 0 80px; min-height: 60vh; }
+
+.admin-login { max-width: 380px; margin: 40px auto; }
+.admin-login h1 { text-align: center; margin-bottom: 24px; }
+.admin-login-form { padding: 0; }
+
+.admin-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.admin-table th {
+  text-align: left;
+  background: var(--bg-alt);
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+}
+.admin-table td { padding: 12px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
+.admin-table tr:hover td { background: var(--bg-alt); }
+.admin-row-inactive td { opacity: 0.5; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: #25d366; }
+.status-dot.is-off { background: var(--ink-soft); }
+.row-edit-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--navy);
+}
+.row-edit-btn:hover { border-color: var(--gold); }
+.price-cell { font-weight: 700; }
+.price-cell.is-quote { color: var(--red); font-weight: 600; font-size: 0.85rem; }

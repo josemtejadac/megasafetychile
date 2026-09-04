@@ -11,8 +11,12 @@ el portal B2B, desplegado en Cloudflare Pages.
 - `index.html`, `styles.css`, `script.js` — landing pública.
 - `compra-empresa.html`, `compra-empresa.css`, `compra-empresa.js` — portal
   B2B "Compra Empresa" (RFQ: catálogo → cotización → formulario → confirmación).
-- `assets/data/productos-b2b.json` — catálogo del portal B2B. **Contiene
-  productos de ejemplo** — reemplazar por el listado real cuando esté listo.
+  El catálogo se lee en vivo desde Supabase (tabla `megasafety_products`);
+  `assets/data/productos-b2b.json` solo se usa como respaldo si Supabase no responde.
+- `admin.html`, `admin.css`, `admin.js` — panel de administración (`/admin.html`,
+  no está enlazado desde el sitio público). Login con Supabase Auth, CRUD completo
+  de `megasafety_products` (precio vacío = "Solicitar cotización"). Acceso
+  restringido a los `user_id` listados en `megasafety_admins`.
 - `functions/api/quote/submit.js` — recibe la solicitud de cotización B2B,
   la guarda en Supabase, genera el correlativo `MS-XXXXXX` y envía el email.
 - `functions/api/flow/create-payment.js` / `confirm.js` — integración con
@@ -51,6 +55,9 @@ Proyecto: **Proyectos varios** (`wiuuzsiiaagqldtxfouj`), tablas con prefijo
 
 - `megasafety_b2b_quotes` — una fila por solicitud de cotización.
 - `megasafety_b2b_quote_items` — productos y cantidades de cada solicitud.
+- `megasafety_products` — catálogo (precio `null` = "Solicitar cotización").
+  Editable desde `/admin.html` o directo en Supabase.
+- `megasafety_admins` — `user_id` (de `auth.users`) con acceso al panel admin.
 
 ## Deploy
 

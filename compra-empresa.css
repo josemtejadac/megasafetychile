@@ -120,6 +120,7 @@
   border-radius: 6px;
 }
 .product-price-note { font-size: 0.8rem; color: var(--red); font-weight: 600; }
+.product-price-note.has-price { color: var(--navy); font-size: 1.05rem; font-weight: 800; font-family: var(--font-head); }
 .product-actions { display: flex; align-items: center; gap: 8px; }
 .qty-input {
   width: 64px;

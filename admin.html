@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin | Mega Safety Chile</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">MEGA</span><span class="brand-mark brand-mark--accent">SAFETY</span>
+      <span class="brand-sub">CHILE</span>
+    </a>
+    <span class="b2b-badge">Panel Admin</span>
+    <div class="header-actions">
+      <button class="btn btn--outline" id="logout-btn" hidden>Cerrar sesión</button>
+    </div>
+  </div>
+</header>
+
+<main class="admin-main">
+  <div class="container">
+
+    <!-- Login -->
+    <section id="login-view" class="admin-login">
+      <h1>Ingresar al panel</h1>
+      <form id="login-form" class="quote-form admin-login-form">
+        <label>Correo<input type="email" name="email" required autocomplete="username"></label>
+        <label>Contraseña<input type="password" name="password" required autocomplete="current-password"></label>
+        <p class="form-note" id="login-note"></p>
+        <button type="submit" class="btn btn--primary">Ingresar</button>
+      </form>
+    </section>
+
+    <!-- Panel -->
+    <section id="panel-view" class="admin-panel" hidden>
+      <div class="admin-panel-head">
+        <h1>Productos</h1>
+        <button class="btn btn--primary" id="new-product-btn">+ Nuevo producto</button>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Activo</th>
+              <th>SKU</th>
+              <th>Nombre</th>
+              <th>Marca</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody"></tbody>
+        </table>
+      </div>
+      <p class="empty-state" id="admin-empty" hidden>No hay productos todavía.</p>
+    </section>
+
+  </div>
+</main>
+
+<!-- Product edit drawer -->
+<div class="cat-menu-overlay" id="product-overlay"></div>
+<aside class="cart-panel form-panel" id="product-panel" aria-hidden="true">
+  <div class="cat-menu-head">
+    <h3 id="product-panel-title">Nuevo producto</h3>
+    <button class="cat-menu-close" id="product-close-btn" aria-label="Cerrar">&times;</button>
+  </div>
+  <form id="product-form" class="quote-form">
+    <input type="hidden" name="id">
+    <label>SKU<input type="text" name="sku"></label>
+    <label>Nombre *<input type="text" name="name" required></label>
+    <label>Marca<input type="text" name="brand"></label>
+    <label>Categoría *
+      <select name="category_id" required>
+        <option value="cat-seguridad-industrial">Seguridad industrial</option>
+        <option value="cat-herramientas">Herramientas y equipos</option>
+        <option value="cat-abrasivos">Abrasivos y discos</option>
+        <option value="cat-soldadura">Soldadura</option>
+        <option value="cat-vial">Seguridad vial y señalización</option>
+        <option value="cat-loto">Bloqueo L.O.T.O.</option>
+        <option value="cat-iluminacion">Iluminación industrial</option>
+        <option value="cat-ropa">Ropa de trabajo y corporativa</option>
+      </select>
+    </label>
+    <label>Descripción<textarea name="description" rows="3"></textarea></label>
+    <label>Certificaciones (separadas por coma)<input type="text" name="certifications" placeholder="ANSI Z89.1, EN 388"></label>
+    <label>Precio CLP (vacío = "Solicitar cotización")<input type="number" name="price" min="0" step="1"></label>
+    <label>Orden<input type="number" name="sort_order" value="0"></label>
+    <label class="checkbox-row"><input type="checkbox" name="active" checked> Activo (visible en el sitio)</label>
+    <p class="form-note" id="product-note"></p>
+    <div class="form-row">
+      <button type="submit" class="btn btn--primary">Guardar</button>
+      <button type="button" class="btn btn--outline" id="delete-product-btn" hidden>Eliminar</button>
+    </div>
+  </form>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

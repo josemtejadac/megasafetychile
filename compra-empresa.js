@@ -1,3 +1,7 @@
+const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const CATEGORIES = [
   { id: "cat-seguridad-industrial", label: "Seguridad industrial" },
   { id: "cat-herramientas", label: "Herramientas y equipos" },
@@ -40,8 +44,28 @@ let cart = loadCart();
 
 // ---------- Catalog ----------
 async function loadProducts() {
-  const res = await fetch("assets/data/productos-b2b.json");
-  products = await res.json();
+  const { data, error } = await supabase
+    .from("megasafety_products")
+    .select("*")
+    .order("category_id", { ascending: true })
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("Error cargando catálogo", error);
+    // Respaldo: catálogo de ejemplo si Supabase no responde.
+    const res = await fetch("assets/data/productos-b2b.json");
+    products = await res.json();
+  } else {
+    products = data.map((p) => ({
+      id: p.id,
+      category_id: p.category_id,
+      name: p.name,
+      brand: p.brand,
+      description: p.description,
+      certifications: p.certifications || [],
+      price: p.price,
+    }));
+  }
   renderChips();
   renderGrid();
 }
@@ -93,7 +117,9 @@ function renderGrid() {
           ? `<div class="product-certs">${p.certifications.map((c) => `<span class="cert-badge">${c}</span>`).join("")}</div>`
           : ""
       }
-      <p class="product-price-note">Precio empresa según volumen</p>
+      <p class="product-price-note ${p.price != null ? "has-price" : ""}">${
+        p.price != null ? "$" + Number(p.price).toLocaleString("es-CL") : "Precio empresa según volumen"
+      }</p>
       <div class="product-actions">
         <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad">
         <button class="add-btn" type="button">Agregar a cotización</button>
