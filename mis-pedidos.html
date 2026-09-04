@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis Cotizaciones | Mega Safety Chile</title>
+<link rel="icon" href="assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="compra-empresa.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">MEGA</span><span class="brand-mark brand-mark--accent">SAFETY</span>
+      <span class="brand-sub">CHILE</span>
+    </a>
+    <span class="b2b-badge">Mi cuenta</span>
+    <div class="header-actions">
+      <a href="index.html" class="btn btn--outline">Volver al sitio</a>
+    </div>
+  </div>
+</header>
+
+<main class="admin-main">
+  <div class="container">
+
+    <section id="logged-out-view" hidden>
+      <div class="admin-login">
+        <h1>Inicia sesión para ver tus cotizaciones</h1>
+        <p style="text-align:center; color:var(--ink-soft); margin-bottom:20px;">Usa el botón "Ingresar" del menú principal para acceder.</p>
+        <a href="index.html" class="btn btn--primary" style="display:flex; justify-content:center;">Volver al sitio</a>
+      </div>
+    </section>
+
+    <section id="orders-view" hidden>
+      <div class="admin-panel-head">
+        <div>
+          <h1>Mis cotizaciones</h1>
+          <p class="admin-subtitle">Historial de solicitudes enviadas a Mega Safety Chile</p>
+        </div>
+      </div>
+      <div id="orders-list"></div>
+      <p class="empty-state" id="orders-empty" hidden>Todavía no has enviado ninguna cotización.</p>
+    </section>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="account.js"></script>
+<script src="mis-pedidos.js"></script>
+</body>
+</html>

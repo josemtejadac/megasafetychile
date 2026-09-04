@@ -322,9 +322,13 @@ form.addEventListener("submit", async (e) => {
   formNote.className = "form-note is-loading";
 
   try {
+    const headers = { "Content-Type": "application/json" };
+    const { data: { session } } = await sbClient.auth.getSession();
+    if (session) headers.Authorization = `Bearer ${session.access_token}`;
+
     const res = await fetch("/api/quote/submit", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ empresa, items: cart, attachment }),
     });
     const data = await res.json();

@@ -21,6 +21,20 @@ export async function onRequestPost({ request, env }) {
     return badRequest("Faltan datos de empresa o productos");
   }
 
+  // Si el cliente está logueado, vinculamos la cotización a su cuenta.
+  let customerUserId = null;
+  const authHeader = request.headers.get("Authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  if (token) {
+    const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1", Authorization: `Bearer ${token}` },
+    });
+    if (userRes.ok) {
+      const user = await userRes.json();
+      customerUserId = user.id;
+    }
+  }
+
   const required = ["razon_social", "rut", "nombre_contacto", "telefono", "correo"];
   for (const field of required) {
     if (!empresa[field] || String(empresa[field]).trim() === "") {
@@ -38,6 +52,7 @@ export async function onRequestPost({ request, env }) {
     region: empresa.region || null,
     requiere_despacho: Boolean(empresa.requiere_despacho),
     observaciones: empresa.observaciones || null,
+    customer_user_id: customerUserId,
   };
 
   let quote;
