@@ -103,6 +103,66 @@
 .photo-upload-btn.is-disabled { opacity: 0.5; cursor: not-allowed; }
 .photo-hint { font-size: 0.78rem; color: var(--ink-soft); margin: 0; max-width: 220px; }
 
+.admin-welcome { color: var(--ink-soft); font-size: 0.9rem; margin: 0 0 16px; }
+
+.admin-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+.admin-tab {
+  padding: 12px 4px;
+  margin-right: 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.admin-tab.is-active { color: var(--navy); border-bottom-color: var(--gold); }
+.admin-section[hidden] { display: none; }
+.admin-help { color: var(--ink-soft); font-size: 0.85rem; background: var(--bg-alt); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; }
+
+/* Quote cards */
+.quote-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.quote-card:hover { border-color: var(--gold); box-shadow: var(--shadow); }
+.quote-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.quote-code { font-family: var(--font-head); font-size: 1.1rem; font-weight: 800; color: var(--navy); }
+.quote-badge { font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; }
+.quote-badge.st-pendiente { background: #fde8d0; color: #a35b00; }
+.quote-badge.st-en_proceso { background: #dbeafe; color: #1d4ed8; }
+.quote-badge.st-vendida { background: #dcfce7; color: #15803d; }
+.quote-badge.st-perdida { background: #fee2e2; color: #b91c1c; }
+.quote-card-company { font-weight: 700; color: var(--navy); margin: 8px 0 2px; }
+.quote-card-meta { font-size: 0.82rem; color: var(--ink-soft); }
+.quote-card-claimed { font-size: 0.8rem; color: var(--ink-soft); margin-top: 6px; }
+
+.quote-detail-body { padding: 20px 24px 28px; }
+.quote-detail-section { margin-bottom: 20px; }
+.quote-detail-section h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); margin: 0 0 8px; }
+.quote-detail-row { font-size: 0.9rem; margin: 0 0 4px; color: var(--ink); }
+.quote-items-list { list-style: none; padding: 0; margin: 0; }
+.quote-items-list li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.quote-status-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.quote-status-actions button {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.quote-status-actions button.is-active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.sale-amount-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+.sale-amount-row input { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; }
+
 @media (max-width: 960px) {
   .admin-stats { grid-template-columns: repeat(2, 1fr); }
 }

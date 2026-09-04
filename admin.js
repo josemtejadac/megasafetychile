@@ -20,6 +20,8 @@ const logoutBtn = document.getElementById("logout-btn");
 const loginForm = document.getElementById("login-form");
 const loginNote = document.getElementById("login-note");
 
+let currentStaff = null; // { user_id, name, role, commission_rate }
+
 async function showAppropriateView() {
   const { data: { session } } = await sbClient.auth.getSession();
   if (!session) {
@@ -31,7 +33,7 @@ async function showAppropriateView() {
 
   const { data: adminRow, error } = await sbClient
     .from("megasafety_admins")
-    .select("user_id")
+    .select("user_id, name, role, commission_rate")
     .eq("user_id", session.user.id)
     .maybeSingle();
 
@@ -45,10 +47,34 @@ async function showAppropriateView() {
     return;
   }
 
+  currentStaff = adminRow;
   loginView.hidden = true;
   panelView.hidden = false;
   logoutBtn.hidden = false;
-  loadProducts();
+
+  document.getElementById("admin-welcome").textContent =
+    `Hola, ${adminRow.name || session.user.email} (${adminRow.role === "admin" ? "Administrador" : "Vendedor"})`;
+  document.getElementById("tab-equipo").hidden = adminRow.role !== "admin";
+
+  setupTabs();
+  loadQuotes();
+}
+
+function setupTabs() {
+  const tabs = document.querySelectorAll(".admin-tab");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      if (tab.hidden) return;
+      tabs.forEach((t) => t.classList.remove("is-active"));
+      tab.classList.add("is-active");
+      document.querySelectorAll(".admin-section").forEach((s) => (s.hidden = true));
+      const target = document.getElementById(`section-${tab.dataset.section}`);
+      target.hidden = false;
+      if (tab.dataset.section === "productos" && allProducts.length === 0) loadProducts();
+      if (tab.dataset.section === "equipo") loadStaff();
+      if (tab.dataset.section === "cotizaciones") loadQuotes();
+    });
+  });
 }
 
 loginForm.addEventListener("submit", async (e) => {
@@ -307,6 +333,266 @@ deleteBtn.addEventListener("click", async () => {
   }
   closeProductPanel();
   loadProducts();
+});
+
+// ---------- Cotizaciones ----------
+let allQuotes = [];
+const quotesList = document.getElementById("quotes-list");
+const quotesEmpty = document.getElementById("quotes-empty");
+const quotesStatusFilter = document.getElementById("quotes-status-filter");
+const quotesMineFilter = document.getElementById("quotes-mine-filter");
+
+async function loadQuotes() {
+  const { data, error } = await sbClient
+    .from("megasafety_b2b_quotes")
+    .select("*, megasafety_b2b_quote_items(*)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    quotesList.innerHTML = "";
+    quotesEmpty.hidden = false;
+    quotesEmpty.textContent = "Error cargando cotizaciones: " + error.message;
+    return;
+  }
+  allQuotes = data;
+  renderQuoteStats();
+  renderQuotesList();
+}
+
+function renderQuoteStats() {
+  document.getElementById("qstat-total").textContent = allQuotes.length;
+  document.getElementById("qstat-pendientes").textContent = allQuotes.filter((q) => q.status === "pendiente").length;
+  document.getElementById("qstat-proceso").textContent = allQuotes.filter((q) => q.status === "en_proceso").length;
+  document.getElementById("qstat-vendidas").textContent = allQuotes.filter((q) => q.status === "vendida").length;
+  const myCommission = allQuotes
+    .filter((q) => q.status === "vendida" && q.claimed_by === currentStaff?.user_id)
+    .reduce((sum, q) => sum + (q.commission_amount || 0), 0);
+  document.getElementById("qstat-comision").textContent = "$" + myCommission.toLocaleString("es-CL");
+}
+
+const STATUS_LABELS = { pendiente: "Sin tomar", en_proceso: "En proceso", vendida: "Vendida", perdida: "Perdida" };
+
+function renderQuotesList() {
+  const statusFilter = quotesStatusFilter.value;
+  const mineFilter = quotesMineFilter.value;
+  const filtered = allQuotes.filter((q) => {
+    const matchesStatus = statusFilter === "all" || q.status === statusFilter;
+    const matchesMine = mineFilter === "all" || q.claimed_by === currentStaff?.user_id;
+    return matchesStatus && matchesMine;
+  });
+
+  quotesList.innerHTML = "";
+  quotesEmpty.hidden = filtered.length > 0;
+
+  filtered.forEach((q) => {
+    const card = document.createElement("div");
+    card.className = "quote-card";
+    const date = new Date(q.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+    const itemCount = (q.megasafety_b2b_quote_items || []).reduce((s, i) => s + i.quantity, 0);
+    card.innerHTML = `
+      <div class="quote-card-top">
+        <span class="quote-code">${q.correlative_code}</span>
+        <span class="quote-badge st-${q.status}">${STATUS_LABELS[q.status]}</span>
+      </div>
+      <p class="quote-card-company">${q.razon_social}</p>
+      <p class="quote-card-meta">${date} · ${itemCount} unidad(es) · ${q.nombre_contacto}</p>
+      ${q.claimed_by ? `<p class="quote-card-claimed">Tomada por: ${q.claimed_by === currentStaff?.user_id ? "ti" : "otro vendedor"}</p>` : ""}
+    `;
+    card.addEventListener("click", () => openQuoteDetail(q));
+    quotesList.appendChild(card);
+  });
+}
+
+quotesStatusFilter.addEventListener("change", renderQuotesList);
+quotesMineFilter.addEventListener("change", renderQuotesList);
+
+// ---------- Quote detail drawer ----------
+const quotePanel = document.getElementById("quote-panel");
+const quoteOverlay = document.getElementById("quote-overlay");
+const quotePanelBody = document.getElementById("quote-panel-body");
+
+function openQuotePanel() {
+  quotePanel.classList.add("is-open");
+  quoteOverlay.classList.add("is-open");
+  quotePanel.setAttribute("aria-hidden", "false");
+}
+function closeQuotePanel() {
+  quotePanel.classList.remove("is-open");
+  quoteOverlay.classList.remove("is-open");
+  quotePanel.setAttribute("aria-hidden", "true");
+}
+document.getElementById("quote-close-btn").addEventListener("click", closeQuotePanel);
+quoteOverlay.addEventListener("click", closeQuotePanel);
+
+async function logQuoteEvent(quoteId, eventType, detail) {
+  await sbClient.from("megasafety_quote_events").insert({
+    quote_id: quoteId,
+    user_id: currentStaff?.user_id,
+    event_type: eventType,
+    detail: detail || null,
+  });
+}
+
+function openQuoteDetail(q) {
+  document.getElementById("quote-panel-title").textContent = q.correlative_code;
+  const itemsHtml = (q.megasafety_b2b_quote_items || [])
+    .map((i) => `<li>${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}</li>`)
+    .join("");
+
+  const canClaim = !q.claimed_by;
+  const isMine = q.claimed_by === currentStaff?.user_id;
+
+  quotePanelBody.innerHTML = `
+    <div class="quote-detail-section">
+      <h4>Empresa</h4>
+      <p class="quote-detail-row"><strong>${q.razon_social}</strong> — ${q.rut}</p>
+      <p class="quote-detail-row">${q.nombre_contacto} · ${q.telefono} · ${q.correo}</p>
+      <p class="quote-detail-row">${q.comuna || "-"}, ${q.region || "-"} — Despacho: ${q.requiere_despacho ? "Sí" : "No"}</p>
+      ${q.observaciones ? `<p class="quote-detail-row">Obs: ${q.observaciones}</p>` : ""}
+    </div>
+    <div class="quote-detail-section">
+      <h4>Productos</h4>
+      <ul class="quote-items-list">${itemsHtml}</ul>
+    </div>
+    <div class="quote-detail-section">
+      <h4>Estado</h4>
+      <div class="quote-status-actions">
+        ${canClaim ? `<button data-action="claim">Tomar cotización</button>` : ""}
+        ${isMine ? `<button data-action="en_proceso" class="${q.status === "en_proceso" ? "is-active" : ""}">En proceso</button>` : ""}
+        ${isMine ? `<button data-action="perdida" class="${q.status === "perdida" ? "is-active" : ""}">Marcar perdida</button>` : ""}
+      </div>
+      ${
+        isMine && q.status !== "vendida"
+          ? `<div class="sale-amount-row">
+               <input type="number" id="sale-amount-input" placeholder="Monto vendido (CLP)" min="0">
+               <button class="btn btn--primary" id="mark-sold-btn" type="button">Marcar vendida</button>
+             </div>`
+          : ""
+      }
+      ${
+        q.status === "vendida"
+          ? `<p class="quote-detail-row" style="margin-top:10px;"><strong>Venta: $${Number(q.sale_amount || 0).toLocaleString("es-CL")}</strong> · Comisión: $${Number(q.commission_amount || 0).toLocaleString("es-CL")} (${q.commission_rate_snapshot || 0}%)</p>`
+          : ""
+      }
+    </div>
+    <p class="form-note" id="quote-action-note"></p>
+  `;
+
+  const note = document.getElementById("quote-action-note");
+
+  quotePanelBody.querySelector('[data-action="claim"]')?.addEventListener("click", async () => {
+    const { error } = await sbClient
+      .from("megasafety_b2b_quotes")
+      .update({ claimed_by: currentStaff.user_id, claimed_at: new Date().toISOString(), status: "en_proceso" })
+      .eq("id", q.id);
+    if (error) { note.textContent = "Error: " + error.message; return; }
+    await logQuoteEvent(q.id, "claimed");
+    closeQuotePanel();
+    loadQuotes();
+  });
+
+  quotePanelBody.querySelector('[data-action="en_proceso"]')?.addEventListener("click", async () => {
+    await sbClient.from("megasafety_b2b_quotes").update({ status: "en_proceso" }).eq("id", q.id);
+    await logQuoteEvent(q.id, "status_changed", { status: "en_proceso" });
+    closeQuotePanel();
+    loadQuotes();
+  });
+
+  quotePanelBody.querySelector('[data-action="perdida"]')?.addEventListener("click", async () => {
+    await sbClient.from("megasafety_b2b_quotes").update({ status: "perdida" }).eq("id", q.id);
+    await logQuoteEvent(q.id, "status_changed", { status: "perdida" });
+    closeQuotePanel();
+    loadQuotes();
+  });
+
+  document.getElementById("mark-sold-btn")?.addEventListener("click", async () => {
+    const amountInput = document.getElementById("sale-amount-input");
+    const amount = Number(amountInput.value);
+    if (!amount || amount <= 0) {
+      note.textContent = "Ingresa un monto válido.";
+      note.className = "form-note is-error";
+      return;
+    }
+    const rate = currentStaff?.commission_rate || 0;
+    const commission = Math.round((amount * rate) / 100);
+    const { error } = await sbClient
+      .from("megasafety_b2b_quotes")
+      .update({
+        status: "vendida",
+        sale_amount: amount,
+        commission_rate_snapshot: rate,
+        commission_amount: commission,
+        sold_at: new Date().toISOString(),
+      })
+      .eq("id", q.id);
+    if (error) { note.textContent = "Error: " + error.message; return; }
+    await logQuoteEvent(q.id, "sold", { sale_amount: amount, commission_amount: commission });
+    closeQuotePanel();
+    loadQuotes();
+  });
+
+  openQuotePanel();
+}
+
+// ---------- Equipo (solo admin) ----------
+const staffTbody = document.getElementById("staff-tbody");
+const staffForm = document.getElementById("staff-form");
+const staffNote = document.getElementById("staff-note");
+
+async function loadStaff() {
+  const { data, error } = await sbClient
+    .from("megasafety_admins")
+    .select("*")
+    .order("role", { ascending: false });
+  if (error) return;
+
+  staffTbody.innerHTML = "";
+  data.forEach((s) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.name || "-"}</td>
+      <td>${s.user_id}</td>
+      <td>${s.role === "admin" ? "Admin" : "Vendedor"}</td>
+      <td><input type="number" min="0" max="100" step="0.1" value="${s.commission_rate}" class="staff-rate-input" style="width:70px; padding:6px; border:1px solid var(--border); border-radius:6px;"></td>
+      <td><span class="status-dot ${s.active ? "" : "is-off"}"></span></td>
+      <td><button class="row-edit-btn save-rate-btn" type="button">Guardar</button></td>
+    `;
+    tr.querySelector(".save-rate-btn").addEventListener("click", async () => {
+      const newRate = Number(tr.querySelector(".staff-rate-input").value) || 0;
+      await sbClient.from("megasafety_admins").update({ commission_rate: newRate }).eq("user_id", s.user_id);
+      loadStaff();
+    });
+    staffTbody.appendChild(tr);
+  });
+}
+
+staffForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fd = new FormData(staffForm);
+  staffNote.textContent = "Vinculando...";
+  staffNote.className = "form-note is-loading";
+  const { data: { session } } = await sbClient.auth.getSession();
+  try {
+    const res = await fetch("/api/admin/link-staff", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({
+        email: fd.get("email"),
+        name: fd.get("name"),
+        role: fd.get("role"),
+        commission_rate: Number(fd.get("commission_rate")) || 0,
+      }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Error al vincular");
+    staffNote.textContent = "Vinculado correctamente.";
+    staffNote.className = "form-note";
+    staffForm.reset();
+    loadStaff();
+  } catch (err) {
+    staffNote.textContent = err.message;
+    staffNote.className = "form-note is-error";
+  }
 });
 
 showAppropriateView();

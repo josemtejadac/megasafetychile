@@ -44,6 +44,14 @@
 
     <!-- Panel -->
     <section id="panel-view" class="admin-panel" hidden>
+      <p class="admin-welcome" id="admin-welcome"></p>
+      <nav class="admin-tabs" id="admin-tabs">
+        <button class="admin-tab is-active" data-section="cotizaciones" type="button">Cotizaciones</button>
+        <button class="admin-tab" data-section="productos" type="button">Productos</button>
+        <button class="admin-tab" data-section="equipo" type="button" id="tab-equipo" hidden>Equipo</button>
+      </nav>
+
+    <section id="section-productos" class="admin-section" hidden>
       <div class="admin-panel-head">
         <div>
           <h1>Productos</h1>
@@ -116,6 +124,97 @@
       <p class="empty-state" id="admin-empty" hidden>No hay productos que coincidan con el filtro.</p>
     </section>
 
+    <section id="section-cotizaciones" class="admin-section">
+      <div class="admin-panel-head">
+        <div>
+          <h1>Cotizaciones</h1>
+          <p class="admin-subtitle">Solicitudes que llegan desde el sitio — tómalas y regístralas al vender</p>
+        </div>
+      </div>
+
+      <div class="admin-stats" id="quotes-stats">
+        <div class="stat-card">
+          <span class="stat-value" id="qstat-total">0</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="qstat-pendientes">0</span>
+          <span class="stat-label">Sin tomar</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="qstat-proceso">0</span>
+          <span class="stat-label">En proceso</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="qstat-vendidas">0</span>
+          <span class="stat-label">Vendidas</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="qstat-comision">$0</span>
+          <span class="stat-label">Mi comisión total</span>
+        </div>
+      </div>
+
+      <div class="admin-controls">
+        <select id="quotes-status-filter">
+          <option value="all">Todos los estados</option>
+          <option value="pendiente">Sin tomar</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="vendida">Vendida</option>
+          <option value="perdida">Perdida</option>
+        </select>
+        <select id="quotes-mine-filter">
+          <option value="all">Todas</option>
+          <option value="mine">Solo las mías</option>
+        </select>
+      </div>
+
+      <div id="quotes-list"></div>
+      <p class="empty-state" id="quotes-empty" hidden>No hay cotizaciones que coincidan con el filtro.</p>
+    </section>
+
+    <section id="section-equipo" class="admin-section" hidden>
+      <div class="admin-panel-head">
+        <div>
+          <h1>Equipo</h1>
+          <p class="admin-subtitle">Vendedores con acceso al panel y su % de comisión</p>
+        </div>
+      </div>
+      <p class="admin-help">Para agregar a alguien nuevo: créalo primero en Supabase → Authentication → Users (con Auto Confirm activado), luego vincúlalo aquí con su correo, nombre, rol y % de comisión.</p>
+      <form id="staff-form" class="quote-form" style="padding:0; margin-bottom:28px; max-width:520px;">
+        <div class="form-row">
+          <label>Correo (ya creado en Supabase) *<input type="email" name="email" required></label>
+          <label>Nombre<input type="text" name="name"></label>
+        </div>
+        <div class="form-row">
+          <label>Rol
+            <select name="role">
+              <option value="vendedor">Vendedor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+          <label>Comisión %<input type="number" name="commission_rate" min="0" max="100" step="0.1" value="0"></label>
+        </div>
+        <p class="form-note" id="staff-note"></p>
+        <button type="submit" class="btn btn--primary" style="width:fit-content;">Vincular</button>
+      </form>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th>Comisión %</th>
+              <th>Activo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="staff-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
   </div>
 </main>
 
@@ -167,6 +266,16 @@
       <button type="button" class="btn btn--outline" id="delete-product-btn" hidden>Eliminar</button>
     </div>
   </form>
+</aside>
+
+<!-- Quote detail drawer -->
+<div class="cat-menu-overlay" id="quote-overlay"></div>
+<aside class="cart-panel form-panel" id="quote-panel" aria-hidden="true">
+  <div class="cat-menu-head">
+    <h3 id="quote-panel-title">Cotización</h3>
+    <button class="cat-menu-close" id="quote-close-btn" aria-label="Cerrar">&times;</button>
+  </div>
+  <div id="quote-panel-body" class="quote-detail-body"></div>
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
