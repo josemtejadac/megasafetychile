@@ -19,12 +19,15 @@ const CART_KEY = "msc_b2b_cart";
 let products = [];
 let activeCategory = "all";
 let searchTerm = "";
+let sortMode = "relevancia";
 let attachment = null; // { filename, mime, base64 }
 
 const grid = document.getElementById("product-grid");
 const emptyState = document.getElementById("empty-state");
 const chipsEl = document.getElementById("cat-filter-chips");
 const searchInput = document.getElementById("search-input");
+const sortSelect = document.getElementById("sort-select");
+const catalogCount = document.getElementById("catalog-count");
 
 // ---------- Cart persistence ----------
 function loadCart() {
@@ -67,6 +70,8 @@ async function loadProducts() {
       certifications: p.certifications || [],
       price: p.price,
       image_url: p.image_url,
+      colors: p.colors || [],
+      sizes: p.sizes || [],
     }));
   }
   renderChips();
@@ -114,6 +119,15 @@ function renderGrid() {
       !term || p.name.toLowerCase().includes(term) || (p.brand || "").toLowerCase().includes(term);
     return matchesCat && matchesTerm;
   });
+
+  if (sortMode === "nombre-az") filtered.sort((a, b) => a.name.localeCompare(b.name, "es"));
+  else if (sortMode === "nombre-za") filtered.sort((a, b) => b.name.localeCompare(a.name, "es"));
+  else if (sortMode === "precio-asc")
+    filtered.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+  else if (sortMode === "precio-desc")
+    filtered.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+
+  catalogCount.textContent = `${filtered.length} producto${filtered.length === 1 ? "" : "s"}`;
 
   grid.innerHTML = "";
   emptyState.hidden = filtered.length > 0;
@@ -168,7 +182,42 @@ const detailPanel = document.getElementById("detail-panel");
 const detailOverlay = document.getElementById("detail-overlay");
 const detailBody = document.getElementById("detail-body");
 
+const COLOR_HEX = {
+  rojo: "#d62828", roja: "#d62828", azul: "#1d4ed8", amarillo: "#f5b400", amarilla: "#f5b400",
+  naranjo: "#f97316", naranja: "#f97316", verde: "#16a34a", negro: "#111111", negra: "#111111",
+  blanco: "#ffffff", blanca: "#ffffff", gris: "#9ca3af", "café": "#7c4a2d", beige: "#e5d3b3",
+  "ámbar": "#f59e0b", celeste: "#7dd3fc", morado: "#7c3aed", rosado: "#f9a8d4", plomo: "#6b7280",
+};
+
 function openProductDetail(p) {
+  const variantsHtml = `
+    ${
+      p.colors && p.colors.length
+        ? `<div class="detail-variant-group">
+             <span class="detail-variant-label">Colores disponibles</span>
+             <div class="detail-swatches">
+               ${p.colors
+                 .map(
+                   (c) =>
+                     `<span class="swatch" style="background:${COLOR_HEX[c] || "#ccc"}; ${
+                       COLOR_HEX[c] === "#ffffff" ? "border:1px solid var(--border);" : ""
+                     }" title="${c}"></span>`
+                 )
+                 .join("")}
+             </div>
+           </div>`
+        : ""
+    }
+    ${
+      p.sizes && p.sizes.length
+        ? `<div class="detail-variant-group">
+             <span class="detail-variant-label">Tallas disponibles</span>
+             <div class="detail-size-chips">${p.sizes.map((s) => `<span class="size-chip">${s}</span>`).join("")}</div>
+           </div>`
+        : ""
+    }
+  `;
+
   detailBody.innerHTML = `
     <div class="detail-photo">
       ${
@@ -186,6 +235,7 @@ function openProductDetail(p) {
         ? `<div class="detail-certs">${p.certifications.map((c) => `<span class="cert-badge">${c}</span>`).join("")}</div>`
         : ""
     }
+    ${variantsHtml}
     <p class="detail-price ${p.price != null ? "has-price" : ""}">${
       p.price != null ? "$" + Number(p.price).toLocaleString("es-CL") : "Precio empresa según volumen"
     }</p>
@@ -222,6 +272,11 @@ detailOverlay.addEventListener("click", closeProductDetail);
 
 searchInput.addEventListener("input", (e) => {
   searchTerm = e.target.value;
+  renderGrid();
+});
+
+sortSelect.addEventListener("change", (e) => {
+  sortMode = e.target.value;
   renderGrid();
 });
 
