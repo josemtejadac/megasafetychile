@@ -180,11 +180,11 @@
           <p class="admin-subtitle">Vendedores con acceso al panel y su % de comisión</p>
         </div>
       </div>
-      <p class="admin-help">Para agregar a alguien nuevo: créalo primero en Supabase → Authentication → Users (con Auto Confirm activado, correo real para el login inicial), luego vincúlalo aquí con su RUT (con el que iniciará sesión), nombre, rol y % de comisión.</p>
+      <p class="admin-help">Crea la cuenta del trabajador directamente aquí — solo necesita su RUT y una contraseña para iniciar sesión, no usa correo. Solo tú (admin) puedes crear, editar o eliminar trabajadores; ellos no ven esta sección ni pueden tocar productos.</p>
       <form id="staff-form" class="quote-form" style="padding:0; margin-bottom:28px; max-width:600px;">
         <div class="form-row">
-          <label>Correo (el mismo creado en Supabase) *<input type="email" name="email" required></label>
           <label>RUT (para iniciar sesión) *<input type="text" name="rut" placeholder="12345678-9" required></label>
+          <label>Contraseña *<input type="password" name="password" minlength="6" required placeholder="mín. 6 caracteres"></label>
         </div>
         <div class="form-row">
           <label>Nombre<input type="text" name="name"></label>
@@ -197,7 +197,7 @@
         </div>
         <label style="max-width:200px;">Comisión %<input type="number" name="commission_rate" min="0" max="100" step="0.1" value="2"></label>
         <p class="form-note" id="staff-note"></p>
-        <button type="submit" class="btn btn--primary" style="width:fit-content;">Vincular</button>
+        <button type="submit" class="btn btn--primary" style="width:fit-content;">Crear trabajador</button>
       </form>
       <div class="admin-table-wrap">
         <table class="admin-table">
@@ -205,7 +205,6 @@
             <tr>
               <th>Nombre</th>
               <th>RUT</th>
-              <th>Correo</th>
               <th>Rol</th>
               <th>Comisión %</th>
               <th>Vendido</th>

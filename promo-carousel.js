@@ -71,10 +71,10 @@
   nextBtn.addEventListener("click", () => goTo(current + 1));
   dots.forEach((d) => d.addEventListener("click", () => goTo(Number(d.dataset.i))));
 
-  let timer = setInterval(() => goTo(current + 1), 5000);
+  let timer = setInterval(() => goTo(current + 1), 3000);
   section.addEventListener("mouseenter", () => clearInterval(timer));
   section.addEventListener("mouseleave", () => {
-    timer = setInterval(() => goTo(current + 1), 5000);
+    timer = setInterval(() => goTo(current + 1), 3000);
   });
 
   goTo(0);

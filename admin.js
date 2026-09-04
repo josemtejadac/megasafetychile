@@ -579,14 +579,14 @@ async function loadStaff() {
     tr.innerHTML = `
       <td>${s.name || "-"}</td>
       <td>${s.rut || "-"}</td>
-      <td>${s.email || "-"}</td>
       <td>${s.role === "admin" ? "Admin" : "Vendedor"}</td>
       <td><input type="number" min="0" max="100" step="0.1" value="${s.commission_rate}" class="staff-rate-input" style="width:70px; padding:6px; border:1px solid var(--border); border-radius:6px;"></td>
       <td>$${totals.sold.toLocaleString("es-CL")}</td>
       <td>$${totals.commission.toLocaleString("es-CL")}</td>
       <td><span class="status-dot ${s.active ? "" : "is-off"}"></span></td>
-      <td style="display:flex; gap:6px;">
+      <td style="display:flex; gap:6px; flex-wrap:wrap;">
         <button class="row-edit-btn save-rate-btn" type="button">Guardar</button>
+        <button class="row-edit-btn reset-pass-btn" type="button">Restablecer clave</button>
         <button class="row-edit-btn delete-staff-btn" type="button">Eliminar</button>
       </td>
     `;
@@ -595,8 +595,21 @@ async function loadStaff() {
       await sbClient.from("megasafety_admins").update({ commission_rate: newRate }).eq("user_id", s.user_id);
       loadStaff();
     });
+    tr.querySelector(".reset-pass-btn").addEventListener("click", async () => {
+      const newPass = prompt(`Nueva contraseña para ${s.name || s.rut} (mín. 6 caracteres):`);
+      if (!newPass) return;
+      if (newPass.length < 6) { alert("Debe tener al menos 6 caracteres."); return; }
+      const { data: { session } } = await sbClient.auth.getSession();
+      const res = await fetch("/api/admin/reset-staff-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ user_id: s.user_id, new_password: newPass }),
+      });
+      const data = await res.json();
+      alert(data.ok ? "Contraseña actualizada." : "Error: " + data.error);
+    });
     tr.querySelector(".delete-staff-btn").addEventListener("click", async () => {
-      if (!confirm(`¿Quitar a ${s.name || s.email} del equipo? Perderá acceso al panel.`)) return;
+      if (!confirm(`¿Quitar a ${s.name || s.rut} del equipo? Perderá acceso al panel.`)) return;
       await sbClient.from("megasafety_admins").delete().eq("user_id", s.user_id);
       loadStaff();
     });
@@ -607,24 +620,24 @@ async function loadStaff() {
 staffForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const fd = new FormData(staffForm);
-  staffNote.textContent = "Vinculando...";
+  staffNote.textContent = "Creando...";
   staffNote.className = "form-note is-loading";
   const { data: { session } } = await sbClient.auth.getSession();
   try {
-    const res = await fetch("/api/admin/link-staff", {
+    const res = await fetch("/api/admin/create-staff", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({
-        email: fd.get("email"),
         rut: fd.get("rut"),
+        password: fd.get("password"),
         name: fd.get("name"),
         role: fd.get("role"),
         commission_rate: Number(fd.get("commission_rate")) || 0,
       }),
     });
     const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "Error al vincular");
-    staffNote.textContent = "Vinculado correctamente.";
+    if (!data.ok) throw new Error(data.error || "Error al crear el trabajador");
+    staffNote.textContent = "Trabajador creado correctamente.";
     staffNote.className = "form-note";
     staffForm.reset();
     loadStaff();
