@@ -11,6 +11,7 @@ const CATEGORIES = [
   { id: "cat-loto", label: "Bloqueo L.O.T.O." },
   { id: "cat-iluminacion", label: "Iluminación industrial" },
   { id: "cat-ropa", label: "Ropa de trabajo y corporativa" },
+  { id: "cat-izaje", label: "Izaje de carga" },
 ];
 const CAT_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.id, c.label]));
 const CART_KEY = "msc_b2b_cart";

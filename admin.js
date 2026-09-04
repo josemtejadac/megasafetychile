@@ -11,6 +11,7 @@ const CATEGORY_LABELS = {
   "cat-loto": "Bloqueo L.O.T.O.",
   "cat-iluminacion": "Iluminación industrial",
   "cat-ropa": "Ropa de trabajo y corporativa",
+  "cat-izaje": "Izaje de carga",
 };
 
 const loginView = document.getElementById("login-view");
