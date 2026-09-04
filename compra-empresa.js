@@ -65,6 +65,7 @@ async function loadProducts() {
       description: p.description,
       certifications: p.certifications || [],
       price: p.price,
+      image_url: p.image_url,
     }));
   }
   renderChips();
@@ -121,7 +122,11 @@ function renderGrid() {
     card.className = "product-card";
     card.innerHTML = `
       <div class="product-thumb" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+        ${
+          p.image_url
+            ? `<img src="${p.image_url}" alt="" loading="lazy">`
+            : `<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`
+        }
       </div>
       <p class="product-brand">${p.brand || ""}</p>
       <h3 class="product-name">${p.name}</h3>
