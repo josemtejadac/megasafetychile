@@ -71,6 +71,12 @@ export async function onRequest(context) {
 
   const url = new URL(request.url);
 
+  // Never gate API routes — quote submissions, staff login, image uploads,
+  // Flow webhooks, etc. must keep working regardless of the coming-soon page.
+  if (url.pathname.startsWith("/api/")) {
+    return next();
+  }
+
   // Visiting /preview?key=... with the right key sets a cookie and redirects home.
   if (url.pathname === "/preview") {
     const key = url.searchParams.get("key");
