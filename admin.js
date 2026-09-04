@@ -1,6 +1,6 @@
 const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CATEGORY_LABELS = {
   "cat-seguridad-industrial": "Seguridad industrial",
@@ -21,7 +21,7 @@ const loginForm = document.getElementById("login-form");
 const loginNote = document.getElementById("login-note");
 
 async function showAppropriateView() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sbClient.auth.getSession();
   if (!session) {
     loginView.hidden = false;
     panelView.hidden = true;
@@ -29,7 +29,7 @@ async function showAppropriateView() {
     return;
   }
 
-  const { data: adminRow, error } = await supabase
+  const { data: adminRow, error } = await sbClient
     .from("megasafety_admins")
     .select("user_id")
     .eq("user_id", session.user.id)
@@ -38,7 +38,7 @@ async function showAppropriateView() {
   if (error || !adminRow) {
     loginNote.textContent = "Esta cuenta no tiene permisos de administrador.";
     loginNote.className = "form-note is-error";
-    await supabase.auth.signOut();
+    await sbClient.auth.signOut();
     loginView.hidden = false;
     panelView.hidden = true;
     logoutBtn.hidden = true;
@@ -56,7 +56,7 @@ loginForm.addEventListener("submit", async (e) => {
   const fd = new FormData(loginForm);
   loginNote.textContent = "Ingresando...";
   loginNote.className = "form-note is-loading";
-  const { error } = await supabase.auth.signInWithPassword({
+  const { error } = await sbClient.auth.signInWithPassword({
     email: fd.get("email"),
     password: fd.get("password"),
   });
@@ -70,7 +70,7 @@ loginForm.addEventListener("submit", async (e) => {
 });
 
 logoutBtn.addEventListener("click", async () => {
-  await supabase.auth.signOut();
+  await sbClient.auth.signOut();
   showAppropriateView();
 });
 
@@ -79,7 +79,7 @@ const tbody = document.getElementById("products-tbody");
 const emptyState = document.getElementById("admin-empty");
 
 async function loadProducts() {
-  const { data, error } = await supabase
+  const { data, error } = await sbClient
     .from("megasafety_products")
     .select("*")
     .order("category_id", { ascending: true })
@@ -187,8 +187,8 @@ productForm.addEventListener("submit", async (e) => {
   productNote.className = "form-note is-loading";
 
   const query = id
-    ? supabase.from("megasafety_products").update(payload).eq("id", id)
-    : supabase.from("megasafety_products").insert(payload);
+    ? sbClient.from("megasafety_products").update(payload).eq("id", id)
+    : sbClient.from("megasafety_products").insert(payload);
 
   const { error } = await query;
   if (error) {
@@ -203,7 +203,7 @@ productForm.addEventListener("submit", async (e) => {
 deleteBtn.addEventListener("click", async () => {
   const id = productForm.elements.id.value;
   if (!id || !confirm("¿Eliminar este producto? Esta acción no se puede deshacer.")) return;
-  const { error } = await supabase.from("megasafety_products").delete().eq("id", id);
+  const { error } = await sbClient.from("megasafety_products").delete().eq("id", id);
   if (error) {
     productNote.textContent = "Error: " + error.message;
     productNote.className = "form-note is-error";

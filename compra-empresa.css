@@ -235,6 +235,11 @@
 .confirm-body h4 { font-size: 1.3rem; margin-bottom: 8px; }
 .confirm-body p { color: var(--ink-soft); margin-bottom: 22px; }
 
+.footer-credit {
+  border-top-color: var(--border);
+  padding-bottom: 24px;
+}
+
 @media (max-width: 760px) {
   .b2b-options { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }

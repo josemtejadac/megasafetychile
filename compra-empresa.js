@@ -1,6 +1,6 @@
 const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CATEGORIES = [
   { id: "cat-seguridad-industrial", label: "Seguridad industrial" },
@@ -45,7 +45,7 @@ let cart = loadCart();
 
 // ---------- Catalog ----------
 async function loadProducts() {
-  const { data, error } = await supabase
+  const { data, error } = await sbClient
     .from("megasafety_products")
     .select("*")
     .order("category_id", { ascending: true })
