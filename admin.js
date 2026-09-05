@@ -300,9 +300,8 @@ function populateSubcategoryOptions(categoryId, selected) {
     `<option value="">Sin subcategoría</option>` + subs.map((s) => `<option value="${s}">${s}</option>`).join("");
   subcategorySelect.value = subs.includes(selected) ? selected : "";
 }
-productForm.elements.category_id?.addEventListener("change", (e) => populateSubcategoryOptions(e.target.value, ""));
-
 const productForm = document.getElementById("product-form");
+productForm.elements.category_id?.addEventListener("change", (e) => populateSubcategoryOptions(e.target.value, ""));
 const productNote = document.getElementById("product-note");
 const productPanelTitle = document.getElementById("product-panel-title");
 const deleteBtn = document.getElementById("delete-product-btn");
