@@ -1,6 +1,10 @@
 const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
-const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Same storage key as account.js / mis-pedidos.js (customer pages) so the
+// customer's login persists across them, separate from the staff panel.
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { storageKey: "msc_customer_auth" },
+});
 
 const CATEGORIES = [
   { id: "cat-seguridad-industrial", label: "Seguridad industrial" },

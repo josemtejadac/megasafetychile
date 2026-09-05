@@ -1,6 +1,10 @@
 const ACCOUNT_SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const ACCOUNT_SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
-const accountClient = window.supabase.createClient(ACCOUNT_SUPABASE_URL, ACCOUNT_SUPABASE_ANON_KEY);
+// Same storage key as compra-empresa.js / mis-pedidos.js (customer pages) so
+// the customer's login persists across them, separate from the staff panel.
+const accountClient = window.supabase.createClient(ACCOUNT_SUPABASE_URL, ACCOUNT_SUPABASE_ANON_KEY, {
+  auth: { storageKey: "msc_customer_auth" },
+});
 
 function injectAccountUI() {
   const btn = document.createElement("button");

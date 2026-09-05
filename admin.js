@@ -1,6 +1,10 @@
 const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
-const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Separate storage key from the customer-facing pages (account.js etc.) so a
+// staff login in one tab doesn't sign out a customer session open in another.
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { storageKey: "msc_staff_auth" },
+});
 
 const CATEGORY_LABELS = {
   "cat-seguridad-industrial": "Seguridad industrial",
