@@ -54,7 +54,8 @@
     if (data.status === 2) {
       icon.textContent = "✓";
       title.textContent = "¡Pago procesado!";
-      detail.textContent = `Tu pedido ${data.commerceOrder} está en preparación. Te enviamos el comprobante por correo.`;
+      detail.textContent = `Tu pedido ${data.commerceOrder} está en preparación. Te enviamos el comprobante por correo. Te llevamos a Mis cotizaciones...`;
+      setTimeout(() => { window.location.href = "mis-pedidos.html"; }, 2500);
     } else if (data.status === 1) {
       icon.textContent = "⏳";
       title.textContent = "Pago pendiente";
