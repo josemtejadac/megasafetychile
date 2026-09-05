@@ -63,7 +63,15 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  const subtotal = items.reduce((sum, it) => sum + it.unit_price * it.quantity, 0);
+  // Recompute totals from the freshly-saved rows (which have quantity) rather
+  // than trusting the request body — the client only sends {id, unit_price}.
+  const itemsRes = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/megasafety_b2b_quote_items?quote_id=eq.${quote_id}&select=*`,
+    { headers: sbHeaders(env) }
+  );
+  const fullItems = await itemsRes.json();
+
+  const subtotal = fullItems.reduce((sum, it) => sum + (it.unit_price || 0) * (it.quantity || 0), 0);
   const iva = Math.round(subtotal * 0.19);
   const total = subtotal + iva;
 
@@ -83,12 +91,6 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({ ok: false, error: await quoteRes.text() }), { status: 500 });
   }
   const [quote] = await quoteRes.json();
-
-  const itemsRes = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/megasafety_b2b_quote_items?quote_id=eq.${quote_id}&select=*`,
-    { headers: sbHeaders(env) }
-  );
-  const fullItems = await itemsRes.json();
 
   let emailResult = { sent: false, reason: "RESEND_API_KEY no configurada" };
   if (env.RESEND_API_KEY) {
