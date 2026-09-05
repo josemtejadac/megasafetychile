@@ -623,11 +623,11 @@ function openQuoteDetail(q) {
       <h4>Estado</h4>
       <div class="quote-status-actions">
         ${canClaim ? `<button data-action="claim">Tomar cotización</button>` : ""}
-        ${isMine ? `<button data-action="en_proceso" class="${q.status === "en_proceso" ? "is-active" : ""}">En proceso</button>` : ""}
-        ${isMine ? `<button data-action="perdida" class="${q.status === "perdida" ? "is-active" : ""}">Marcar perdida</button>` : ""}
+        <button data-action="en_proceso" class="${q.status === "en_proceso" ? "is-active" : ""}">En proceso</button>
+        <button data-action="perdida" class="${q.status === "perdida" ? "is-active" : ""}">Marcar perdida</button>
       </div>
       ${
-        isMine && q.status !== "vendida" && q.status !== "pagada"
+        q.status !== "vendida" && q.status !== "pagada"
           ? `<div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
                <input type="number" id="sale-amount-input" placeholder="Monto vendido (CLP)" min="0" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--border); border-radius:8px;">
                <button class="btn btn--primary" id="mark-sold-btn" type="button" style="width:100%; white-space:normal;">Marcar vendida (venta manual)</button>
@@ -779,14 +779,18 @@ function openQuoteDetail(q) {
   });
 
   quotePanelBody.querySelector('[data-action="en_proceso"]')?.addEventListener("click", async () => {
-    await sbClient.from("megasafety_b2b_quotes").update({ status: "en_proceso" }).eq("id", q.id);
+    const patch = { status: "en_proceso" };
+    if (!q.claimed_by) { patch.claimed_by = currentStaff.user_id; patch.claimed_at = new Date().toISOString(); }
+    await sbClient.from("megasafety_b2b_quotes").update(patch).eq("id", q.id);
     await logQuoteEvent(q.id, "status_changed", { status: "en_proceso" });
     closeQuotePanel();
     loadQuotes();
   });
 
   quotePanelBody.querySelector('[data-action="perdida"]')?.addEventListener("click", async () => {
-    await sbClient.from("megasafety_b2b_quotes").update({ status: "perdida" }).eq("id", q.id);
+    const patch = { status: "perdida" };
+    if (!q.claimed_by) { patch.claimed_by = currentStaff.user_id; patch.claimed_at = new Date().toISOString(); }
+    await sbClient.from("megasafety_b2b_quotes").update(patch).eq("id", q.id);
     await logQuoteEvent(q.id, "status_changed", { status: "perdida" });
     closeQuotePanel();
     loadQuotes();
@@ -802,16 +806,15 @@ function openQuoteDetail(q) {
     }
     const rate = currentStaff?.commission_rate || 0;
     const commission = Math.round((amount * rate) / 100);
-    const { error } = await sbClient
-      .from("megasafety_b2b_quotes")
-      .update({
-        status: "vendida",
-        sale_amount: amount,
-        commission_rate_snapshot: rate,
-        commission_amount: commission,
-        sold_at: new Date().toISOString(),
-      })
-      .eq("id", q.id);
+    const patch = {
+      status: "vendida",
+      sale_amount: amount,
+      commission_rate_snapshot: rate,
+      commission_amount: commission,
+      sold_at: new Date().toISOString(),
+    };
+    if (!q.claimed_by) { patch.claimed_by = currentStaff.user_id; patch.claimed_at = new Date().toISOString(); }
+    const { error } = await sbClient.from("megasafety_b2b_quotes").update(patch).eq("id", q.id);
     if (error) { note.textContent = "Error: " + error.message; return; }
     await logQuoteEvent(q.id, "sold", { sale_amount: amount, commission_amount: commission });
     closeQuotePanel();
