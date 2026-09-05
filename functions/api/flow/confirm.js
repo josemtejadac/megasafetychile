@@ -32,6 +32,10 @@ export async function onRequestPost({ request, env }) {
       const rows = await res.json();
       const quote = rows[0];
       if (quote && quote.status !== "pagada") {
+        // Flow's paymentData.media names the actual rail used (Webpay, Khipu,
+        // Servipag, etc.) — surfaced to staff so they know how the customer
+        // paid, not just that they did.
+        const paymentMethod = status.paymentData?.media || status.optional?.media || null;
         await fetch(`${env.SUPABASE_URL}/rest/v1/megasafety_b2b_quotes?id=eq.${quote.id}`, {
           method: "PATCH",
           headers: sbHeaders(env),
@@ -40,6 +44,8 @@ export async function onRequestPost({ request, env }) {
             paid_at: new Date().toISOString(),
             flow_token: token,
             flow_order: String(status.flowOrder || ""),
+            payment_method: paymentMethod,
+            payer_email: status.payer || null,
           }),
         });
 
@@ -50,7 +56,7 @@ export async function onRequestPost({ request, env }) {
             { headers: sbHeaders(env) }
           );
           const items = await itemsRes.json();
-          const paidQuote = { ...quote, status: "pagada" };
+          const paidQuote = { ...quote, status: "pagada", payment_method: paymentMethod, paid_at: new Date().toISOString() };
           const html = buildQuotePaidEmailHtml(paidQuote, items, origin);
           const { base64: pdfBase64 } = await buildQuotePdfBase64(paidQuote, items, origin);
 

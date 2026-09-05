@@ -504,10 +504,13 @@ h1, h2, h3 {
 }
 .cat-card {
   position: relative;
-  background: #fff;
-  border: 1px solid var(--border);
+  align-items: center;
+  text-align: center;
+  padding: 28px 20px 24px;
+  background: var(--navy);
+  color: #fff;
+  border: 1px solid transparent;
   border-radius: var(--radius);
-  padding: 26px 22px;
   display: flex;
   flex-direction: column;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
@@ -517,49 +520,22 @@ h1, h2, h3 {
   box-shadow: var(--shadow);
   border-color: var(--gold);
 }
-.cat-icon { font-size: 1.9rem; margin-bottom: 12px; }
-.cat-card h3 { font-size: 1.15rem; margin-bottom: 6px; }
-.cat-card p { margin: 0 0 16px; color: var(--ink-soft); font-size: 0.92rem; }
-.cat-card-btn {
-  margin-top: auto;
-  align-self: flex-start;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--navy);
-  border-bottom: 2px solid var(--gold);
-  padding-bottom: 2px;
-  transition: color 0.15s ease;
-}
-.cat-card-btn:hover { color: var(--gold-dark); }
-
-/* Enhanced state when a real product photo is available (added via JS).
-   The photo shows as a small framed badge, not a full-bleed background —
-   individual product shots have inconsistent crops/edges that look messy
-   when stretched to fill an entire card, but read fine as a neat thumbnail. */
-.cat-card.has-photo {
-  align-items: center;
-  text-align: center;
-  padding: 28px 20px 24px;
-  background: var(--navy);
-  color: #fff;
-  border-color: transparent;
-}
-.cat-card.has-photo .cat-photo-badge {
-  width: 84px;
-  height: 84px;
+.cat-photo-badge {
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
-  background: #fff;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--navy-light, #16305a);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0 0 16px;
   border: 3px solid var(--gold);
   box-shadow: 0 8px 20px -6px rgba(0,0,0,0.5);
 }
-.cat-card.has-photo .cat-icon,
-.cat-card.has-photo p { display: none; }
-.cat-card.has-photo h3 { color: #fff; font-size: 1.15rem; margin-bottom: 14px; }
-.cat-card.has-photo .cat-card-btn {
+.cat-card h3 { color: #fff; font-size: 1.15rem; margin-bottom: 6px; }
+.cat-card p { margin: 0 0 16px; color: #c7d1e3; font-size: 0.88rem; }
+.cat-card-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -569,9 +545,11 @@ h1, h2, h3 {
   border-radius: 999px;
   padding: 8px 18px;
   margin-top: auto;
-  border-bottom: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: background 0.15s ease;
 }
-.cat-card.has-photo .cat-card-btn:hover { background: #fff; color: var(--navy); }
+.cat-card-btn:hover { background: #fff; color: var(--navy); }
 .cat-note { margin-top: 32px; color: var(--ink-soft); }
 .cat-note a { color: var(--red); font-weight: 700; }
 
