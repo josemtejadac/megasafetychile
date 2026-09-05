@@ -466,7 +466,7 @@ function openQuoteDetail(q) {
       (i) => `
       <div class="price-row" style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
         <span style="flex:1; font-size:0.88rem;">${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}</span>
-        <input type="number" min="0" class="item-price-input" data-item-id="${i.id}" value="${i.unit_price || ""}" placeholder="Precio unit." style="width:120px;" ${!canPrice ? "disabled" : ""}>
+        <input type="number" min="0" class="item-price-input" data-item-id="${i.id}" data-qty="${i.quantity}" value="${i.unit_price || ""}" placeholder="Precio unit." style="width:120px;" ${!canPrice ? "disabled" : ""}>
       </div>`
     )
     .join("");
@@ -487,6 +487,7 @@ function openQuoteDetail(q) {
     <div class="quote-detail-section">
       <h4>Productos y precios</h4>
       ${priceRowsHtml}
+      ${canPrice ? `<p class="quote-detail-row" id="live-total-preview" style="margin:6px 0 10px; font-weight:700;"></p>` : ""}
       ${canPrice ? `<button class="btn btn--primary" id="send-priced-quote-btn" type="button" style="margin-top:8px;">Guardar precios y enviar cotización al cliente</button>` : ""}
       ${pricedHtml}
     </div>
@@ -517,6 +518,24 @@ function openQuoteDetail(q) {
     </div>
     <p class="form-note" id="quote-action-note"></p>
   `;
+
+  function updateLiveTotalPreview() {
+    const preview = document.getElementById("live-total-preview");
+    if (!preview) return;
+    let subtotal = 0;
+    quotePanelBody.querySelectorAll(".item-price-input").forEach((input) => {
+      const price = Number(input.value) || 0;
+      const qty = Number(input.dataset.qty) || 0;
+      subtotal += price * qty;
+    });
+    const iva = Math.round(subtotal * 0.19);
+    const total = subtotal + iva;
+    preview.textContent = `Total estimado: $${total.toLocaleString("es-CL")} (subtotal $${subtotal.toLocaleString("es-CL")} + IVA $${iva.toLocaleString("es-CL")})`;
+  }
+  quotePanelBody.querySelectorAll(".item-price-input").forEach((input) => {
+    input.addEventListener("input", updateLiveTotalPreview);
+  });
+  updateLiveTotalPreview();
 
   document.getElementById("download-pdf-btn").addEventListener("click", async () => {
     const { data: { session: s } } = await sbClient.auth.getSession();

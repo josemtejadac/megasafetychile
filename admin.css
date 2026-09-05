@@ -162,9 +162,9 @@
   cursor: pointer;
 }
 .quote-status-actions button.is-active { background: var(--navy); color: #fff; border-color: var(--navy); }
-.sale-amount-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; align-items: center; }
-.sale-amount-row input { flex: 1; min-width: 120px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; }
-.sale-amount-row button { white-space: normal; flex: 1 1 auto; }
+.sale-amount-row { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.sale-amount-row input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+.sale-amount-row button { width: 100%; white-space: normal; }
 
 @media (max-width: 960px) {
   .admin-stats { grid-template-columns: repeat(2, 1fr); }
