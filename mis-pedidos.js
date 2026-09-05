@@ -143,3 +143,21 @@ async function loadOrders() {
 
 loadOrders();
 setTimeout(loadOrders, 400); // segundo intento por si el login del header terminó justo después del primero
+document.getElementById("refresh-orders-btn")?.addEventListener("click", () => loadOrders());
+
+// Live updates: a status change or new price from staff shows up automatically.
+let ordersRealtimeChannel = null;
+async function subscribeToOwnQuoteUpdates() {
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (!session || ordersRealtimeChannel) return;
+  ordersRealtimeChannel = sbClient
+    .channel("customer-quotes-live")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "megasafety_b2b_quotes", filter: `customer_user_id=eq.${session.user.id}` },
+      () => loadOrders()
+    )
+    .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_b2b_quote_items" }, () => loadOrders())
+    .subscribe();
+}
+subscribeToOwnQuoteUpdates();

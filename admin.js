@@ -76,7 +76,23 @@ async function showAppropriateView() {
 
   setupTabs();
   loadQuotes();
+  subscribeToQuoteUpdates();
 }
+
+// Live updates: any insert/update on quotes or their items (a new RFQ coming
+// in, a colleague pricing/claiming one, a payment landing) refreshes the
+// list automatically, in addition to the manual "Actualizar" button.
+let quotesRealtimeChannel = null;
+function subscribeToQuoteUpdates() {
+  if (quotesRealtimeChannel) return;
+  quotesRealtimeChannel = sbClient
+    .channel("admin-quotes-live")
+    .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_b2b_quotes" }, () => loadQuotes())
+    .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_b2b_quote_items" }, () => loadQuotes())
+    .subscribe();
+}
+
+document.getElementById("refresh-quotes-btn")?.addEventListener("click", () => loadQuotes());
 
 function setupTabs() {
   const tabs = document.querySelectorAll(".admin-tab");
