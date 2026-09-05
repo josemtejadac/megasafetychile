@@ -390,17 +390,20 @@ h1, h2, h3 {
 .promo-slide {
   flex: 0 0 100%;
   position: relative;
-  height: min(560px, 82vw);
+  height: min(420px, 48vw);
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--navy);
 }
 .promo-slide img {
-  width: 100%;
-  height: 100%;
+  max-width: 92%;
+  max-height: 90%;
+  width: auto;
+  height: auto;
   object-fit: contain;
   display: block;
+  margin: 0 auto;
 }
 
 .promo-arrow {
@@ -444,7 +447,7 @@ h1, h2, h3 {
 .promo-dot.is-active { background: var(--gold); width: 22px; border-radius: 4px; }
 
 @media (max-width: 760px) {
-  .promo-slide { height: 82vw; }
+  .promo-slide { height: 60vw; }
   .promo-arrow { display: none; }
 }
 
