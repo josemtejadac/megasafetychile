@@ -201,3 +201,25 @@
 .row-edit-btn:hover { border-color: var(--gold); }
 .price-cell { font-weight: 700; }
 .price-cell.is-quote { color: var(--red); font-weight: 600; font-size: 0.85rem; }
+
+/* Quote detail: centered modal instead of a narrow side drawer, so long
+   labels/buttons (item prices, "Marcar vendida") always have room. The ID
+   selector wins over the shared .cart-panel drawer rules used by cart/checkout. */
+#quote-panel {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  width: min(680px, 94vw);
+  max-height: 85vh;
+  border-radius: 16px;
+  transform: translate(-50%, -50%) scale(0.96);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+#quote-panel.is-open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}

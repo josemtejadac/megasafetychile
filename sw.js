@@ -1,4 +1,4 @@
-const CACHE_NAME = "msc-v1";
+const CACHE_NAME = "msc-v2";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -33,18 +33,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Network-first for JS/CSS/HTML: this site is under active development and
+  // a stale cached script/stylesheet must never outlive a fresh deploy. Cache
+  // is only a fallback for when the network is unreachable (offline/PWA use).
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request)
+      .then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
