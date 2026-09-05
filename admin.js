@@ -1,9 +1,32 @@
 const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
+
+// By default the session lives in sessionStorage (gone once the browser/tab
+// closes) so opening the site never silently reuses a previous login — a
+// real problem when admin and vendedor share the same login page/device.
+// Checking "Mantener sesión iniciada" at login switches it to localStorage
+// so it survives a restart. The REMEMBER_KEY flag itself is always in
+// localStorage so it's readable before any session exists.
+const STAFF_REMEMBER_KEY = "msc_staff_remember";
+const staffAuthStorage = {
+  getItem: (key) => {
+    const remember = localStorage.getItem(STAFF_REMEMBER_KEY) === "1";
+    return (remember ? localStorage : sessionStorage).getItem(key);
+  },
+  setItem: (key, value) => {
+    const remember = localStorage.getItem(STAFF_REMEMBER_KEY) === "1";
+    (remember ? localStorage : sessionStorage).setItem(key, value);
+  },
+  removeItem: (key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  },
+};
+
 // Separate storage key from the customer-facing pages (account.js etc.) so a
 // staff login in one tab doesn't sign out a customer session open in another.
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { storageKey: "msc_staff_auth" },
+  auth: { storageKey: "msc_staff_auth", storage: staffAuthStorage },
 });
 
 // Returns a valid (non-expired) access token, forcing a refresh first if the
@@ -117,6 +140,10 @@ loginForm.addEventListener("submit", async (e) => {
   loginNote.textContent = "Ingresando...";
   loginNote.className = "form-note is-loading";
 
+  // Must be set before setSession() below, since our storage adapter reads
+  // this flag at the moment it writes the session to decide where it goes.
+  localStorage.setItem(STAFF_REMEMBER_KEY, fd.get("remember") === "on" ? "1" : "0");
+
   const res = await fetch("/api/staff/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -144,6 +171,7 @@ loginForm.addEventListener("submit", async (e) => {
 
 logoutBtn.addEventListener("click", async () => {
   await sbClient.auth.signOut();
+  localStorage.removeItem(STAFF_REMEMBER_KEY);
   showAppropriateView();
 });
 

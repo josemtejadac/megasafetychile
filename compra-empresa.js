@@ -1,9 +1,28 @@
 const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
+
+// Must match account.js exactly (same storageKey + storage adapter) so a
+// customer's session — remembered or not — reads consistently across pages.
+const CUSTOMER_REMEMBER_KEY = "msc_customer_remember";
+const customerAuthStorage = {
+  getItem: (key) => {
+    const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
+    return (remember ? localStorage : sessionStorage).getItem(key);
+  },
+  setItem: (key, value) => {
+    const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
+    (remember ? localStorage : sessionStorage).setItem(key, value);
+  },
+  removeItem: (key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  },
+};
+
 // Same storage key as account.js / mis-pedidos.js (customer pages) so the
 // customer's login persists across them, separate from the staff panel.
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { storageKey: "msc_customer_auth" },
+  auth: { storageKey: "msc_customer_auth", storage: customerAuthStorage },
 });
 
 const CATEGORIES = [

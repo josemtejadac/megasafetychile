@@ -1,9 +1,30 @@
 const ACCOUNT_SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const ACCOUNT_SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
+
+// By default the session lives in sessionStorage (gone once the browser/tab
+// closes) so opening the site never silently reuses a previous login.
+// Checking "Mantener sesión iniciada" switches it to localStorage so it
+// survives a restart. See admin.js for the matching staff-side version.
+const CUSTOMER_REMEMBER_KEY = "msc_customer_remember";
+const customerAuthStorage = {
+  getItem: (key) => {
+    const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
+    return (remember ? localStorage : sessionStorage).getItem(key);
+  },
+  setItem: (key, value) => {
+    const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
+    (remember ? localStorage : sessionStorage).setItem(key, value);
+  },
+  removeItem: (key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  },
+};
+
 // Same storage key as compra-empresa.js / mis-pedidos.js (customer pages) so
 // the customer's login persists across them, separate from the staff panel.
 const accountClient = window.supabase.createClient(ACCOUNT_SUPABASE_URL, ACCOUNT_SUPABASE_ANON_KEY, {
-  auth: { storageKey: "msc_customer_auth" },
+  auth: { storageKey: "msc_customer_auth", storage: customerAuthStorage },
 });
 
 function injectAccountUI() {
@@ -36,6 +57,7 @@ function injectAccountUI() {
       <form id="account-login-form" class="quote-form">
         <label>Correo<input type="email" name="email" required></label>
         <label>Contraseña<input type="password" name="password" required></label>
+        <label class="checkbox-row"><input type="checkbox" name="remember"> Mantener sesión iniciada en este navegador</label>
         <p class="form-note" id="account-login-note"></p>
         <button type="submit" class="btn btn--primary">Iniciar sesión</button>
       </form>
@@ -87,6 +109,7 @@ function injectAccountUI() {
     const note = document.getElementById("account-login-note");
     note.textContent = "Ingresando...";
     note.className = "form-note is-loading";
+    localStorage.setItem(CUSTOMER_REMEMBER_KEY, fd.get("remember") === "on" ? "1" : "0");
     const { error } = await accountClient.auth.signInWithPassword({
       email: fd.get("email"),
       password: fd.get("password"),
@@ -123,6 +146,7 @@ function injectAccountUI() {
 
   document.getElementById("account-logout-btn").addEventListener("click", async () => {
     await accountClient.auth.signOut();
+    localStorage.removeItem(CUSTOMER_REMEMBER_KEY);
     await refreshAccountState();
     close();
   });
