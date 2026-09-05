@@ -619,9 +619,14 @@ function openQuoteDetail(q) {
        </div>`
     : "";
 
+  const paidInfoHtml =
+    q.status === "pagada"
+      ? `<p class="quote-detail-row" style="margin-top:6px; color:#15803d;"><strong>Pagado</strong>${q.payment_method ? ` vía ${q.payment_method}` : ""}${q.paid_at ? ` — ${new Date(q.paid_at).toLocaleString("es-CL")}` : ""}</p>`
+      : "";
+
   const pricedHtml =
     q.status === "cotizada" || q.status === "pagada" || q.status === "rechazada"
-      ? `<p class="quote-detail-row" style="margin-top:10px;"><strong>Total cotizado: $${Number(q.total || 0).toLocaleString("es-CL")}</strong> (subtotal $${Number(q.subtotal || 0).toLocaleString("es-CL")} + IVA $${Number(q.iva || 0).toLocaleString("es-CL")})</p>`
+      ? `<p class="quote-detail-row" style="margin-top:10px;"><strong>Total cotizado: $${Number(q.total || 0).toLocaleString("es-CL")}</strong> (subtotal $${Number(q.subtotal || 0).toLocaleString("es-CL")} + IVA $${Number(q.iva || 0).toLocaleString("es-CL")})</p>${paidInfoHtml}`
       : "";
 
   const rejectedHtml =

@@ -137,15 +137,31 @@ export async function buildQuotePdfBase64(quote, items, origin) {
   const totalTxt = money(quote.total);
   ops.push({ type: "text", text: totalTxt, x: rightX - 12 - totalTxt.length * 7.2, y: y - 18, size: 12, bold: true, color: gold });
 
-  // --- Datos bancarios ---
+  const isPaid = quote.status === "pagada";
+
+  // --- Datos bancarios (o confirmación de pago si ya se pagó) ---
   y -= 50;
-  ops.push({ type: "text", text: "DATOS BANCARIOS (transferencia)", x: marginX, y, size: 9, bold: true, color: gold });
-  const bankLines = [
-    "Nombre: Mega Safety Chile Spa",
-    "RUT: 78.463.919-3",
-    "Cuenta Vista N° 00-075-97261-94 — Banco de Chile",
-    "Correo: contacto@megasafetychile.cl",
-  ];
+  ops.push({
+    type: "text",
+    text: isPaid ? "PAGO CONFIRMADO" : "DATOS BANCARIOS (transferencia)",
+    x: marginX,
+    y,
+    size: 9,
+    bold: true,
+    color: isPaid ? [0.09, 0.5, 0.24] : gold,
+  });
+  const bankLines = isPaid
+    ? [
+        `Fecha de pago: ${quote.paid_at ? new Date(quote.paid_at).toLocaleString("es-CL") : "-"}`,
+        `Método: ${quote.payment_method || "Flow"}`,
+        `Orden Flow: ${quote.flow_order || "-"}`,
+      ]
+    : [
+        "Nombre: Mega Safety Chile Spa",
+        "RUT: 78.463.919-3",
+        "Cuenta Vista N° 00-075-97261-94 — Banco de Chile",
+        "Correo: contacto@megasafetychile.cl",
+      ];
   y -= 16;
   bankLines.forEach((line) => {
     ops.push({ type: "text", text: line, x: marginX, y, size: 9.5, color: gray });
