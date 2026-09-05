@@ -94,10 +94,14 @@ async function loadOrders() {
       ? `<p style="margin:8px 0 0; font-weight:800; color:var(--navy);">Total: $${Number(q.total || 0).toLocaleString("es-CL")}</p>`
       : "";
 
+    const waText = encodeURIComponent(`Hola, tengo una consulta sobre mi cotización ${q.correlative_code}.`);
+    const waLink = `https://wa.me/56983061338?text=${waText}`;
+
     const actionsHtml = `
       <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
         ${q.status === "cotizada" ? `<button class="btn btn--primary btn-pay" data-id="${q.id}" type="button">Aceptar y pagar con Flow</button>` : ""}
         <button class="btn btn--outline btn-pdf" data-id="${q.id}" type="button">Descargar PDF</button>
+        <a class="btn btn--outline" href="${waLink}" target="_blank" rel="noopener" style="color:#25d366; border-color:#25d366;">💬 Consultar por WhatsApp</a>
       </div>`;
 
     card.innerHTML = `
