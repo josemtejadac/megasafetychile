@@ -69,6 +69,42 @@ export async function onRequestPost({ request, env }) {
     }));
     await insertQuoteItems(env, itemRows);
 
+    // Persist the customer's attached file (PDF/Excel/photo) to storage so
+    // staff can open it from the admin panel, not just find it buried in an
+    // email — it's the reference they'll build the priced quote from.
+    if (attachment && attachment.base64 && attachment.filename) {
+      try {
+        const bytes = Uint8Array.from(atob(attachment.base64), (c) => c.charCodeAt(0));
+        const safeName = attachment.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `quote-attachments/${quote.id}-${safeName}`;
+        const uploadRes = await fetch(`${env.SUPABASE_URL}/storage/v1/object/megasafety-products/${path}`, {
+          method: "POST",
+          headers: {
+            apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+            Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+            "Content-Type": attachment.mime || "application/octet-stream",
+          },
+          body: bytes,
+        });
+        if (uploadRes.ok) {
+          const attachmentUrl = `${env.SUPABASE_URL}/storage/v1/object/public/megasafety-products/${path}`;
+          await fetch(`${env.SUPABASE_URL}/rest/v1/megasafety_b2b_quotes?id=eq.${quote.id}`, {
+            method: "PATCH",
+            headers: {
+              apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+              Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ attachment_url: attachmentUrl }),
+          });
+          quote.attachment_url = attachmentUrl;
+        }
+      } catch {
+        // Non-fatal — the quote itself is already saved; the attachment still
+        // goes out via email below as a fallback.
+      }
+    }
+
     const emailResult = await sendQuoteNotification(env, quote, itemRows, attachment);
     if (emailResult.sent) await markEmailSent(env, quote.id);
 

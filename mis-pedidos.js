@@ -63,6 +63,7 @@ async function loadOrders() {
     en_proceso: "En revisión",
     cotizada: "Cotización lista — falta tu aceptación",
     pagada: "Pagada — pedido en preparación",
+    rechazada: "Rechazada por ti",
     vendida: "Vendida",
     perdida: "Cerrada",
   };
@@ -97,12 +98,19 @@ async function loadOrders() {
     const waText = encodeURIComponent(`Hola, tengo una consulta sobre mi cotización ${q.correlative_code}.`);
     const waLink = `https://wa.me/56983061338?text=${waText}`;
 
+    const rejectedHtml =
+      q.status === "rechazada" && q.rejected_reason
+        ? `<p style="margin:8px 0 0; color:var(--ink-soft); font-size:0.88rem;"><strong>Motivo:</strong> ${q.rejected_reason}</p>`
+        : "";
+
     const actionsHtml = `
       <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
         ${q.status === "cotizada" ? `<button class="btn btn--primary btn-pay" data-id="${q.id}" type="button">Aceptar y pagar con Flow</button>` : ""}
+        ${q.status === "cotizada" ? `<button class="btn btn--outline btn-reject" data-id="${q.id}" type="button" style="color:#b91c1c; border-color:#b91c1c;">Rechazar cotización</button>` : ""}
         <button class="btn btn--outline btn-pdf" data-id="${q.id}" type="button">Descargar PDF</button>
         <a class="btn btn--outline" href="${waLink}" target="_blank" rel="noopener" style="color:#25d366; border-color:#25d366;">💬 Consultar por WhatsApp</a>
-      </div>`;
+      </div>
+      ${rejectedHtml}`;
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -134,6 +142,27 @@ async function loadOrders() {
         return;
       }
       window.location.href = `${data.url}?token=${data.token}`;
+    });
+  });
+
+  list.querySelectorAll(".btn-reject").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("¿Seguro que quieres rechazar esta cotización?")) return;
+      const reason = prompt("¿Motivo del rechazo? (opcional, déjalo en blanco si prefieres no decir)") || "";
+      btn.disabled = true;
+      const token = await getFreshAccessToken();
+      const res = await fetch("/api/quote/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quote_id: btn.dataset.id, reason }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        alert(data.error || "No se pudo rechazar la cotización.");
+        btn.disabled = false;
+        return;
+      }
+      loadOrders();
     });
   });
 

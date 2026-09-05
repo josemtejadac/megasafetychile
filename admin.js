@@ -215,7 +215,7 @@ function renderTable() {
       <td>${p.sku || "-"}</td>
       <td>${p.name}</td>
       <td>${p.brand || "-"}</td>
-      <td>${CATEGORY_LABELS[p.category_id] || p.category_id}</td>
+      <td>${CATEGORY_LABELS[p.category_id] || p.category_id}${p.subcategory ? `<br><span style="color:var(--ink-soft); font-size:0.8rem;">${p.subcategory}</span>` : ""}</td>
       <td class="price-cell ${p.price == null ? "is-quote" : ""}">${
         p.price == null ? "Solicitar cotización" : "$" + Number(p.price).toLocaleString("es-CL")
       }</td>
@@ -233,6 +233,75 @@ priceFilter.addEventListener("change", renderTable);
 // ---------- Product form ----------
 const productPanel = document.getElementById("product-panel");
 const productOverlay = document.getElementById("product-overlay");
+// Mirrors the subcategory links in the site's main nav (index.html) so the
+// admin picks from the exact same list the storefront filters against —
+// typing a mismatched subcategory string silently breaks that filter.
+const SUBCATS_BY_CATEGORY = {
+  "cat-seguridad-industrial": [
+    "Protección visual y facial",
+    "Protección de cabeza y auditiva",
+    "Protección respiratoria",
+    "Protección de manos",
+    "Calzado de seguridad",
+    "Protección dérmica e higiene",
+    "Arneses y trabajo en altura",
+    "Emergencia y seguridad",
+  ],
+  "cat-herramientas": [
+    "Herramientas manuales",
+    "Herramientas eléctricas",
+    "Herramientas inalámbricas",
+    "Medición",
+    "Accesorios y consumibles",
+  ],
+  "cat-abrasivos": [
+    "Discos de corte",
+    "Discos de desbaste",
+    "Discos traslapados y de acabado",
+    "Lijas y abrasivos",
+    "Accesorios",
+  ],
+  "cat-soldadura": [
+    "Máquinas MIG",
+    "Máquinas MMA / Inverter",
+    "Alambres y electrodos",
+    "Antorchas, repuestos y consumibles",
+    "Accesorios para soldadura",
+  ],
+  "cat-vial": ["Conos y delimitación", "Señalética", "Cintas y elementos reflectantes", "Balizas y señalización luminosa"],
+  "cat-loto": [
+    "Candados de seguridad",
+    "Dispositivos de bloqueo",
+    "Kits y estaciones LOTO",
+    "Accesorios y señalización LOTO",
+  ],
+  "cat-iluminacion": [
+    "Focos y proyectores LED",
+    "Luminarias industriales",
+    "Iluminación de emergencia",
+    "Iluminación portátil y para faena",
+    "Accesorios",
+  ],
+  "cat-ropa": ["Ropa de trabajo", "Chalecos geólogo", "Ropa térmica e impermeable", "Poleras y polerones", "Micropolares y parkas"],
+  "cat-izaje": [
+    "Cadenas y ganchos",
+    "Grilletes y eslabones",
+    "Tensores y accesorios",
+    "Eslingas planas y tubulares",
+    "Estrobos y cables de acero",
+    "Equipos de elevación",
+  ],
+};
+
+const subcategorySelect = document.getElementById("subcategory-select");
+function populateSubcategoryOptions(categoryId, selected) {
+  const subs = SUBCATS_BY_CATEGORY[categoryId] || [];
+  subcategorySelect.innerHTML =
+    `<option value="">Sin subcategoría</option>` + subs.map((s) => `<option value="${s}">${s}</option>`).join("");
+  subcategorySelect.value = subs.includes(selected) ? selected : "";
+}
+productForm.elements.category_id?.addEventListener("change", (e) => populateSubcategoryOptions(e.target.value, ""));
+
 const productForm = document.getElementById("product-form");
 const productNote = document.getElementById("product-note");
 const productPanelTitle = document.getElementById("product-panel-title");
@@ -307,6 +376,7 @@ document.getElementById("new-product-btn").addEventListener("click", () => {
   productNote.textContent = "";
   setPhotoPreview(null);
   setPhotoFieldState(null);
+  populateSubcategoryOptions(productForm.elements.category_id.value, "");
   openProductPanel();
 });
 
@@ -317,6 +387,7 @@ function openProductForm(p) {
   productForm.elements.name.value = p.name || "";
   productForm.elements.brand.value = p.brand || "";
   productForm.elements.category_id.value = p.category_id;
+  populateSubcategoryOptions(p.category_id, p.subcategory || "");
   productForm.elements.description.value = p.description || "";
   productForm.elements.certifications.value = (p.certifications || []).join(", ");
   productForm.elements.price.value = p.price == null ? "" : p.price;
@@ -342,6 +413,7 @@ productForm.addEventListener("submit", async (e) => {
     name: fd.get("name"),
     brand: fd.get("brand") || null,
     category_id: fd.get("category_id"),
+    subcategory: fd.get("subcategory") || null,
     description: fd.get("description") || null,
     certifications: certsRaw
       .split(",")
@@ -422,6 +494,7 @@ const STATUS_LABELS = {
   en_proceso: "En proceso",
   cotizada: "Cotización enviada",
   pagada: "Pagada",
+  rechazada: "Rechazada por cliente",
   vendida: "Vendida",
   perdida: "Perdida",
 };
@@ -501,13 +574,32 @@ function openQuoteDetail(q) {
       <div class="price-row" style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
         <span style="flex:1; font-size:0.88rem;">${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}</span>
         <input type="number" min="0" class="item-price-input" data-item-id="${i.id}" data-qty="${i.quantity}" value="${i.unit_price || ""}" placeholder="Precio unit." style="width:120px;" ${!canPrice ? "disabled" : ""}>
+        ${canPrice ? `<button type="button" class="remove-item-btn" data-item-id="${i.id}" title="Quitar producto" style="background:none; border:none; color:#b91c1c; font-size:1.1rem; cursor:pointer; padding:0 4px;">✕</button>` : ""}
       </div>`
     )
     .join("");
 
+  const attachmentHtml = q.attachment_url
+    ? `<p class="quote-detail-row"><a href="${q.attachment_url}" target="_blank" rel="noopener" style="color:var(--navy); font-weight:700;">📎 Ver archivo adjunto del cliente</a></p>`
+    : "";
+
+  const addItemHtml = canPrice
+    ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
+         <input type="text" id="new-item-name" placeholder="Nombre del producto" style="flex:2; min-width:140px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+         <input type="text" id="new-item-brand" placeholder="Marca (opcional)" style="flex:1; min-width:100px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+         <input type="number" id="new-item-qty" placeholder="Cant." min="1" value="1" style="width:70px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+         <button type="button" class="btn btn--outline" id="add-item-btn">+ Agregar producto</button>
+       </div>`
+    : "";
+
   const pricedHtml =
-    q.status === "cotizada" || q.status === "pagada"
+    q.status === "cotizada" || q.status === "pagada" || q.status === "rechazada"
       ? `<p class="quote-detail-row" style="margin-top:10px;"><strong>Total cotizado: $${Number(q.total || 0).toLocaleString("es-CL")}</strong> (subtotal $${Number(q.subtotal || 0).toLocaleString("es-CL")} + IVA $${Number(q.iva || 0).toLocaleString("es-CL")})</p>`
+      : "";
+
+  const rejectedHtml =
+    q.status === "rechazada"
+      ? `<p class="quote-detail-row" style="margin-top:6px; color:#b91c1c;"><strong>Rechazada por el cliente${q.rejected_reason ? `:</strong> ${q.rejected_reason}` : "</strong> (sin motivo indicado)"}</p>`
       : "";
 
   quotePanelBody.innerHTML = `
@@ -517,11 +609,13 @@ function openQuoteDetail(q) {
       <p class="quote-detail-row">${q.nombre_contacto} · ${q.telefono} · ${q.correo}</p>
       <p class="quote-detail-row">${q.direccion || "-"}, ${q.comuna || "-"}, ${q.region || "-"} — Despacho: ${q.requiere_despacho ? "Sí" : "No"}</p>
       ${q.observaciones ? `<p class="quote-detail-row">Obs: ${q.observaciones}</p>` : ""}
+      ${attachmentHtml}
     </div>
     <div class="quote-detail-section">
       <h4>Productos y precios</h4>
-      ${priceRowsHtml}
-      ${canPrice ? `<p class="quote-detail-row" id="live-total-preview" style="margin:6px 0 10px; font-weight:700;"></p>` : ""}
+      ${priceRowsHtml || `<p class="quote-detail-row" style="color:var(--ink-soft);">Sin productos todavía — agrégalos abajo (útil cuando el cliente solo mandó un PDF/foto).</p>`}
+      ${addItemHtml}
+      ${canPrice ? `<p class="quote-detail-row" id="live-total-preview" style="margin:10px 0 10px; font-weight:700;"></p>` : ""}
       ${canPrice ? `<button class="btn btn--primary" id="send-priced-quote-btn" type="button" style="margin-top:8px;">Guardar precios y enviar cotización al cliente</button>` : ""}
       ${pricedHtml}
     </div>
@@ -570,6 +664,52 @@ function openQuoteDetail(q) {
     input.addEventListener("input", updateLiveTotalPreview);
   });
   updateLiveTotalPreview();
+
+  async function reopenQuoteDetail() {
+    const { data: fresh } = await sbClient
+      .from("megasafety_b2b_quotes")
+      .select("*, megasafety_b2b_quote_items(*)")
+      .eq("id", q.id)
+      .maybeSingle();
+    if (fresh) openQuoteDetail(fresh);
+    loadQuotes();
+  }
+
+  quotePanelBody.querySelectorAll(".remove-item-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const token = await getFreshAccessToken();
+      await fetch("/api/quote/remove-item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ item_id: btn.dataset.itemId }),
+      });
+      reopenQuoteDetail();
+    });
+  });
+
+  document.getElementById("add-item-btn")?.addEventListener("click", async () => {
+    const name = document.getElementById("new-item-name").value.trim();
+    const brand = document.getElementById("new-item-brand").value.trim();
+    const qty = Number(document.getElementById("new-item-qty").value) || 1;
+    if (!name) {
+      note.textContent = "Ingresa el nombre del producto a agregar.";
+      note.className = "form-note is-error";
+      return;
+    }
+    const token = await getFreshAccessToken();
+    const res = await fetch("/api/quote/add-item", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ quote_id: q.id, product_name: name, brand: brand || null, quantity: qty, category_id: q.megasafety_b2b_quote_items?.[0]?.category_id || null }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      note.textContent = data.error || "No se pudo agregar el producto.";
+      note.className = "form-note is-error";
+      return;
+    }
+    reopenQuoteDetail();
+  });
 
   document.getElementById("download-pdf-btn").addEventListener("click", async () => {
     const token = await getFreshAccessToken();
