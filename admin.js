@@ -6,6 +6,20 @@ const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { storageKey: "msc_staff_auth" },
 });
 
+// Returns a valid (non-expired) access token, forcing a refresh first if the
+// cached session is at or past expiry — a plain getSession() can otherwise
+// hand back a stale token on a long-idle tab and every admin action then
+// fails with "No autorizado".
+async function getFreshAccessToken() {
+  let { data: { session: s } } = await sbClient.auth.getSession();
+  const expiresInMs = s ? s.expires_at * 1000 - Date.now() : -1;
+  if (!s || expiresInMs < 60000) {
+    const { data } = await sbClient.auth.refreshSession();
+    s = data.session;
+  }
+  return s?.access_token || null;
+}
+
 const CATEGORY_LABELS = {
   "cat-seguridad-industrial": "Seguridad industrial",
   "cat-herramientas": "Herramientas y equipos",
@@ -542,16 +556,16 @@ function openQuoteDetail(q) {
   updateLiveTotalPreview();
 
   document.getElementById("download-pdf-btn").addEventListener("click", async () => {
-    const { data: { session: s } } = await sbClient.auth.getSession();
-    window.open(`/api/quote/pdf?id=${q.id}&token=${s.access_token}`, "_blank");
+    const token = await getFreshAccessToken();
+    window.open(`/api/quote/pdf?id=${q.id}&token=${token}`, "_blank");
   });
 
   document.getElementById("delete-quote-btn")?.addEventListener("click", async () => {
     if (!confirm(`¿Eliminar definitivamente la cotización ${q.correlative_code}? Esta acción no se puede deshacer.`)) return;
-    const { data: { session: s } } = await sbClient.auth.getSession();
+    const token = await getFreshAccessToken();
     const res = await fetch("/api/admin/delete-quote", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.access_token}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ quote_id: q.id }),
     });
     const data = await res.json();
@@ -578,10 +592,10 @@ function openQuoteDetail(q) {
     }
     note.textContent = "Enviando cotización...";
     note.className = "form-note is-loading";
-    const { data: { session: s } } = await sbClient.auth.getSession();
+    const token = await getFreshAccessToken();
     const res = await fetch("/api/quote/price-and-send", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.access_token}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ quote_id: q.id, items: priced }),
     });
     const data = await res.json();
@@ -703,10 +717,10 @@ async function loadStaff() {
       const newPass = prompt(`Nueva contraseña para ${s.name || s.rut} (mín. 6 caracteres):`);
       if (!newPass) return;
       if (newPass.length < 6) { alert("Debe tener al menos 6 caracteres."); return; }
-      const { data: { session } } = await sbClient.auth.getSession();
+      const token = await getFreshAccessToken();
       const res = await fetch("/api/admin/reset-staff-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ user_id: s.user_id, new_password: newPass }),
       });
       const data = await res.json();
@@ -726,11 +740,11 @@ staffForm.addEventListener("submit", async (e) => {
   const fd = new FormData(staffForm);
   staffNote.textContent = "Creando...";
   staffNote.className = "form-note is-loading";
-  const { data: { session } } = await sbClient.auth.getSession();
+  const token = await getFreshAccessToken();
   try {
     const res = await fetch("/api/admin/create-staff", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         rut: fd.get("rut"),
         password: fd.get("password"),

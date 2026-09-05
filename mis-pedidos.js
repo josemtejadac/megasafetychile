@@ -6,6 +6,18 @@ const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { storageKey: "msc_customer_auth" },
 });
 
+// Forces a session refresh if the cached token is at or past expiry, so a
+// long-idle tab doesn't send a stale token to the PDF/pay endpoints.
+async function getFreshAccessToken() {
+  let { data: { session: s } } = await sbClient.auth.getSession();
+  const expiresInMs = s ? s.expires_at * 1000 - Date.now() : -1;
+  if (!s || expiresInMs < 60000) {
+    const { data } = await sbClient.auth.refreshSession();
+    s = data.session;
+  }
+  return s?.access_token || null;
+}
+
 const CATEGORY_LABELS = {
   "cat-seguridad-industrial": "Seguridad industrial",
   "cat-herramientas": "Herramientas y equipos",
@@ -123,8 +135,8 @@ async function loadOrders() {
 
   list.querySelectorAll(".btn-pdf").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const { data: { session: s } } = await sbClient.auth.getSession();
-      window.open(`/api/quote/pdf?id=${btn.dataset.id}&token=${s.access_token}`, "_blank");
+      const token = await getFreshAccessToken();
+      window.open(`/api/quote/pdf?id=${btn.dataset.id}&token=${token}`, "_blank");
     });
   });
 }
