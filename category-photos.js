@@ -19,7 +19,10 @@
       const card = document.querySelector(`.cat-card[data-cat="${catId}"]`);
       if (!card) return;
       card.classList.add("has-photo");
-      card.style.backgroundImage = `url(${url})`;
+      const badge = document.createElement("div");
+      badge.className = "cat-photo-badge";
+      badge.style.backgroundImage = `url(${url})`;
+      card.insertBefore(badge, card.firstChild);
     });
   } catch {
     // Sin conexión o error de red: las tarjetas se quedan con el ícono, sin romper nada.

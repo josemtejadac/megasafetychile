@@ -532,31 +532,33 @@ h1, h2, h3 {
 }
 .cat-card-btn:hover { color: var(--gold-dark); }
 
-/* Enhanced state when a real product photo is available (added via JS) */
+/* Enhanced state when a real product photo is available (added via JS).
+   The photo shows as a small framed badge, not a full-bleed background —
+   individual product shots have inconsistent crops/edges that look messy
+   when stretched to fill an entire card, but read fine as a neat thumbnail. */
 .cat-card.has-photo {
-  min-height: 260px;
-  justify-content: flex-end;
-  padding: 22px;
-  background-color: var(--navy);
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center 30%;
+  align-items: center;
+  text-align: center;
+  padding: 28px 20px 24px;
+  background: var(--navy);
   color: #fff;
-  overflow: hidden;
   border-color: transparent;
 }
-.cat-card.has-photo::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(11,31,58,0) 0%, rgba(11,31,58,0.35) 55%, rgba(11,31,58,0.92) 100%);
-  z-index: 0;
+.cat-card.has-photo .cat-photo-badge {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: #fff;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin: 0 0 16px;
+  border: 3px solid var(--gold);
+  box-shadow: 0 8px 20px -6px rgba(0,0,0,0.5);
 }
 .cat-card.has-photo .cat-icon,
 .cat-card.has-photo p { display: none; }
-.cat-card.has-photo h3,
-.cat-card.has-photo .cat-card-btn { position: relative; z-index: 1; }
-.cat-card.has-photo h3 { color: #fff; font-size: 1.3rem; }
+.cat-card.has-photo h3 { color: #fff; font-size: 1.15rem; margin-bottom: 14px; }
 .cat-card.has-photo .cat-card-btn {
   display: inline-flex;
   align-items: center;
@@ -565,8 +567,9 @@ h1, h2, h3 {
   color: var(--navy);
   border: none;
   border-radius: 999px;
-  padding: 8px 16px;
-  margin-top: 8px;
+  padding: 8px 18px;
+  margin-top: auto;
+  border-bottom: none;
 }
 .cat-card.has-photo .cat-card-btn:hover { background: #fff; color: var(--navy); }
 .cat-note { margin-top: 32px; color: var(--ink-soft); }
