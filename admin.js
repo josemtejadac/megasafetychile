@@ -534,9 +534,9 @@ function openQuoteDetail(q) {
       </div>
       ${
         isMine && q.status !== "vendida" && q.status !== "pagada"
-          ? `<div class="sale-amount-row">
-               <input type="number" id="sale-amount-input" placeholder="Monto vendido (CLP)" min="0">
-               <button class="btn btn--primary" id="mark-sold-btn" type="button">Marcar vendida (venta manual)</button>
+          ? `<div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+               <input type="number" id="sale-amount-input" placeholder="Monto vendido (CLP)" min="0" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--border); border-radius:8px;">
+               <button class="btn btn--primary" id="mark-sold-btn" type="button" style="width:100%; white-space:normal;">Marcar vendida (venta manual)</button>
              </div>`
           : ""
       }
