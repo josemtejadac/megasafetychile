@@ -5,8 +5,13 @@
 // megasafety_admins isn't publicly readable).
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 
+// Accepts a RUT typed with or without dots/dashes/spaces (e.g. "20.811.675-4",
+// "208116754", "20811675-4") and always returns the same canonical form
+// ("20811675-4"), so lookups match regardless of how the user typed it.
 function normalizeRut(rut) {
-  return rut.replace(/[.\s]/g, "").toUpperCase();
+  const clean = rut.replace(/[^0-9kK]/g, "").toUpperCase();
+  if (clean.length < 2) return clean;
+  return `${clean.slice(0, -1)}-${clean.slice(-1)}`;
 }
 
 export async function onRequestPost({ request, env }) {

@@ -5,8 +5,12 @@
 // it, they only ever log in with their RUT via /api/staff/login.
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 
+// Accepts a RUT typed with or without dots/dashes/spaces and always returns
+// the same canonical form ("20811675-4"), matching login.js's normalizeRut.
 function normalizeRut(rut) {
-  return rut.replace(/[.\s]/g, "").toUpperCase();
+  const clean = rut.replace(/[^0-9kK]/g, "").toUpperCase();
+  if (clean.length < 2) return clean;
+  return `${clean.slice(0, -1)}-${clean.slice(-1)}`;
 }
 
 async function requireAdmin(request, env) {
