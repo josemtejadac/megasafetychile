@@ -42,6 +42,15 @@ async function loadOrders() {
   }
   empty.hidden = true;
 
+  const STATUS_LABELS = {
+    pendiente: "Recibida, en revisión",
+    en_proceso: "En revisión",
+    cotizada: "Cotización lista — falta tu aceptación",
+    pagada: "Pagada — pedido en preparación",
+    vendida: "Vendida",
+    perdida: "Cerrada",
+  };
+
   quotes.forEach((q) => {
     const card = document.createElement("div");
     card.className = "stat-card";
@@ -52,18 +61,67 @@ async function loadOrders() {
       month: "short",
       year: "numeric",
     });
-    const itemsHtml = (q.megasafety_b2b_quote_items || [])
-      .map((it) => `<li>${it.quantity} x ${it.product_name}${it.brand ? ` (${it.brand})` : ""}</li>`)
+    const items = q.megasafety_b2b_quote_items || [];
+    const priced = q.status === "cotizada" || q.status === "pagada";
+    const itemsHtml = items
+      .map((it) => {
+        const name = `${it.quantity} x ${it.product_name}${it.brand ? ` (${it.brand})` : ""}`;
+        if (priced) {
+          const subtotal = (it.quantity || 0) * (it.unit_price || 0);
+          return `<li>${name} — $${subtotal.toLocaleString("es-CL")}</li>`;
+        }
+        return `<li>${name}</li>`;
+      })
       .join("");
+
+    const totalsHtml = priced
+      ? `<p style="margin:8px 0 0; font-weight:800; color:var(--navy);">Total: $${Number(q.total || 0).toLocaleString("es-CL")}</p>`
+      : "";
+
+    const actionsHtml = `
+      <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        ${q.status === "cotizada" ? `<button class="btn btn--primary btn-pay" data-id="${q.id}" type="button">Aceptar y pagar con Flow</button>` : ""}
+        <button class="btn btn--outline btn-pdf" data-id="${q.id}" type="button">Descargar PDF</button>
+      </div>`;
+
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <strong style="font-family:var(--font-head); font-size:1.2rem; color:var(--navy);">${q.correlative_code}</strong>
         <span style="font-size:0.85rem; color:var(--ink-soft);">${date}</span>
       </div>
-      <p style="margin:4px 0; color:var(--ink-soft); font-size:0.9rem;">Estado: <strong style="color:var(--navy);">${q.status}</strong></p>
+      <p style="margin:4px 0; color:var(--ink-soft); font-size:0.9rem;">Estado: <strong style="color:var(--navy);">${STATUS_LABELS[q.status] || q.status}</strong></p>
       <ul style="margin:8px 0 0; padding-left:18px; font-size:0.88rem; color:var(--ink);">${itemsHtml}</ul>
+      ${totalsHtml}
+      ${actionsHtml}
     `;
     list.appendChild(card);
+  });
+
+  list.querySelectorAll(".btn-pay").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "Redirigiendo a Flow...";
+      const res = await fetch("/api/quote/pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quote_id: btn.dataset.id }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        alert(data.error || "No se pudo iniciar el pago.");
+        btn.disabled = false;
+        btn.textContent = "Aceptar y pagar con Flow";
+        return;
+      }
+      window.location.href = `${data.url}?token=${data.token}`;
+    });
+  });
+
+  list.querySelectorAll(".btn-pdf").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const { data: { session: s } } = await sbClient.auth.getSession();
+      window.open(`/api/quote/pdf?id=${btn.dataset.id}&token=${s.access_token}`, "_blank");
+    });
   });
 }
 

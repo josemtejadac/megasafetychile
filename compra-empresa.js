@@ -454,6 +454,7 @@ form.addEventListener("submit", async (e) => {
     nombre_contacto: fd.get("nombre_contacto"),
     telefono: fd.get("telefono"),
     correo: fd.get("correo"),
+    direccion: fd.get("direccion"),
     comuna: fd.get("comuna"),
     region: fd.get("region"),
     requiere_despacho: fd.get("requiere_despacho") === "on",

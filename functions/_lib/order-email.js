@@ -68,6 +68,111 @@ export function buildOrderEmailHtml(order, origin) {
   </div>`;
 }
 
+export function buildQuoteSentEmailHtml(quote, items, origin) {
+  const logoUrl = new URL(LOGO_URL_PATH, origin).toString();
+  const acceptUrl = new URL("/mis-pedidos.html", origin).toString();
+  const itemsHtml = items
+    .map((i) => {
+      const subtotal = (i.quantity || 0) * (i.unit_price || 0);
+      const name = i.brand ? `${i.product_name} (${i.brand})` : i.product_name;
+      return `<tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#10141c;">${name}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#4a5468;text-align:center;">${i.quantity}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#10141c;text-align:right;font-weight:700;">${money(subtotal)}</td>
+        </tr>`;
+    })
+    .join("");
+
+  return `
+  <div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fa;padding:32px 0;">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e3e7ee;">
+      <div style="background:#0b1f3a;padding:24px 32px;">
+        <img src="${logoUrl}" alt="Mega Safety Chile" style="height:40px;display:block;">
+      </div>
+      <div style="padding:32px;">
+        <p style="color:#f5b400;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-size:12px;margin:0 0 8px;">Tu cotización está lista</p>
+        <h1 style="color:#0b1f3a;font-size:22px;margin:0 0 4px;">${quote.correlative_code}</h1>
+        <p style="color:#4a5468;font-size:14px;margin:0 0 24px;">Hola ${quote.nombre_contacto}, preparamos tu cotización. Revisa el detalle y el PDF adjunto.</p>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Producto</th>
+              <th style="text-align:center;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Cant.</th>
+              <th style="text-align:right;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+
+        <table style="width:100%;margin-bottom:24px;">
+          <tr><td style="padding:2px 12px;text-align:right;color:#4a5468;font-size:13px;">Subtotal</td><td style="padding:2px 12px;text-align:right;color:#10141c;font-size:13px;width:120px;">${money(quote.subtotal)}</td></tr>
+          <tr><td style="padding:2px 12px;text-align:right;color:#4a5468;font-size:13px;">IVA (19%)</td><td style="padding:2px 12px;text-align:right;color:#10141c;font-size:13px;">${money(quote.iva)}</td></tr>
+          <tr><td style="padding:6px 12px;text-align:right;color:#4a5468;font-size:14px;">Total</td><td style="padding:6px 12px;text-align:right;font-weight:800;color:#0b1f3a;font-size:18px;">${money(quote.total)}</td></tr>
+        </table>
+
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="${acceptUrl}" style="display:inline-block;background:#f5b400;color:#0b1f3a;font-weight:800;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:14px;">Aceptar y pagar en línea</a>
+        </div>
+
+        <p style="font-size:13px;color:#4a5468;">También puedes pagar por transferencia con los datos incluidos en el PDF adjunto. Cualquier duda, escríbenos por WhatsApp al +56 9 8306 1338.</p>
+      </div>
+      <div style="background:#0b1f3a;padding:16px 32px;text-align:center;">
+        <p style="margin:0;font-size:11px;color:#6f80a0;">Mega Safety Chile — Artículos de seguridad industrial</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+export function buildQuotePaidEmailHtml(quote, items, origin) {
+  const logoUrl = new URL(LOGO_URL_PATH, origin).toString();
+  const itemsHtml = items
+    .map((i) => {
+      const subtotal = (i.quantity || 0) * (i.unit_price || 0);
+      const name = i.brand ? `${i.product_name} (${i.brand})` : i.product_name;
+      return `<tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#10141c;">${name}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#4a5468;text-align:center;">${i.quantity}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#10141c;text-align:right;font-weight:700;">${money(subtotal)}</td>
+        </tr>`;
+    })
+    .join("");
+
+  return `
+  <div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fa;padding:32px 0;">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e3e7ee;">
+      <div style="background:#0b1f3a;padding:24px 32px;">
+        <img src="${logoUrl}" alt="Mega Safety Chile" style="height:40px;display:block;">
+      </div>
+      <div style="padding:32px;">
+        <p style="color:#2fae5c;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-size:12px;margin:0 0 8px;">Pago confirmado</p>
+        <h1 style="color:#0b1f3a;font-size:22px;margin:0 0 4px;">${quote.correlative_code}</h1>
+        <p style="color:#4a5468;font-size:14px;margin:0 0 24px;">Gracias ${quote.nombre_contacto}, recibimos tu pago. Tu pedido ya está en preparación.</p>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Producto</th>
+              <th style="text-align:center;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Cant.</th>
+              <th style="text-align:right;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+
+        <table style="width:100%;margin-bottom:24px;">
+          <tr><td style="padding:4px 12px;text-align:right;color:#4a5468;font-size:14px;">Total pagado</td><td style="padding:4px 12px;text-align:right;font-weight:800;color:#0b1f3a;font-size:18px;width:120px;">${money(quote.total)}</td></tr>
+        </table>
+
+        <p style="font-size:13px;color:#4a5468;">Adjuntamos el comprobante en PDF. Cualquier duda, escríbenos por WhatsApp al +56 9 8306 1338.</p>
+      </div>
+      <div style="background:#0b1f3a;padding:16px 32px;text-align:center;">
+        <p style="margin:0;font-size:11px;color:#6f80a0;">Mega Safety Chile — Artículos de seguridad industrial</p>
+      </div>
+    </div>
+  </div>`;
+}
+
 function truncate(text, max) {
   const s = String(text || "");
   return s.length > max ? s.slice(0, max - 1) + "…" : s;

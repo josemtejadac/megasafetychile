@@ -35,7 +35,7 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  const required = ["razon_social", "rut", "nombre_contacto", "telefono", "correo"];
+  const required = ["razon_social", "rut", "nombre_contacto", "telefono", "correo", "direccion", "comuna", "region"];
   for (const field of required) {
     if (!empresa[field] || String(empresa[field]).trim() === "") {
       return badRequest(`Falta el campo: ${field}`);
@@ -48,6 +48,7 @@ export async function onRequestPost({ request, env }) {
     nombre_contacto: empresa.nombre_contacto,
     telefono: empresa.telefono,
     correo: empresa.correo,
+    direccion: empresa.direccion,
     comuna: empresa.comuna || null,
     region: empresa.region || null,
     requiere_despacho: Boolean(empresa.requiere_despacho),

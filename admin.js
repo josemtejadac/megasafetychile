@@ -383,7 +383,14 @@ function renderQuoteStats() {
   document.getElementById("qstat-comision").textContent = "$" + myCommission.toLocaleString("es-CL");
 }
 
-const STATUS_LABELS = { pendiente: "Sin tomar", en_proceso: "En proceso", vendida: "Vendida", perdida: "Perdida" };
+const STATUS_LABELS = {
+  pendiente: "Sin tomar",
+  en_proceso: "En proceso",
+  cotizada: "Cotización enviada",
+  pagada: "Pagada",
+  vendida: "Vendida",
+  perdida: "Perdida",
+};
 
 function renderQuotesList() {
   const statusFilter = quotesStatusFilter.value;
@@ -448,24 +455,40 @@ async function logQuoteEvent(quoteId, eventType, detail) {
 
 function openQuoteDetail(q) {
   document.getElementById("quote-panel-title").textContent = q.correlative_code;
-  const itemsHtml = (q.megasafety_b2b_quote_items || [])
-    .map((i) => `<li>${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}</li>`)
-    .join("");
-
+  const items = q.megasafety_b2b_quote_items || [];
   const canClaim = !q.claimed_by;
   const isMine = q.claimed_by === currentStaff?.user_id;
+  const isAdmin = currentStaff?.role === "admin";
+  const canPrice = q.status !== "pagada";
+
+  const priceRowsHtml = items
+    .map(
+      (i) => `
+      <div class="price-row" style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="flex:1; font-size:0.88rem;">${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}</span>
+        <input type="number" min="0" class="item-price-input" data-item-id="${i.id}" value="${i.unit_price || ""}" placeholder="Precio unit." style="width:120px;" ${!canPrice ? "disabled" : ""}>
+      </div>`
+    )
+    .join("");
+
+  const pricedHtml =
+    q.status === "cotizada" || q.status === "pagada"
+      ? `<p class="quote-detail-row" style="margin-top:10px;"><strong>Total cotizado: $${Number(q.total || 0).toLocaleString("es-CL")}</strong> (subtotal $${Number(q.subtotal || 0).toLocaleString("es-CL")} + IVA $${Number(q.iva || 0).toLocaleString("es-CL")})</p>`
+      : "";
 
   quotePanelBody.innerHTML = `
     <div class="quote-detail-section">
       <h4>Empresa</h4>
       <p class="quote-detail-row"><strong>${q.razon_social}</strong> — ${q.rut}</p>
       <p class="quote-detail-row">${q.nombre_contacto} · ${q.telefono} · ${q.correo}</p>
-      <p class="quote-detail-row">${q.comuna || "-"}, ${q.region || "-"} — Despacho: ${q.requiere_despacho ? "Sí" : "No"}</p>
+      <p class="quote-detail-row">${q.direccion || "-"}, ${q.comuna || "-"}, ${q.region || "-"} — Despacho: ${q.requiere_despacho ? "Sí" : "No"}</p>
       ${q.observaciones ? `<p class="quote-detail-row">Obs: ${q.observaciones}</p>` : ""}
     </div>
     <div class="quote-detail-section">
-      <h4>Productos</h4>
-      <ul class="quote-items-list">${itemsHtml}</ul>
+      <h4>Productos y precios</h4>
+      ${priceRowsHtml}
+      ${canPrice ? `<button class="btn btn--primary" id="send-priced-quote-btn" type="button" style="margin-top:8px;">Guardar precios y enviar cotización al cliente</button>` : ""}
+      ${pricedHtml}
     </div>
     <div class="quote-detail-section">
       <h4>Estado</h4>
@@ -475,10 +498,10 @@ function openQuoteDetail(q) {
         ${isMine ? `<button data-action="perdida" class="${q.status === "perdida" ? "is-active" : ""}">Marcar perdida</button>` : ""}
       </div>
       ${
-        isMine && q.status !== "vendida"
+        isMine && q.status !== "vendida" && q.status !== "pagada"
           ? `<div class="sale-amount-row">
                <input type="number" id="sale-amount-input" placeholder="Monto vendido (CLP)" min="0">
-               <button class="btn btn--primary" id="mark-sold-btn" type="button">Marcar vendida</button>
+               <button class="btn btn--primary" id="mark-sold-btn" type="button">Marcar vendida (venta manual)</button>
              </div>`
           : ""
       }
@@ -488,8 +511,66 @@ function openQuoteDetail(q) {
           : ""
       }
     </div>
+    <div class="quote-detail-section" style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn--outline" id="download-pdf-btn" type="button">Descargar PDF</button>
+      ${isAdmin ? `<button class="btn btn--outline" id="delete-quote-btn" type="button" style="color:#b91c1c; border-color:#b91c1c;">Eliminar cotización</button>` : ""}
+    </div>
     <p class="form-note" id="quote-action-note"></p>
   `;
+
+  document.getElementById("download-pdf-btn").addEventListener("click", async () => {
+    const { data: { session: s } } = await sbClient.auth.getSession();
+    window.open(`/api/quote/pdf?id=${q.id}&token=${s.access_token}`, "_blank");
+  });
+
+  document.getElementById("delete-quote-btn")?.addEventListener("click", async () => {
+    if (!confirm(`¿Eliminar definitivamente la cotización ${q.correlative_code}? Esta acción no se puede deshacer.`)) return;
+    const { data: { session: s } } = await sbClient.auth.getSession();
+    const res = await fetch("/api/admin/delete-quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.access_token}` },
+      body: JSON.stringify({ quote_id: q.id }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      note.textContent = data.error || "No se pudo eliminar.";
+      note.className = "form-note is-error";
+      return;
+    }
+    closeQuotePanel();
+    loadQuotes();
+  });
+
+  document.getElementById("send-priced-quote-btn")?.addEventListener("click", async () => {
+    const inputs = quotePanelBody.querySelectorAll(".item-price-input");
+    const priced = [];
+    for (const input of inputs) {
+      const val = Number(input.value);
+      if (!val || val <= 0) {
+        note.textContent = "Ingresa un precio válido para todos los productos.";
+        note.className = "form-note is-error";
+        return;
+      }
+      priced.push({ id: input.dataset.itemId, unit_price: val });
+    }
+    note.textContent = "Enviando cotización...";
+    note.className = "form-note is-loading";
+    const { data: { session: s } } = await sbClient.auth.getSession();
+    const res = await fetch("/api/quote/price-and-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.access_token}` },
+      body: JSON.stringify({ quote_id: q.id, items: priced }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      note.textContent = data.error || "Error enviando la cotización.";
+      note.className = "form-note is-error";
+      return;
+    }
+    note.textContent = data.email?.sent ? "Cotización enviada al cliente por correo." : `Precios guardados, pero el correo no se envió: ${data.email?.reason || ""}`;
+    note.className = "form-note";
+    loadQuotes();
+  });
 
   const note = document.getElementById("quote-action-note");
 

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultado de pago | Mega Safety Chile</title>
+<link rel="icon" href="assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="compra-empresa.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">MEGA</span><span class="brand-mark brand-mark--accent">SAFETY</span>
+      <span class="brand-sub">CHILE</span>
+    </a>
+  </div>
+</header>
+
+<main class="admin-main">
+  <div class="container" style="max-width:560px;">
+    <div class="confirm-body" style="padding:40px 0; text-align:center;">
+      <div class="confirm-check" id="result-icon">⏳</div>
+      <h1 id="result-title">Verificando tu pago...</h1>
+      <p id="result-detail">Un momento, estamos confirmando el estado de tu pago con Flow.</p>
+      <a href="mis-pedidos.html" class="btn btn--primary" style="display:inline-flex; margin-top:16px;">Ver mis cotizaciones</a>
+    </div>
+  </div>
+</main>
+
+<script>
+(async function () {
+  const token = new URLSearchParams(location.search).get("token");
+  const title = document.getElementById("result-title");
+  const detail = document.getElementById("result-detail");
+  const icon = document.getElementById("result-icon");
+
+  if (!token) {
+    title.textContent = "No encontramos información del pago";
+    detail.textContent = "Si ya pagaste, revisa el estado en Mis cotizaciones.";
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/flow/status?token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Error");
+
+    if (data.status === 2) {
+      icon.textContent = "✓";
+      title.textContent = "¡Pago procesado!";
+      detail.textContent = `Tu pedido ${data.commerceOrder} está en preparación. Te enviamos el comprobante por correo.`;
+    } else if (data.status === 1) {
+      icon.textContent = "⏳";
+      title.textContent = "Pago pendiente";
+      detail.textContent = "Tu pago sigue en proceso. Te avisaremos por correo cuando se confirme.";
+    } else {
+      icon.textContent = "✕";
+      title.textContent = "Pago no completado";
+      detail.textContent = "El pago fue rechazado o anulado. Puedes intentarlo de nuevo desde Mis cotizaciones.";
+    }
+  } catch (err) {
+    title.textContent = "No pudimos verificar el pago";
+    detail.textContent = "Revisa el estado en Mis cotizaciones en unos minutos.";
+  }
+})();
+</script>
+
+</body>
+</html>

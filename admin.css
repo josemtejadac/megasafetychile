@@ -139,6 +139,8 @@
 .quote-badge.st-en_proceso { background: #dbeafe; color: #1d4ed8; }
 .quote-badge.st-vendida { background: #dcfce7; color: #15803d; }
 .quote-badge.st-perdida { background: #fee2e2; color: #b91c1c; }
+.quote-badge.st-cotizada { background: #fef3c7; color: #92400e; }
+.quote-badge.st-pagada { background: #dcfce7; color: #15803d; }
 .quote-card-company { font-weight: 700; color: var(--navy); margin: 8px 0 2px; }
 .quote-card-meta { font-size: 0.82rem; color: var(--ink-soft); }
 .quote-card-claimed { font-size: 0.8rem; color: var(--ink-soft); margin-top: 6px; }
