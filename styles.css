@@ -678,6 +678,12 @@ h1, h2, h3 {
   .btn--whatsapp { padding: 10px; }
   .account-btn span { display: none; }
   .account-btn { padding: 9px; }
+  .cat-menu-btn span { display: none; }
+  .cat-menu-btn { padding: 9px; }
+  .header-inner { gap: 8px; }
+  .header-actions { gap: 6px; }
+  .brand { font-size: 1.05rem; }
+  .brand-sub { display: none; }
   .cat-grid { grid-template-columns: 1fr; }
   .benefit-grid { grid-template-columns: 1fr; }
   .footer-cols { grid-template-columns: 1fr 1fr; gap: 28px 20px; }
