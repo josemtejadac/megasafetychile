@@ -98,6 +98,32 @@
     </div>
   </section>
 
+  <section class="section" id="featured-carousel">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Lo más pedido</p>
+        <h2>Productos destacados</h2>
+      </div>
+    </div>
+    <div class="featured-wrap">
+      <button class="promo-arrow promo-arrow--prev" id="featured-prev" aria-label="Anterior">‹</button>
+      <div class="featured-scroll" id="featured-scroll">
+        <div class="featured-track" id="featured-track"></div>
+      </div>
+      <button class="promo-arrow promo-arrow--next" id="featured-next" aria-label="Siguiente">›</button>
+    </div>
+  </section>
+
+  <section class="brands-strip">
+    <p class="brands-label">Marcas representadas</p>
+    <div class="brands-marquee">
+      <div class="brands-track">
+        <span>Kbeen</span><span>Saga</span><span>Vortex</span><span>Force</span><span>Bufalo</span><span>Daumer</span><span>Prodelta</span><span>MegaSafety</span><span>Jmak</span>
+        <span>Kbeen</span><span>Saga</span><span>Vortex</span><span>Force</span><span>Bufalo</span><span>Daumer</span><span>Prodelta</span><span>MegaSafety</span><span>Jmak</span>
+      </div>
+    </div>
+  </section>
+
   <section id="productos" class="section">
     <div class="container">
       <div class="section-head">
@@ -424,6 +450,7 @@
 <script src="script.js"></script>
 <script src="account.js"></script>
 <script src="promo-carousel.js"></script>
+<script src="featured-products.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

@@ -464,6 +464,66 @@ h1, h2, h3 {
 }
 .strip-item strong { color: var(--gold); }
 
+/* Featured products carousel */
+.featured-wrap { position: relative; padding: 0 24px; }
+.featured-scroll {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.featured-scroll::-webkit-scrollbar { display: none; }
+.featured-track { display: flex; gap: 20px; }
+.featured-card {
+  scroll-snap-align: start;
+  flex: 0 0 220px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.featured-thumb {
+  display: block;
+  aspect-ratio: 4/3;
+  background: var(--bg-alt);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.featured-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.featured-brand { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold-dark); margin: 0; }
+.featured-name { font-size: 0.92rem; font-weight: 700; color: var(--navy); margin: 0; line-height: 1.3; }
+.featured-price { font-size: 0.85rem; color: var(--red); font-weight: 600; margin: 0; }
+.featured-price.has-price { color: var(--navy); font-size: 1.1rem; font-weight: 800; font-family: var(--font-head); }
+.featured-cta { text-align: center; justify-content: center; margin-top: auto; padding: 9px 14px; font-size: 0.85rem; }
+.featured-wrap .promo-arrow { background: var(--navy); color: #fff; top: 40%; }
+.featured-wrap .promo-arrow:hover { background: var(--navy-light); }
+
+/* Brands marquee — real, currently-carried brands only, plain text (no
+   third-party logo artwork, we don't hold rights to reproduce those). */
+.brands-strip { background: #fff; padding: 28px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow: hidden; }
+.brands-label { text-align: center; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 16px; }
+.brands-marquee { overflow: hidden; }
+.brands-track {
+  display: flex;
+  width: max-content;
+  gap: 56px;
+  animation: brands-scroll 22s linear infinite;
+}
+.brands-track span {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--navy);
+  opacity: 0.55;
+  white-space: nowrap;
+}
+@keyframes brands-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 /* Trust bar */
 .trust-bar { padding: 0 0 24px; }
 .trust-bar-inner {
