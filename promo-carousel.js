@@ -11,9 +11,6 @@
     { img: "assets/img/promo/promo-6.jpg", alt: "Parrilla Rodeo $67.990", href: waLink("Hola, quiero cotizar la Parrilla Rodeo 1/2 tambor con tapa ($67.990).") },
     { img: "assets/img/promo/promo-7.jpg", alt: "Ropa de trabajo Poplín", href: waLink("Hola, quiero cotizar overoles/chalecos línea Poplín para mi equipo de trabajo.") },
     { img: "assets/img/promo/promo-8.jpg", alt: "Pack Full $69.990", href: waLink("Hola, quiero cotizar el Pack Full ($69.990 neto): pantalón + overol + zapatos + 2 poleras/polerón.") },
-    { img: "assets/img/promo/promo-9.jpg", alt: "Protege lo que más importa: tu equipo, tu seguridad, tu futuro", href: "compra-empresa.html" },
-    { img: "assets/img/promo/promo-10.jpg", alt: "Soluciones industriales integrales", href: "compra-empresa.html?cat=cat-seguridad-industrial" },
-    { img: "assets/img/promo/promo-11.jpg", alt: "La seguridad no es opcional, es esencial", href: "compra-empresa.html?cat=cat-soldadura" },
   ];
 
   const track = document.getElementById("promo-track");
