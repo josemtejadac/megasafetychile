@@ -286,6 +286,14 @@ function openProductDetail(p) {
         ? `<div class="detail-certs">${p.certifications.map((c) => `<span class="cert-badge">${c}</span>`).join("")}</div>`
         : ""
     }
+    ${
+      p.ficha_tecnica_url || p.registro_isp_url
+        ? `<div class="detail-doc-buttons">
+             ${p.ficha_tecnica_url ? `<a class="btn btn--primary" href="${p.ficha_tecnica_url}" target="_blank" rel="noopener">Ver Ficha Técnica</a>` : ""}
+             ${p.registro_isp_url ? `<a class="btn btn--outline" href="${p.registro_isp_url}" target="_blank" rel="noopener">Ver Registro ISP</a>` : ""}
+           </div>`
+        : ""
+    }
     ${variantsHtml}
     <p class="detail-price ${p.price != null ? "has-price" : ""}">${
       p.price != null ? "$" + Number(p.price).toLocaleString("es-CL") : "Precio empresa según volumen"

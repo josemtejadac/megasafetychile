@@ -244,6 +244,21 @@
         <p class="photo-hint" id="photo-hint">Guarda el producto primero para poder subir su foto.</p>
       </div>
     </div>
+    <div class="photo-field-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+      <label class="photo-upload-btn">
+        Subir ficha técnica (PDF)
+        <input type="file" id="ficha-input" accept="application/pdf" hidden>
+      </label>
+      <a id="ficha-link" href="#" target="_blank" rel="noopener" hidden style="font-size:0.85rem;">Ver actual</a>
+      <button type="button" id="ficha-remove-btn" hidden style="font-size:0.85rem; background:none; border:none; color:#b91c1c; cursor:pointer; padding:0;">Quitar</button>
+      <label class="photo-upload-btn">
+        Subir registro ISP (PDF)
+        <input type="file" id="isp-input" accept="application/pdf" hidden>
+      </label>
+      <a id="isp-link" href="#" target="_blank" rel="noopener" hidden style="font-size:0.85rem;">Ver actual</a>
+      <button type="button" id="isp-remove-btn" hidden style="font-size:0.85rem; background:none; border:none; color:#b91c1c; cursor:pointer; padding:0;">Quitar</button>
+    </div>
+    <p class="photo-hint" id="doc-hint"></p>
     <label>SKU<input type="text" name="sku"></label>
     <label>Nombre *<input type="text" name="name" required></label>
     <label>Marca<input type="text" name="brand"></label>

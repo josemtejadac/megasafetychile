@@ -394,6 +394,75 @@ photoInput.addEventListener("change", async (e) => {
   }
 });
 
+// ---------- Document uploads (ficha técnica / registro ISP) ----------
+const fichaInput = document.getElementById("ficha-input");
+const ispInput = document.getElementById("isp-input");
+const fichaLink = document.getElementById("ficha-link");
+const ispLink = document.getElementById("isp-link");
+const fichaRemoveBtn = document.getElementById("ficha-remove-btn");
+const ispRemoveBtn = document.getElementById("isp-remove-btn");
+const docHint = document.getElementById("doc-hint");
+
+function setDocLink(link, removeBtn, url) {
+  if (url) {
+    link.href = url;
+    link.hidden = false;
+    removeBtn.hidden = false;
+  } else {
+    link.hidden = true;
+    removeBtn.hidden = true;
+  }
+}
+
+async function removeDocument(field, link, removeBtn) {
+  const productId = productForm.elements.id.value;
+  if (!productId) return;
+  if (!confirm("¿Quitar este documento del producto?")) return;
+  const { error } = await sbClient.from("megasafety_products").update({ [field]: null }).eq("id", productId);
+  if (error) {
+    docHint.textContent = "No se pudo quitar: " + error.message;
+    return;
+  }
+  setDocLink(link, removeBtn, null);
+  docHint.textContent = "Documento quitado.";
+  loadProducts();
+}
+
+fichaRemoveBtn.addEventListener("click", () => removeDocument("ficha_tecnica_url", fichaLink, fichaRemoveBtn));
+ispRemoveBtn.addEventListener("click", () => removeDocument("registro_isp_url", ispLink, ispRemoveBtn));
+
+async function uploadDocument(file, docType) {
+  const productId = productForm.elements.id.value;
+  if (!file || !productId) {
+    docHint.textContent = "Guarda el producto primero para poder subir documentos.";
+    return;
+  }
+  docHint.textContent = "Subiendo...";
+  try {
+    const { data: { session } } = await sbClient.auth.getSession();
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("product_id", productId);
+    fd.append("doc_type", docType);
+    const res = await fetch("/api/admin/upload-document", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: fd,
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Error al subir el documento");
+    if (docType === "ficha_tecnica") setDocLink(fichaLink, fichaRemoveBtn, data.url);
+    else setDocLink(ispLink, ispRemoveBtn, data.url);
+    docHint.textContent = "Documento actualizado.";
+    loadProducts();
+  } catch (err) {
+    docHint.textContent = err.message || "No se pudo subir el documento.";
+  }
+}
+
+fichaInput.addEventListener("change", (e) => uploadDocument(e.target.files[0], "ficha_tecnica"));
+ispInput.addEventListener("change", (e) => uploadDocument(e.target.files[0], "registro_isp"));
+
 document.getElementById("new-product-btn").addEventListener("click", () => {
   productForm.reset();
   productForm.elements.id.value = "";
@@ -403,6 +472,9 @@ document.getElementById("new-product-btn").addEventListener("click", () => {
   productNote.textContent = "";
   setPhotoPreview(null);
   setPhotoFieldState(null);
+  setDocLink(fichaLink, fichaRemoveBtn, null);
+  setDocLink(ispLink, ispRemoveBtn, null);
+  docHint.textContent = "";
   populateSubcategoryOptions(productForm.elements.category_id.value, "");
   openProductPanel();
 });
@@ -424,6 +496,9 @@ function openProductForm(p) {
   deleteBtn.hidden = false;
   setPhotoPreview(p.image_url);
   setPhotoFieldState(p.id);
+  setDocLink(fichaLink, fichaRemoveBtn, p.ficha_tecnica_url);
+  setDocLink(ispLink, ispRemoveBtn, p.registro_isp_url);
+  docHint.textContent = "";
   productNote.textContent = "";
   openProductPanel();
 }

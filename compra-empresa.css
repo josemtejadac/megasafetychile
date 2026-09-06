@@ -161,6 +161,8 @@
 .detail-sku { font-size: 0.8rem; color: var(--ink-soft); margin: 0 0 16px; }
 .detail-desc { color: var(--ink); font-size: 0.95rem; line-height: 1.6; margin: 0 0 16px; }
 .detail-certs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.detail-doc-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 20px; }
+.detail-doc-buttons .btn { font-size: 0.85rem; padding: 10px 18px; }
 .detail-price { font-size: 0.9rem; color: var(--red); font-weight: 600; margin-bottom: 20px; }
 .detail-price.has-price { color: var(--navy); font-size: 1.3rem; font-weight: 800; font-family: var(--font-head); }
 .detail-actions { display: flex; gap: 10px; align-items: center; }
