@@ -25,18 +25,18 @@
       .map((p) => {
         const priceHtml =
           p.price != null
-            ? `<p class="featured-price has-price">$${Number(p.price).toLocaleString("es-CL")}</p>`
-            : `<p class="featured-price">Cotizar</p>`;
+            ? `<p style="font-size:1.1rem; color:var(--navy); font-weight:800; font-family:var(--font-head); margin:0;">$${Number(p.price).toLocaleString("es-CL")}</p>`
+            : `<p style="font-size:0.85rem; color:var(--red); font-weight:600; margin:0;">Cotizar</p>`;
         const waText = encodeURIComponent(`Hola, quiero cotizar: ${p.name}${p.sku ? ` (SKU ${p.sku})` : ""}.`);
         return `
-        <div class="featured-card">
-          <a class="featured-thumb" href="compra-empresa.html?cat=${p.category_id}" aria-label="${p.name}">
-            <img src="${p.image_url}" alt="${p.name}" loading="lazy">
+        <div class="featured-card" style="scroll-snap-align:start; flex:0 0 220px; background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:8px;">
+          <a class="featured-thumb" href="compra-empresa.html?cat=${p.category_id}" aria-label="${p.name}" style="display:block; aspect-ratio:4/3; background:var(--bg-alt); border-radius:10px; overflow:hidden;">
+            <img src="${p.image_url}" alt="${p.name}" loading="lazy" style="width:100%; height:100%; object-fit:contain;">
           </a>
-          ${p.brand ? `<p class="featured-brand">${p.brand}</p>` : ""}
-          <p class="featured-name">${p.name}</p>
+          ${p.brand ? `<p style="font-size:0.72rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--gold-dark); margin:0;">${p.brand}</p>` : ""}
+          <p style="font-size:0.92rem; font-weight:700; color:var(--navy); margin:0; line-height:1.3;">${p.name}</p>
           ${priceHtml}
-          <a class="btn btn--primary featured-cta" href="https://wa.me/${WA_NUMBER}?text=${waText}" target="_blank" rel="noopener">Cotizar</a>
+          <a class="btn btn--primary" href="https://wa.me/${WA_NUMBER}?text=${waText}" target="_blank" rel="noopener" style="text-align:center; justify-content:center; margin-top:auto; padding:9px 14px; font-size:0.85rem;">Cotizar</a>
         </div>`;
       })
       .join("");

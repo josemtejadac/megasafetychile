@@ -105,24 +105,25 @@
         <h2>Productos destacados</h2>
       </div>
     </div>
-    <div class="featured-wrap">
-      <button class="promo-arrow promo-arrow--prev" id="featured-prev" aria-label="Anterior">‹</button>
-      <div class="featured-scroll" id="featured-scroll">
-        <div class="featured-track" id="featured-track"></div>
+    <div class="featured-wrap" style="position:relative; padding:0 24px;">
+      <button class="promo-arrow promo-arrow--prev" id="featured-prev" aria-label="Anterior" style="position:absolute; top:40%; left:16px; z-index:2; background:var(--navy); color:#fff; width:40px; height:40px; border-radius:50%; border:none; font-size:1.6rem; cursor:pointer;">‹</button>
+      <div class="featured-scroll" id="featured-scroll" style="overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none;">
+        <div class="featured-track" id="featured-track" style="display:flex; gap:20px;"></div>
       </div>
-      <button class="promo-arrow promo-arrow--next" id="featured-next" aria-label="Siguiente">›</button>
+      <button class="promo-arrow promo-arrow--next" id="featured-next" aria-label="Siguiente" style="position:absolute; top:40%; right:16px; z-index:2; background:var(--navy); color:#fff; width:40px; height:40px; border-radius:50%; border:none; font-size:1.6rem; cursor:pointer;">›</button>
     </div>
   </section>
 
-  <section class="brands-strip">
-    <p class="brands-label">Marcas representadas</p>
-    <div class="brands-marquee">
-      <div class="brands-track">
-        <span>Kbeen</span><span>Saga</span><span>Vortex</span><span>Force</span><span>Bufalo</span><span>Daumer</span><span>Prodelta</span><span>MegaSafety</span><span>Jmak</span>
-        <span>Kbeen</span><span>Saga</span><span>Vortex</span><span>Force</span><span>Bufalo</span><span>Daumer</span><span>Prodelta</span><span>MegaSafety</span><span>Jmak</span>
+  <section class="brands-strip" style="background:#fff; padding:28px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); overflow:hidden;">
+    <p class="brands-label" style="text-align:center; font-size:0.75rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 16px;">Marcas representadas</p>
+    <div class="brands-marquee" style="overflow:hidden;">
+      <div class="brands-track" style="display:flex; width:max-content; gap:56px; animation:brands-scroll 22s linear infinite;">
+        <span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Kbeen</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Saga</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Vortex</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Force</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Bufalo</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Daumer</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Prodelta</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">MegaSafety</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Jmak</span>
+        <span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Kbeen</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Saga</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Vortex</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Force</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Bufalo</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Daumer</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Prodelta</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">MegaSafety</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Jmak</span>
       </div>
     </div>
   </section>
+  <style>@keyframes brands-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }</style>
 
   <section id="productos" class="section">
     <div class="container">
