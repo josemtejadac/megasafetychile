@@ -1,19 +1,25 @@
-document.getElementById("year").textContent = new Date().getFullYear();
+// This file is shared across pages that don't all have a footer/main-nav
+// (e.g. compra-empresa.html) — guard each lookup so a missing element on
+// one page doesn't throw and abort the rest of the script.
+const yearEl = document.getElementById("year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 const navToggle = document.getElementById("nav-toggle");
 const mainNav = document.getElementById("main-nav");
 
-navToggle.addEventListener("click", () => {
-  const isOpen = mainNav.classList.toggle("is-open");
-  navToggle.setAttribute("aria-expanded", String(isOpen));
-});
-
-mainNav.querySelectorAll("a").forEach((link) => {
-  link.addEventListener("click", () => {
-    mainNav.classList.remove("is-open");
-    navToggle.setAttribute("aria-expanded", "false");
+if (navToggle && mainNav) {
+  navToggle.addEventListener("click", () => {
+    const isOpen = mainNav.classList.toggle("is-open");
+    navToggle.setAttribute("aria-expanded", String(isOpen));
   });
-});
+
+  mainNav.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      mainNav.classList.remove("is-open");
+      navToggle.setAttribute("aria-expanded", "false");
+    });
+  });
+}
 
 const catMenuBtn = document.getElementById("cat-menu-btn");
 const catMenuPanel = document.getElementById("cat-menu-panel");

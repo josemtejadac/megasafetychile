@@ -1,39 +1,10 @@
 const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 
-// Must match account.js exactly (same storageKey + storage adapter) so a
-// customer's session — remembered or not — reads consistently across pages.
-const CUSTOMER_REMEMBER_KEY = "msc_customer_remember";
-// Defensive: some browsers/extensions throw a SecurityError just for
-// touching localStorage/sessionStorage, and this runs inside supabase-js's
-// internal session check on every request (even anonymous reads) — an
-// uncaught throw here would silently break the whole page.
-const customerAuthStorage = {
-  getItem: (key) => {
-    try {
-      const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
-      return (remember ? localStorage : sessionStorage).getItem(key);
-    } catch {
-      return null;
-    }
-  },
-  setItem: (key, value) => {
-    try {
-      const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
-      (remember ? localStorage : sessionStorage).setItem(key, value);
-    } catch {
-      /* storage unavailable — session just won't persist */
-    }
-  },
-  removeItem: (key) => {
-    try {
-      localStorage.removeItem(key);
-      sessionStorage.removeItem(key);
-    } catch {
-      /* ignore */
-    }
-  },
-};
+// CUSTOMER_REMEMBER_KEY and customerAuthStorage are already declared by
+// account.js, which this page loads first — reusing them (not redeclaring)
+// avoids a page-wide "Identifier has already been declared" SyntaxError,
+// since non-module <script> tags share one global scope for const/let.
 
 // Same storage key as account.js / compra-empresa.js (customer pages) so the
 // customer's login persists across them, separate from the staff panel.

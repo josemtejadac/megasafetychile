@@ -1,45 +1,11 @@
 const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 
-// Must match account.js exactly (same storageKey + storage adapter) so a
-// customer's session — remembered or not — reads consistently across pages.
-const CUSTOMER_REMEMBER_KEY = "msc_customer_remember";
-// Every method is defensive: some browsers/extensions (privacy modes,
-// cookie-blocking settings) throw a SecurityError just for touching
-// localStorage/sessionStorage. An uncaught throw here happens inside
-// supabase-js's internal session check, which runs even for anonymous
-// reads — so it silently aborted the whole product query before this was
-// wrapped in try/catch. Failing "quietly, no persistence" beats breaking
-// the entire page.
-const customerAuthStorage = {
-  getItem: (key) => {
-    try {
-      const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
-      return (remember ? localStorage : sessionStorage).getItem(key);
-    } catch {
-      return null;
-    }
-  },
-  setItem: (key, value) => {
-    try {
-      const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
-      (remember ? localStorage : sessionStorage).setItem(key, value);
-    } catch {
-      /* storage unavailable — session just won't persist */
-    }
-  },
-  removeItem: (key) => {
-    try {
-      localStorage.removeItem(key);
-      sessionStorage.removeItem(key);
-    } catch {
-      /* ignore */
-    }
-  },
-};
-
-// Same storage key as account.js / mis-pedidos.js (customer pages) so the
-// customer's login persists across them, separate from the staff panel.
+// CUSTOMER_REMEMBER_KEY and customerAuthStorage are already declared by
+// account.js, which this page loads first — reusing them (not redeclaring)
+// avoids a page-wide "Identifier has already been declared" SyntaxError,
+// since non-module <script> tags share one global scope for const/let.
+// That exact crash previously killed this entire file silently.
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { storageKey: "msc_customer_auth", storage: customerAuthStorage },
 });
