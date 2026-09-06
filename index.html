@@ -105,12 +105,14 @@
         <h2>Productos destacados</h2>
       </div>
     </div>
-    <div class="featured-wrap" style="position:relative; padding:0 24px;">
-      <button class="promo-arrow promo-arrow--prev" id="featured-prev" aria-label="Anterior" style="position:absolute; top:40%; left:16px; z-index:2; background:var(--navy); color:#fff; width:40px; height:40px; border-radius:50%; border:none; font-size:1.6rem; cursor:pointer;">‹</button>
-      <div class="featured-scroll" id="featured-scroll" style="overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none;">
-        <div class="featured-track" id="featured-track" style="display:flex; gap:20px;"></div>
+    <div class="container">
+      <div style="position:relative; max-width:100%;">
+        <button class="promo-arrow promo-arrow--prev" id="featured-prev" aria-label="Anterior" style="position:absolute; top:50%; left:-8px; transform:translateY(-50%); z-index:2; background:var(--navy); color:#fff; width:38px; height:38px; border-radius:50%; border:none; font-size:1.4rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.25);">‹</button>
+        <div class="featured-scroll" id="featured-scroll" style="overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scrollbar-width:none; padding:6px 4px 20px;">
+          <div class="featured-track" id="featured-track" style="display:flex; gap:18px;"></div>
+        </div>
+        <button class="promo-arrow promo-arrow--next" id="featured-next" aria-label="Siguiente" style="position:absolute; top:50%; right:-8px; transform:translateY(-50%); z-index:2; background:var(--navy); color:#fff; width:38px; height:38px; border-radius:50%; border:none; font-size:1.4rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.25);">›</button>
       </div>
-      <button class="promo-arrow promo-arrow--next" id="featured-next" aria-label="Siguiente" style="position:absolute; top:40%; right:16px; z-index:2; background:var(--navy); color:#fff; width:40px; height:40px; border-radius:50%; border:none; font-size:1.6rem; cursor:pointer;">›</button>
     </div>
   </section>
 

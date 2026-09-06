@@ -7,7 +7,7 @@
   if (!track) return;
 
   fetch(
-    `${SUPABASE_URL}/rest/v1/megasafety_products?select=id,sku,name,brand,image_url,price,category_id&active=eq.true&image_url=not.is.null&order=sort_order.asc&limit=16`,
+    `${SUPABASE_URL}/rest/v1/megasafety_products?select=id,sku,name,brand,image_url,price,category_id&active=eq.true&image_url=not.is.null&order=sort_order.asc&limit=10`,
     { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
   )
     .then((res) => (res.ok ? res.json() : []))
@@ -25,18 +25,18 @@
       .map((p) => {
         const priceHtml =
           p.price != null
-            ? `<p style="font-size:1.1rem; color:var(--navy); font-weight:800; font-family:var(--font-head); margin:0;">$${Number(p.price).toLocaleString("es-CL")}</p>`
-            : `<p style="font-size:0.85rem; color:var(--red); font-weight:600; margin:0;">Cotizar</p>`;
+            ? `<p style="font-size:1.05rem; color:var(--navy); font-weight:800; font-family:var(--font-head); margin:0;">$${Number(p.price).toLocaleString("es-CL")}</p>`
+            : `<p style="font-size:0.78rem; color:var(--ink-soft); font-weight:600; margin:0;">Precio a cotizar</p>`;
         const waText = encodeURIComponent(`Hola, quiero cotizar: ${p.name}${p.sku ? ` (SKU ${p.sku})` : ""}.`);
         return `
-        <div class="featured-card" style="scroll-snap-align:start; flex:0 0 220px; background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:8px;">
-          <a class="featured-thumb" href="compra-empresa.html?cat=${p.category_id}" aria-label="${p.name}" style="display:block; aspect-ratio:4/3; background:var(--bg-alt); border-radius:10px; overflow:hidden;">
-            <img src="${p.image_url}" alt="${p.name}" loading="lazy" style="width:100%; height:100%; object-fit:contain;">
+        <div class="featured-card" style="scroll-snap-align:start; flex:0 0 200px; width:200px; height:330px; background:#fff; border:1px solid #e3e7ee; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px; box-shadow:0 6px 18px -8px rgba(11,31,58,0.18);">
+          <a href="compra-empresa.html?cat=${p.category_id}" aria-label="${p.name}" style="display:block; width:100%; height:130px; background:#f4f6fa; border-radius:10px; overflow:hidden; flex-shrink:0;">
+            <img src="${p.image_url}" alt="${p.name}" loading="lazy" style="width:100%; height:100%; object-fit:contain; display:block;">
           </a>
-          ${p.brand ? `<p style="font-size:0.72rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--gold-dark); margin:0;">${p.brand}</p>` : ""}
-          <p style="font-size:0.92rem; font-weight:700; color:var(--navy); margin:0; line-height:1.3;">${p.name}</p>
+          ${p.brand ? `<p style="font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#c9a11d; margin:8px 0 0;">${p.brand}</p>` : ""}
+          <p style="font-size:0.85rem; font-weight:700; color:var(--navy); margin:0; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${p.name}</p>
           ${priceHtml}
-          <a class="btn btn--primary" href="https://wa.me/${WA_NUMBER}?text=${waText}" target="_blank" rel="noopener" style="text-align:center; justify-content:center; margin-top:auto; padding:9px 14px; font-size:0.85rem;">Cotizar</a>
+          <a class="btn btn--primary" href="https://wa.me/${WA_NUMBER}?text=${waText}" target="_blank" rel="noopener" style="text-align:center; justify-content:center; margin-top:auto; padding:8px 12px; font-size:0.8rem; border-radius:999px;">Cotizar</a>
         </div>`;
       })
       .join("");
