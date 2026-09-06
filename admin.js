@@ -8,18 +8,34 @@ const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 // so it survives a restart. The REMEMBER_KEY flag itself is always in
 // localStorage so it's readable before any session exists.
 const STAFF_REMEMBER_KEY = "msc_staff_remember";
+// Defensive: some browsers/extensions throw a SecurityError just for
+// touching localStorage/sessionStorage, and this runs inside supabase-js's
+// internal session check on every request — an uncaught throw here would
+// silently break the whole admin panel.
 const staffAuthStorage = {
   getItem: (key) => {
-    const remember = localStorage.getItem(STAFF_REMEMBER_KEY) === "1";
-    return (remember ? localStorage : sessionStorage).getItem(key);
+    try {
+      const remember = localStorage.getItem(STAFF_REMEMBER_KEY) === "1";
+      return (remember ? localStorage : sessionStorage).getItem(key);
+    } catch {
+      return null;
+    }
   },
   setItem: (key, value) => {
-    const remember = localStorage.getItem(STAFF_REMEMBER_KEY) === "1";
-    (remember ? localStorage : sessionStorage).setItem(key, value);
+    try {
+      const remember = localStorage.getItem(STAFF_REMEMBER_KEY) === "1";
+      (remember ? localStorage : sessionStorage).setItem(key, value);
+    } catch {
+      /* storage unavailable — session just won't persist */
+    }
   },
   removeItem: (key) => {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
+    try {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
   },
 };
 
@@ -492,6 +508,7 @@ function openProductForm(p) {
   productForm.elements.price.value = p.price == null ? "" : p.price;
   productForm.elements.sort_order.value = p.sort_order || 0;
   productForm.elements.active.checked = p.active;
+  productForm.elements.is_featured.checked = !!p.is_featured;
   productPanelTitle.textContent = "Editar producto";
   deleteBtn.hidden = false;
   setPhotoPreview(p.image_url);
@@ -524,6 +541,7 @@ productForm.addEventListener("submit", async (e) => {
     price: priceRaw === "" ? null : Number(priceRaw),
     sort_order: Number(fd.get("sort_order")) || 0,
     active: fd.get("active") === "on",
+    is_featured: fd.get("is_featured") === "on",
   };
 
   productNote.textContent = "Guardando...";

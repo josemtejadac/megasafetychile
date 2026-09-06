@@ -6,18 +6,34 @@ const ACCOUNT_SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE
 // Checking "Mantener sesión iniciada" switches it to localStorage so it
 // survives a restart. See admin.js for the matching staff-side version.
 const CUSTOMER_REMEMBER_KEY = "msc_customer_remember";
+// Defensive: some browsers/extensions throw a SecurityError just for
+// touching localStorage/sessionStorage, and this runs inside supabase-js's
+// internal session check on every request (even anonymous reads) — an
+// uncaught throw here would silently break the whole page.
 const customerAuthStorage = {
   getItem: (key) => {
-    const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
-    return (remember ? localStorage : sessionStorage).getItem(key);
+    try {
+      const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
+      return (remember ? localStorage : sessionStorage).getItem(key);
+    } catch {
+      return null;
+    }
   },
   setItem: (key, value) => {
-    const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
-    (remember ? localStorage : sessionStorage).setItem(key, value);
+    try {
+      const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
+      (remember ? localStorage : sessionStorage).setItem(key, value);
+    } catch {
+      /* storage unavailable — session just won't persist */
+    }
   },
   removeItem: (key) => {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
+    try {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
   },
 };
 

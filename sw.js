@@ -36,8 +36,13 @@ self.addEventListener("fetch", (event) => {
   // Network-first for JS/CSS/HTML: this site is under active development and
   // a stale cached script/stylesheet must never outlive a fresh deploy. Cache
   // is only a fallback for when the network is unreachable (offline/PWA use).
+  // `cache: "reload"` forces this fetch to bypass the browser's own HTTP
+  // cache too — without it, an asset served with a long Cache-Control (as
+  // Cloudflare's default sometimes does regardless of our _headers rules)
+  // would be silently reused from disk even though this handler is
+  // "network-first" in name.
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "reload" })
       .then((res) => {
         if (res.ok) {
           const copy = res.clone();

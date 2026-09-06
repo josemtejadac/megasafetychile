@@ -6,11 +6,17 @@
   const track = document.getElementById("featured-track");
   if (!track) return;
 
-  fetch(
-    `${SUPABASE_URL}/rest/v1/megasafety_products?select=id,sku,name,brand,image_url,price,category_id&active=eq.true&image_url=not.is.null&order=sort_order.asc&limit=10`,
-    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
-  )
+  const baseUrl = `${SUPABASE_URL}/rest/v1/megasafety_products?select=id,sku,name,brand,image_url,price,category_id&active=eq.true&image_url=not.is.null`;
+  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+
+  // Prefer admin-curated picks (is_featured=true); only fall back to an
+  // arbitrary sort_order sample if nothing has been curated yet.
+  fetch(`${baseUrl}&is_featured=eq.true&order=sort_order.asc&limit=10`, { headers })
     .then((res) => (res.ok ? res.json() : []))
+    .then((featured) => {
+      if (featured.length) return featured;
+      return fetch(`${baseUrl}&order=sort_order.asc&limit=10`, { headers }).then((res) => (res.ok ? res.json() : []));
+    })
     .then((products) => {
       if (!products.length) {
         document.getElementById("featured-carousel")?.setAttribute("hidden", "");

@@ -4,18 +4,37 @@ const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 // Must match account.js exactly (same storageKey + storage adapter) so a
 // customer's session — remembered or not — reads consistently across pages.
 const CUSTOMER_REMEMBER_KEY = "msc_customer_remember";
+// Every method is defensive: some browsers/extensions (privacy modes,
+// cookie-blocking settings) throw a SecurityError just for touching
+// localStorage/sessionStorage. An uncaught throw here happens inside
+// supabase-js's internal session check, which runs even for anonymous
+// reads — so it silently aborted the whole product query before this was
+// wrapped in try/catch. Failing "quietly, no persistence" beats breaking
+// the entire page.
 const customerAuthStorage = {
   getItem: (key) => {
-    const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
-    return (remember ? localStorage : sessionStorage).getItem(key);
+    try {
+      const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
+      return (remember ? localStorage : sessionStorage).getItem(key);
+    } catch {
+      return null;
+    }
   },
   setItem: (key, value) => {
-    const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
-    (remember ? localStorage : sessionStorage).setItem(key, value);
+    try {
+      const remember = localStorage.getItem(CUSTOMER_REMEMBER_KEY) === "1";
+      (remember ? localStorage : sessionStorage).setItem(key, value);
+    } catch {
+      /* storage unavailable — session just won't persist */
+    }
   },
   removeItem: (key) => {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
+    try {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
   },
 };
 
@@ -97,6 +116,8 @@ async function loadProducts() {
       colors: p.colors || [],
       sizes: p.sizes || [],
       subcategory: p.subcategory,
+      ficha_tecnica_url: p.ficha_tecnica_url,
+      registro_isp_url: p.registro_isp_url,
     }));
   }
   renderChips();
