@@ -22,6 +22,45 @@
 }
 
 .b2b-step { padding: 64px 0; }
+.b2b-hero-img-section { padding-top: 28px; padding-bottom: 0; }
+
+/* "Solicita tu cotización" hero — the owner's own graphic, with invisible
+   functional hotspots over the 3 option cards and the drop-zone box. */
+.b2b-hero-img-wrap { position: relative; }
+.b2b-hero-hotspot {
+  position: absolute;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  display: block;
+}
+#upload-option-hotspot { z-index: 1; }
+#upload-option-hotspot.is-dragover { background: rgba(245,180,0,0.16); outline: 3px dashed var(--gold); }
+
+.upload-panel {
+  margin: 0 3.4% 24px 4.5%;
+  background: var(--bg-alt);
+  border: 2px dashed var(--border);
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  padding: 16px 20px 20px;
+}
+.upload-hint { margin: 0; font-size: 0.85rem; color: var(--ink-soft); text-align: center; }
+.upload-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.upload-file-row-icon { font-size: 1.1rem; }
+.upload-file-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+.upload-file-row-remove { background: none; border: none; color: var(--red); font-size: 1.05rem; cursor: pointer; padding: 0 4px; }
+#upload-send-btn { width: 100%; text-align: center; }
 
 .b2b-hero { max-width: 640px; margin-bottom: 36px; }
 .b2b-hero h1 { font-size: clamp(1.9rem, 3.5vw, 2.6rem); }

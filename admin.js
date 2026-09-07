@@ -1076,7 +1076,11 @@ function openQuoteDetail(q) {
       return;
     }
     const rate = currentStaff?.commission_rate || 0;
-    const commission = Math.round((amount * rate) / 100);
+    // Commission is paid on the net amount (excluding IVA) — the customer
+    // still pays/sees the full amount with IVA, only the commission base
+    // is the amount before tax.
+    const netAmount = amount / 1.19;
+    const commission = Math.round((netAmount * rate) / 100);
     const patch = {
       status: "vendida",
       sale_amount: amount,

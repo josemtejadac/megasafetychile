@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2">
-<link rel="stylesheet" href="account.css?v=2">
-<link rel="stylesheet" href="compra-empresa.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="account.css?v=3">
+<link rel="stylesheet" href="compra-empresa.css?v=3">
 </head>
 <body>
 
@@ -38,63 +38,26 @@
 <main>
 
   <!-- Paso 1: Inicio -->
-  <section id="step-inicio" class="b2b-step" style="padding-bottom:28px;">
+  <section id="step-inicio" class="b2b-step b2b-hero-img-section">
     <div class="container">
-      <div class="b2b-hero b2b-hero-compact" style="text-align:center; max-width:640px; margin:0 auto 40px;">
-        <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:14px;">
-          <span style="height:2px; width:44px; background:var(--gold);"></span>
-          <p class="eyebrow" style="margin:0;">Cotiza para tu empresa</p>
-          <span style="height:2px; width:44px; background:var(--gold);"></span>
-        </div>
-        <h1 style="margin:0 0 12px;">Solicita tu cotización</h1>
-        <p class="b2b-hero-text" style="margin:0;">Selecciona una opción y recibe una cotización personalizada de Mega Safety Chile.</p>
-      </div>
+      <div class="b2b-hero-img-wrap">
+        <img src="assets/img/compra-hero.jpg" alt="Solicita tu cotización — selecciona una opción y recibe una cotización personalizada de Mega Safety Chile." style="width:100%; display:block;">
 
-      <div class="b2b-options b2b-options-compact" style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
-        <button class="b2b-option" data-scroll="#catalogo" style="display:flex; align-items:center; gap:14px; text-align:left; padding:20px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); cursor:pointer;">
-          <div class="b2b-option-icon" style="flex-shrink:0; width:44px; height:44px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🔍</div>
-          <div style="flex:1; min-width:0;">
-            <h3 style="margin:0 0 2px; font-size:1rem;">Buscar productos</h3>
-            <p class="b2b-option-desc" style="margin:0; font-size:0.85rem; color:var(--ink-soft);">Encuentra productos por nombre o marca.</p>
-          </div>
-          <span class="b2b-option-chevron" style="color:var(--ink-soft); font-size:1.2rem;">›</span>
-        </button>
-        <button class="b2b-option" data-scroll="#catalogo" style="display:flex; align-items:center; gap:14px; text-align:left; padding:20px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); cursor:pointer;">
-          <div class="b2b-option-icon" style="flex-shrink:0; width:44px; height:44px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">📂</div>
-          <div style="flex:1; min-width:0;">
-            <h3 style="margin:0 0 2px; font-size:1rem;">Explorar categorías</h3>
-            <p class="b2b-option-desc" style="margin:0; font-size:0.85rem; color:var(--ink-soft);">Navega el catálogo por línea de producto.</p>
-          </div>
-          <span class="b2b-option-chevron" style="color:var(--ink-soft); font-size:1.2rem;">›</span>
-        </button>
-        <button class="b2b-option" id="upload-option-btn" style="display:flex; align-items:center; gap:14px; text-align:left; padding:20px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); cursor:pointer;">
-          <div class="b2b-option-icon" style="flex-shrink:0; width:44px; height:44px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">📎</div>
-          <div style="flex:1; min-width:0;">
-            <h3 style="margin:0 0 2px; font-size:1rem;">Subir listado</h3>
-            <p class="b2b-option-desc" style="margin:0; font-size:0.85rem; color:var(--ink-soft);">Adjunta tu Excel, PDF o imagen con lo que necesitas.</p>
-          </div>
-          <span class="b2b-option-chevron" style="color:var(--ink-soft); font-size:1.2rem;">›</span>
-        </button>
+        <button type="button" data-scroll="#catalogo" class="b2b-hero-hotspot" style="left:3.2%; top:41.7%; width:30.4%; height:15.7%;" aria-label="Buscar productos"></button>
+        <button type="button" data-scroll="#catalogo" class="b2b-hero-hotspot" style="left:34.7%; top:41.7%; width:30.4%; height:15.7%;" aria-label="Explorar categorías"></button>
+        <button type="button" id="upload-option-btn" class="b2b-hero-hotspot" style="left:66.2%; top:41.7%; width:30.3%; height:15.7%;" aria-label="Subir listado"></button>
+        <div id="upload-option-hotspot" class="b2b-hero-hotspot" style="left:4.6%; top:61.4%; width:91.9%; height:38.6%; border-radius:0 0 16px 16px;"></div>
       </div>
-      <style>
-        @media (max-width:760px){
-          .b2b-hero-compact { margin-bottom:16px !important; }
-          .b2b-hero-compact h1 { font-size:1.4rem !important; }
-          .b2b-hero-compact .b2b-hero-text { display:none !important; }
-          .b2b-options-compact { grid-template-columns:repeat(3,1fr) !important; gap:8px !important; }
-          .b2b-options-compact .b2b-option { flex-direction:column !important; align-items:center !important; text-align:center !important; gap:6px !important; padding:10px 6px !important; }
-          .b2b-options-compact .b2b-option-icon { width:32px !important; height:32px !important; font-size:1rem !important; }
-          .b2b-options-compact .b2b-option h3 { font-size:0.72rem !important; line-height:1.2; }
-          .b2b-options-compact .b2b-option-desc,
-          .b2b-options-compact .b2b-option-chevron { display:none !important; }
-        }
-      </style>
 
       <div class="upload-panel" id="upload-panel" hidden>
-        <label for="upload-file">Adjuntar archivo (Excel, PDF o imagen, máx. 5MB)</label>
-        <input type="file" id="upload-file" accept=".xlsx,.xls,.csv,.pdf,image/*">
+        <input type="file" id="upload-file" accept=".xlsx,.xls,.csv,.pdf,image/*" hidden>
+        <div class="upload-file-row" id="upload-file-row" hidden>
+          <span class="upload-file-row-icon">📄</span>
+          <span class="upload-file-row-name" id="upload-file-row-name"></span>
+          <button type="button" class="upload-file-row-remove" id="upload-file-row-remove" aria-label="Quitar archivo">✕</button>
+        </div>
         <p class="upload-hint" id="upload-hint"></p>
-        <button class="btn btn--primary" id="upload-send-btn" type="button" hidden style="margin-top:10px;">Enviar solicitud con este archivo</button>
+        <button class="btn btn--primary" id="upload-send-btn" type="button" hidden style="margin-top:10px;">📨 Enviar solicitud de cotización</button>
       </div>
     </div>
   </section>
@@ -205,9 +168,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="script.js?v=2"></script>
-<script src="account.js?v=2"></script>
-<script src="compra-empresa.js?v=2"></script>
+<script src="script.js?v=3"></script>
+<script src="account.js?v=3"></script>
+<script src="compra-empresa.js?v=3"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

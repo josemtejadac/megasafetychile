@@ -533,10 +533,14 @@ document.getElementById("cart-request-btn").addEventListener("click", () => {
 
 // ---------- Upload listado ----------
 const uploadPanel = document.getElementById("upload-panel");
+const uploadFileInput = document.getElementById("upload-file");
 document.getElementById("upload-option-btn").addEventListener("click", () => {
   uploadPanel.hidden = !uploadPanel.hidden;
+  if (!uploadPanel.hidden) uploadPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
 });
 const uploadSendBtn = document.getElementById("upload-send-btn");
+const uploadFileRow = document.getElementById("upload-file-row");
+const uploadFileRowName = document.getElementById("upload-file-row-name");
 
 // Best-effort, no-cost extraction for spreadsheets: looks for a header row
 // naming a product/description column and a quantity column (falls back to
@@ -585,12 +589,23 @@ function addCustomToCart(name, qty) {
   renderCart();
 }
 
+function showUploadFileRow(filename) {
+  uploadFileRowName.textContent = filename;
+  uploadFileRow.hidden = false;
+}
+function hideUploadFileRow() {
+  uploadFileRow.hidden = true;
+  uploadFileRowName.textContent = "";
+}
+
 async function processUploadedFile(file) {
   const hint = document.getElementById("upload-hint");
+  uploadPanel.hidden = false;
   if (file.size > 5 * 1024 * 1024) {
     hint.textContent = "El archivo supera 5MB. Elige uno más liviano.";
     attachment = null;
     uploadSendBtn.hidden = true;
+    hideUploadFileRow();
     return;
   }
   const base64 = await fileToBase64(file);
@@ -604,6 +619,7 @@ async function processUploadedFile(file) {
         items.forEach((it) => addCustomToCart(it.product_name, it.quantity));
         hint.textContent = `Se detectaron ${items.length} producto(s) en el archivo y se agregaron a tu cotización. Revísalos en "Mi cotización" antes de enviar.`;
         uploadSendBtn.hidden = true;
+        hideUploadFileRow();
         cartPanelCtl.open();
         return;
       }
@@ -613,16 +629,45 @@ async function processUploadedFile(file) {
     }
   }
 
-  hint.textContent = `Adjunto listo: ${file.name}. Si quieres, también puedes seleccionar productos del catálogo antes de enviar.`;
+  showUploadFileRow(file.name);
+  hint.textContent = "Si quieres, también puedes seleccionar productos del catálogo antes de enviar.";
   uploadSendBtn.hidden = false;
 }
 
-document.getElementById("upload-file").addEventListener("change", (e) => {
+uploadFileInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) processUploadedFile(file);
 });
+document.getElementById("upload-file-row-remove").addEventListener("click", () => {
+  attachment = null;
+  uploadFileInput.value = "";
+  hideUploadFileRow();
+  uploadSendBtn.hidden = true;
+  document.getElementById("upload-hint").textContent = "";
+});
 uploadSendBtn.addEventListener("click", () => {
   formPanelCtl.open();
+});
+
+// Hotspot over the drop-zone box in the hero image — click opens the file
+// picker, drag-and-drop works directly on it too.
+const uploadHotspot = document.getElementById("upload-option-hotspot");
+uploadHotspot.addEventListener("click", () => uploadFileInput.click());
+["dragenter", "dragover"].forEach((evt) => {
+  uploadHotspot.addEventListener(evt, (e) => {
+    e.preventDefault();
+    uploadHotspot.classList.add("is-dragover");
+  });
+});
+["dragleave", "drop"].forEach((evt) => {
+  uploadHotspot.addEventListener(evt, (e) => {
+    e.preventDefault();
+    uploadHotspot.classList.remove("is-dragover");
+  });
+});
+uploadHotspot.addEventListener("drop", (e) => {
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file) processUploadedFile(file);
 });
 
 // A file dropped/selected on the home page's "¿Ya tienes tu listado
