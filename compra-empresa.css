@@ -165,7 +165,8 @@
 .detail-doc-buttons .btn { font-size: 0.85rem; padding: 10px 18px; }
 .detail-price { font-size: 0.9rem; color: var(--red); font-weight: 600; margin-bottom: 20px; }
 .detail-price.has-price { color: var(--navy); font-size: 1.3rem; font-weight: 800; font-family: var(--font-head); }
-.detail-actions { display: flex; gap: 10px; align-items: center; }
+.detail-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.detail-actions .add-btn { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
 
 .detail-variant-group { margin-bottom: 18px; }
 .detail-variant-label { display: block; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); margin-bottom: 8px; }
@@ -211,7 +212,9 @@
 }
 .product-price-note { font-size: 0.8rem; color: var(--red); font-weight: 600; }
 .product-price-note.has-price { color: var(--navy); font-size: 1.05rem; font-weight: 800; font-family: var(--font-head); }
-.product-actions { display: flex; align-items: center; gap: 8px; }
+.product-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qty-stepper { flex-shrink: 0; }
+.product-actions .add-btn { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
 .qty-input {
   width: 64px;
   padding: 8px;
