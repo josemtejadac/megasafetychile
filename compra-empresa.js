@@ -193,11 +193,21 @@ function renderGrid() {
         p.price != null ? "$" + Number(p.price).toLocaleString("es-CL") : "Precio empresa según volumen"
       }</p>
       <div class="product-actions">
-        <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad">
+        <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+          <button type="button" class="qty-minus" aria-label="Restar" style="width:32px; height:36px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.1rem; cursor:pointer;">−</button>
+          <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad" style="width:44px; height:36px; border:none; text-align:center; -moz-appearance:textfield;">
+          <button type="button" class="qty-plus" aria-label="Sumar" style="width:32px; height:36px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.1rem; cursor:pointer;">+</button>
+        </div>
         <button class="add-btn" type="button">Agregar a cotización</button>
       </div>
     `;
     const qtyInput = card.querySelector(".qty-input");
+    card.querySelector(".qty-minus").addEventListener("click", () => {
+      qtyInput.value = Math.max(1, (parseInt(qtyInput.value, 10) || 1) - 1);
+    });
+    card.querySelector(".qty-plus").addEventListener("click", () => {
+      qtyInput.value = (parseInt(qtyInput.value, 10) || 1) + 1;
+    });
     const addBtn = card.querySelector(".add-btn");
     addBtn.addEventListener("click", () => {
       const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
@@ -327,7 +337,11 @@ async function openProductDetail(p) {
       p.price != null ? "$" + Number(p.price).toLocaleString("es-CL") : "Precio empresa según volumen"
     }</p>
     <div class="detail-actions">
-      <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad">
+      <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+        <button type="button" class="qty-minus" aria-label="Restar" style="width:36px; height:40px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.2rem; cursor:pointer;">−</button>
+        <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad" style="width:48px; height:40px; border:none; text-align:center;">
+        <button type="button" class="qty-plus" aria-label="Sumar" style="width:36px; height:40px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.2rem; cursor:pointer;">+</button>
+      </div>
       <button class="add-btn" type="button">Agregar a cotización</button>
     </div>
   `;
@@ -335,6 +349,12 @@ async function openProductDetail(p) {
   const stock = currentStock();
   const outOfStock = stock === 0;
   const qtyInput = detailBody.querySelector(".qty-input");
+  detailBody.querySelector(".qty-minus")?.addEventListener("click", () => {
+    qtyInput.value = Math.max(1, (parseInt(qtyInput.value, 10) || 1) - 1);
+  });
+  detailBody.querySelector(".qty-plus")?.addEventListener("click", () => {
+    qtyInput.value = (parseInt(qtyInput.value, 10) || 1) + 1;
+  });
   const addBtn = detailBody.querySelector(".add-btn");
   const stockNote = document.getElementById("variant-stock-note");
   if (stockNote) {
