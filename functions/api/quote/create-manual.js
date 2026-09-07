@@ -1,12 +1,14 @@
 // Staff-only: lets an admin/vendedor register a quote on behalf of a
 // customer who called or wrote in directly (WhatsApp, phone) instead of
-// using the site. Same shape as a customer-submitted RFQ (empresa + items,
-// no prices yet) so it goes through the exact same "revisar y poner precio"
-// flow — the only difference is it's auto-claimed by whoever created it and
-// doesn't trigger the company-notification email (staff already know).
+// using the site. Same shape as a customer-submitted RFQ (empresa + items) —
+// auto-claimed by whoever created it, no company-notification email (staff
+// already know). If every item was given a unit_price, the quote is created
+// already priced (status "cotizada") and the customer gets the priced quote
+// email straight away instead of the unpriced "recibimos tu solicitud" one.
 import { insertQuote, insertQuoteItems } from "../../_lib/supabase.js";
 import { sendManualRfqToCustomer } from "../../_lib/email.js";
-import { buildRfqPdfBase64 } from "../../_lib/quote-pdf.js";
+import { buildRfqPdfBase64, buildQuotePdfBase64 } from "../../_lib/quote-pdf.js";
+import { buildQuoteSentEmailHtml } from "../../_lib/order-email.js";
 
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 
@@ -59,6 +61,16 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
+  const allPriced = items.every((item) => typeof item.unit_price === "number" && item.unit_price > 0);
+  let subtotal = 0;
+  let iva = 0;
+  let total = 0;
+  if (allPriced) {
+    subtotal = items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+    iva = Math.round(subtotal * 0.19);
+    total = subtotal + iva;
+  }
+
   const quotePayload = {
     razon_social: empresa.razon_social,
     rut: empresa.rut,
@@ -71,9 +83,10 @@ export async function onRequestPost({ request, env }) {
     requiere_despacho: Boolean(empresa.requiere_despacho),
     observaciones: empresa.observaciones || null,
     customer_user_id: null,
-    status: "en_proceso",
+    status: allPriced ? "cotizada" : "en_proceso",
     claimed_by: caller.id,
     claimed_at: new Date().toISOString(),
+    ...(allPriced ? { subtotal, iva, total, quoted_at: new Date().toISOString(), quoted_by: caller.id } : {}),
   };
 
   try {
@@ -85,20 +98,38 @@ export async function onRequestPost({ request, env }) {
       brand: item.brand || null,
       quantity: item.quantity,
       variant: item.variant || null,
+      ...(allPriced ? { unit_price: item.unit_price } : {}),
     }));
     await insertQuoteItems(env, itemRows);
 
     let emailResult = { sent: false, reason: "RESEND_API_KEY no configurada" };
+    const origin = new URL(request.url).origin;
     try {
-      const origin = new URL(request.url).origin;
-      const { base64: rfqPdfBase64 } = await buildRfqPdfBase64(quote, itemRows, origin);
-      emailResult = await sendManualRfqToCustomer(env, quote, itemRows, rfqPdfBase64);
+      if (allPriced) {
+        const html = buildQuoteSentEmailHtml(quote, itemRows, origin);
+        const { base64: pdfBase64 } = await buildQuotePdfBase64(quote, itemRows, origin);
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: env.RFQ_FROM_EMAIL || "Mega Safety Chile <cotizaciones@megasafetychile.cl>",
+            to: [quote.correo],
+            subject: `Tu cotización ${quote.correlative_code} está lista`,
+            html,
+            attachments: [{ filename: `${quote.correlative_code}.pdf`, content: pdfBase64 }],
+          }),
+        });
+        emailResult = res.ok ? { sent: true } : { sent: false, reason: `Resend ${res.status}: ${await res.text()}` };
+      } else {
+        const { base64: rfqPdfBase64 } = await buildRfqPdfBase64(quote, itemRows, origin);
+        emailResult = await sendManualRfqToCustomer(env, quote, itemRows, rfqPdfBase64);
+      }
     } catch (err) {
       emailResult = { sent: false, reason: String(err.message || err) };
     }
 
     return new Response(
-      JSON.stringify({ ok: true, correlative_code: quote.correlative_code, email: emailResult }),
+      JSON.stringify({ ok: true, correlative_code: quote.correlative_code, priced: allPriced, email: emailResult }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {

@@ -342,12 +342,15 @@
 
     <div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
       <p style="margin:0 0 8px; font-weight:700; font-size:0.9rem;">Productos solicitados</p>
+      <p class="admin-help" style="margin:0 0 8px;">El precio es opcional. Si le pones precio a todos los productos, la cotización queda lista y enviada de una vez (con "aceptar y pagar" incluido); si dejas alguno sin precio, queda pendiente de cotizar como siempre.</p>
       <div id="manual-quote-items"></div>
+      <p id="manual-quote-total" style="margin:8px 0 0; font-weight:700; color:var(--navy);"></p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
         <input type="text" id="manual-item-name" placeholder="Nombre del producto" list="manual-item-suggestions" style="flex:2; min-width:140px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
         <datalist id="manual-item-suggestions"></datalist>
         <input type="text" id="manual-item-brand" placeholder="Marca (opcional)" style="flex:1; min-width:100px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
         <input type="number" id="manual-item-qty" placeholder="Cant." min="1" value="1" style="width:70px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+        <input type="number" id="manual-item-price" placeholder="Precio unit. (opc.)" min="0" style="width:130px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
         <button type="button" class="btn btn--outline" id="manual-item-add-btn">+ Agregar</button>
         <button type="button" class="btn btn--outline" id="open-product-picker-btn">🔍 Elegir del catálogo</button>
       </div>

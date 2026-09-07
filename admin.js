@@ -1126,9 +1126,12 @@ document.getElementById("new-manual-quote-btn").addEventListener("click", openMa
 document.getElementById("manual-quote-close-btn").addEventListener("click", closeManualQuotePanel);
 manualQuoteOverlay.addEventListener("click", closeManualQuotePanel);
 
+const manualQuoteTotalEl = document.getElementById("manual-quote-total");
+
 function renderManualQuoteItems() {
   if (!manualQuoteItems.length) {
     manualQuoteItemsEl.innerHTML = `<p style="color:var(--ink-soft); font-size:0.85rem; margin:0;">Sin productos agregados todavía.</p>`;
+    manualQuoteTotalEl.textContent = "";
     return;
   }
   manualQuoteItemsEl.innerHTML = manualQuoteItems
@@ -1136,6 +1139,7 @@ function renderManualQuoteItems() {
       (it, idx) => `
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
         <span style="flex:1; font-size:0.88rem;">${it.quantity} x ${it.product_name}${it.brand ? ` (${it.brand})` : ""}</span>
+        <input type="number" min="0" class="manual-item-price-input" data-idx="${idx}" value="${it.unit_price ?? ""}" placeholder="Precio unit." style="width:110px; padding:6px 8px; border:1px solid var(--border); border-radius:6px;">
         <button type="button" class="manual-item-remove" data-idx="${idx}" style="background:none; border:none; color:#b91c1c; font-size:1.1rem; cursor:pointer; padding:0 4px;">✕</button>
       </div>`
     )
@@ -1146,15 +1150,44 @@ function renderManualQuoteItems() {
       renderManualQuoteItems();
     });
   });
+  manualQuoteItemsEl.querySelectorAll(".manual-item-price-input").forEach((input) => {
+    input.addEventListener("input", () => {
+      const val = input.value === "" ? null : Number(input.value);
+      manualQuoteItems[Number(input.dataset.idx)].unit_price = val;
+      updateManualQuoteTotal();
+    });
+  });
+  updateManualQuoteTotal();
+}
+
+function updateManualQuoteTotal() {
+  const allPriced = manualQuoteItems.length > 0 && manualQuoteItems.every((it) => it.unit_price > 0);
+  if (!allPriced) {
+    const anyPriced = manualQuoteItems.some((it) => it.unit_price > 0);
+    manualQuoteTotalEl.textContent = anyPriced
+      ? "Ponle precio a todos los productos para dejar la cotización lista y enviada de una vez."
+      : "";
+    manualQuoteTotalEl.style.color = "var(--ink-soft)";
+    manualQuoteTotalEl.style.fontWeight = "500";
+    return;
+  }
+  const subtotal = manualQuoteItems.reduce((sum, it) => sum + it.unit_price * it.quantity, 0);
+  const iva = Math.round(subtotal * 0.19);
+  const total = subtotal + iva;
+  manualQuoteTotalEl.textContent = `Total: $${total.toLocaleString("es-CL")} (subtotal $${subtotal.toLocaleString("es-CL")} + IVA $${iva.toLocaleString("es-CL")})`;
+  manualQuoteTotalEl.style.color = "var(--navy)";
+  manualQuoteTotalEl.style.fontWeight = "700";
 }
 
 document.getElementById("manual-item-add-btn").addEventListener("click", () => {
   const nameInput = document.getElementById("manual-item-name");
   const brandInput = document.getElementById("manual-item-brand");
   const qtyInput = document.getElementById("manual-item-qty");
+  const priceInput = document.getElementById("manual-item-price");
   const name = nameInput.value.trim();
   const brand = brandInput.value.trim();
   const qty = Number(qtyInput.value) || 1;
+  const price = priceInput.value === "" ? null : Number(priceInput.value);
   if (!name) {
     manualQuoteNote.textContent = "Ingresa el nombre del producto a agregar.";
     manualQuoteNote.className = "form-note is-error";
@@ -1166,10 +1199,12 @@ document.getElementById("manual-item-add-btn").addEventListener("click", () => {
     brand: brand || match?.brand || null,
     quantity: qty,
     category_id: match?.category_id || null,
+    unit_price: price,
   });
   nameInput.value = "";
   brandInput.value = "";
   qtyInput.value = "1";
+  priceInput.value = "";
   manualQuoteNote.textContent = "";
   renderManualQuoteItems();
   nameInput.focus();
@@ -1293,6 +1328,8 @@ manualQuoteForm.addEventListener("submit", async (e) => {
 
     if (!data.email?.sent) {
       alert(`Cotización ${data.correlative_code} creada, pero no se pudo enviar el correo al cliente: ${data.email?.reason || "error desconocido"}`);
+    } else if (data.priced) {
+      alert(`Cotización ${data.correlative_code} creada y enviada al cliente con precio y link de pago.`);
     }
     closeManualQuotePanel();
     loadQuotes();
