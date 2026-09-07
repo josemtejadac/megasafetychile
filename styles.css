@@ -70,6 +70,11 @@ h1, h2, h3 {
   gap: 16px;
   min-height: 76px;
   padding-top: 10px;
+  max-width: none;
+  width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+  box-sizing: border-box;
   padding-bottom: 10px;
 }
 .brand {
