@@ -3,14 +3,6 @@
   const waLink = (text) => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
 
   const SLIDES = [
-    { img: "assets/img/promo/promo-1.jpg", alt: "Pack Básico $45.990", href: waLink("Hola, quiero cotizar el Pack Básico ($45.990 neto): pantalón cargo poplin + overol poplin + zapatos de seguridad Kbeen LI518.") },
-    { img: "assets/img/promo/promo-2.jpg", alt: "Pack Intermedio $53.990", href: waLink("Hola, quiero cotizar el Pack Intermedio ($53.990 neto): pantalón cargo gabardina + overol gabardina + polera piqué + zapatos Kbeen LI-518.") },
-    { img: "assets/img/promo/promo-3.jpg", alt: "Certificaciones de lentes de seguridad", href: "compra-empresa.html?cat=cat-seguridad-industrial&sub=" + encodeURIComponent("Protección visual y facial") },
-    { img: "assets/img/promo/promo-4.jpg", alt: "Guante Cabritilla Combinado $1.070", href: waLink("Hola, quiero cotizar el Guante Cabritilla Combinado ($1.070 neto, compra desde 100 unidades).") },
-    { img: "assets/img/promo/promo-5.jpg", alt: "Botín Impermeable Kbeen $16.990", href: waLink("Hola, quiero cotizar el Botín Impermeable Kbeen ($16.990 neto, compra mínima 10 pares).") },
-    { img: "assets/img/promo/promo-6.jpg", alt: "Parrilla Rodeo $67.990", href: waLink("Hola, quiero cotizar la Parrilla Rodeo 1/2 tambor con tapa ($67.990).") },
-    { img: "assets/img/promo/promo-7.jpg", alt: "Ropa de trabajo Poplín", href: waLink("Hola, quiero cotizar overoles/chalecos línea Poplín para mi equipo de trabajo.") },
-    { img: "assets/img/promo/promo-8.jpg", alt: "Pack Full $69.990", href: waLink("Hola, quiero cotizar el Pack Full ($69.990 neto): pantalón + overol + zapatos + 2 poleras/polerón.") },
     { img: "assets/img/promo/promo-12.jpg", alt: "Todo para tu operación, en un solo lugar", href: "compra-empresa.html" },
     { img: "assets/img/promo/promo-13.jpg", alt: "Abastecimiento para empresas y faenas", href: "compra-empresa.html" },
     { img: "assets/img/promo/promo-14.jpg", alt: "Despachos a toda la RM y regiones", href: "compra-empresa.html" },
