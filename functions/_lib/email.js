@@ -3,7 +3,7 @@ export async function sendQuoteNotification(env, quote, items, attachment) {
 
   const to = env.RFQ_NOTIFY_EMAIL || "contacto@megasafetychile.cl";
   const itemsHtml = items
-    .map((i) => `<li>${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}</li>`)
+    .map((i) => `<li>${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}${i.variant ? ` <strong>[${i.variant}]</strong>` : ""}</li>`)
     .join("");
 
   const html = `

@@ -66,6 +66,7 @@ export async function onRequestPost({ request, env }) {
       product_name: item.product_name,
       brand: item.brand || null,
       quantity: item.quantity,
+      variant: item.variant || null,
     }));
     await insertQuoteItems(env, itemRows);
 

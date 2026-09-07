@@ -107,7 +107,7 @@ export async function buildQuotePdfBase64(quote, items, origin) {
     }
     const unitPrice = item.unit_price || 0;
     const lineTotal = unitPrice * (item.quantity || 0);
-    const name = item.brand ? `${item.product_name} (${item.brand})` : item.product_name;
+    const name = `${item.product_name}${item.brand ? ` (${item.brand})` : ""}${item.variant ? ` [${item.variant}]` : ""}`;
     ops.push({ type: "text", text: truncate(name, 42), x: colDesc, y: y - 10, size: 10, color: navy });
     ops.push({ type: "text", text: String(item.quantity), x: colQty, y: y - 10, size: 10, color: gray });
     ops.push({ type: "text", text: money(unitPrice), x: colUnit, y: y - 10, size: 10, color: gray });

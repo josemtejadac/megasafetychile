@@ -286,6 +286,15 @@
     <label>Orden<input type="number" name="sort_order" value="0"></label>
     <label class="checkbox-row"><input type="checkbox" name="active" checked> Activo (visible en el sitio)</label>
     <label class="checkbox-row"><input type="checkbox" name="is_featured"> Destacar en portada (carrusel "Productos destacados")</label>
+
+    <label>Colores disponibles (separados por coma)<input type="text" name="colors" id="colors-input" placeholder="rojo, azul, amarillo"></label>
+    <label>Tallas disponibles (separadas por coma)<input type="text" name="sizes" id="sizes-input" placeholder="S, M, L, XL"></label>
+    <div id="variants-section" hidden>
+      <p class="admin-help" style="margin:6px 0;">Variantes y stock — deja en 0 el stock de una variante para que el cliente no pueda seleccionarla.</p>
+      <button type="button" class="btn btn--outline" id="generate-variants-btn" style="margin-bottom:10px;">Generar variantes desde colores/tallas</button>
+      <div id="variants-list"></div>
+    </div>
+
     <p class="form-note" id="product-note"></p>
     <div class="form-row">
       <button type="submit" class="btn btn--primary">Guardar</button>

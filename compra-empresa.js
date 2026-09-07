@@ -227,33 +227,74 @@ const COLOR_HEX = {
   "ámbar": "#f59e0b", celeste: "#7dd3fc", morado: "#7c3aed", rosado: "#f9a8d4", plomo: "#6b7280",
 };
 
-function openProductDetail(p) {
+async function openProductDetail(p) {
+  const hasColors = p.colors && p.colors.length;
+  const hasSizes = p.sizes && p.sizes.length;
+  let variants = [];
+  if (hasColors || hasSizes) {
+    const { data } = await sbClient.from("megasafety_product_variants").select("*").eq("product_id", p.id);
+    variants = data || [];
+  }
+
+  // Stock lookup: exact color+size match when both dimensions exist,
+  // otherwise whichever single dimension is in play.
+  function stockFor(color, size) {
+    const match = variants.find((v) => (v.color || null) === (color || null) && (v.size || null) === (size || null));
+    return match ? match.stock : null; // null = no variant row (no stock rule defined)
+  }
+  // A color is selectable if it has stock in at least one size (or alone, if no sizes).
+  function colorHasStock(color) {
+    if (!hasSizes) return stockFor(color, null) !== 0;
+    return p.sizes.some((s) => stockFor(color, s) !== 0);
+  }
+  function sizeHasStock(size, color) {
+    if (!hasColors) return stockFor(null, size) !== 0;
+    return stockFor(color || null, size) !== 0;
+  }
+
+  let selectedColor = hasColors ? p.colors.find((c) => colorHasStock(c)) || p.colors[0] : null;
+  let selectedSize = hasSizes ? p.sizes.find((s) => sizeHasStock(s, selectedColor)) || p.sizes[0] : null;
+
+  function currentStock() {
+    if (!hasColors && !hasSizes) return null; // no variant system on this product
+    return stockFor(selectedColor, selectedSize);
+  }
+
+  function render() {
   const variantsHtml = `
     ${
-      p.colors && p.colors.length
+      hasColors
         ? `<div class="detail-variant-group">
-             <span class="detail-variant-label">Colores disponibles</span>
-             <div class="detail-swatches">
+             <span class="detail-variant-label">Color</span>
+             <div class="detail-swatches" id="color-swatches">
                ${p.colors
-                 .map(
-                   (c) =>
-                     `<span class="swatch" style="background:${COLOR_HEX[c] || "#ccc"}; ${
-                       COLOR_HEX[c] === "#ffffff" ? "border:1px solid var(--border);" : ""
-                     }" title="${c}"></span>`
-                 )
+                 .map((c) => {
+                   const disabled = !colorHasStock(c);
+                   return `<button type="button" class="swatch${c === selectedColor ? " is-selected" : ""}" data-color="${c}" ${disabled ? "disabled" : ""} style="background:${COLOR_HEX[c] || "#ccc"}; ${
+                     COLOR_HEX[c] === "#ffffff" ? "border:1px solid var(--border);" : ""
+                   } ${disabled ? "opacity:0.3; cursor:not-allowed;" : "cursor:pointer;"}" title="${c}${disabled ? " (agotado)" : ""}"></button>`;
+                 })
                  .join("")}
              </div>
            </div>`
         : ""
     }
     ${
-      p.sizes && p.sizes.length
+      hasSizes
         ? `<div class="detail-variant-group">
-             <span class="detail-variant-label">Tallas disponibles</span>
-             <div class="detail-size-chips">${p.sizes.map((s) => `<span class="size-chip">${s}</span>`).join("")}</div>
+             <span class="detail-variant-label">Talla</span>
+             <div class="detail-size-chips" id="size-chips">
+               ${p.sizes
+                 .map((s) => {
+                   const disabled = !sizeHasStock(s, selectedColor);
+                   return `<button type="button" class="size-chip${s === selectedSize ? " is-selected" : ""}" data-size="${s}" ${disabled ? "disabled" : ""} style="${disabled ? "opacity:0.35; cursor:not-allowed; text-decoration:line-through;" : "cursor:pointer;"}">${s}</button>`;
+                 })
+                 .join("")}
+             </div>
            </div>`
         : ""
     }
+    ${(hasColors || hasSizes) ? `<p class="form-note" id="variant-stock-note" style="margin:4px 0 0;"></p>` : ""}
   `;
 
   detailBody.innerHTML = `
@@ -290,11 +331,45 @@ function openProductDetail(p) {
       <button class="add-btn" type="button">Agregar a cotización</button>
     </div>
   `;
+
+  const stock = currentStock();
+  const outOfStock = stock === 0;
   const qtyInput = detailBody.querySelector(".qty-input");
   const addBtn = detailBody.querySelector(".add-btn");
+  const stockNote = document.getElementById("variant-stock-note");
+  if (stockNote) {
+    if (outOfStock) {
+      stockNote.textContent = "Sin stock para la combinación seleccionada.";
+      stockNote.className = "form-note is-error";
+    } else {
+      stockNote.textContent = "";
+    }
+  }
+  if (outOfStock) {
+    addBtn.disabled = true;
+    addBtn.textContent = "Agotado";
+  }
+
+  detailBody.querySelectorAll("#color-swatches .swatch").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedColor = btn.dataset.color;
+      if (hasSizes && !sizeHasStock(selectedSize, selectedColor)) {
+        selectedSize = p.sizes.find((s) => sizeHasStock(s, selectedColor)) || selectedSize;
+      }
+      render();
+    });
+  });
+  detailBody.querySelectorAll("#size-chips .size-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedSize = btn.dataset.size;
+      render();
+    });
+  });
+
   addBtn.addEventListener("click", () => {
     const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
-    addToCart(p, qty);
+    const variantText = [selectedColor, selectedSize].filter(Boolean).join(" / ") || null;
+    addToCart(p, qty, variantText);
     addBtn.textContent = "Agregado ✓";
     addBtn.classList.add("is-added");
     setTimeout(() => {
@@ -302,6 +377,9 @@ function openProductDetail(p) {
       addBtn.classList.remove("is-added");
     }, 1200);
   });
+  }
+
+  render();
 
   detailPanel.classList.add("is-open");
   detailOverlay.classList.add("is-open");
@@ -333,16 +411,20 @@ document.querySelectorAll("[data-scroll]").forEach((btn) => {
 });
 
 // ---------- Cart logic ----------
-function addToCart(product, qty) {
-  const existing = cart.find((i) => i.id === product.id);
+function addToCart(product, qty, variant) {
+  // Same product with a different color/talla is a separate line item.
+  const lineId = variant ? `${product.id}::${variant}` : product.id;
+  const existing = cart.find((i) => i.lineId === lineId);
   if (existing) {
     existing.quantity += qty;
   } else {
     cart.push({
       id: product.id,
+      lineId,
       category_id: product.category_id,
       product_name: product.name,
       brand: product.brand,
+      variant: variant || null,
       quantity: qty,
     });
   }
@@ -350,14 +432,14 @@ function addToCart(product, qty) {
   renderCart();
 }
 
-function removeFromCart(id) {
-  cart = cart.filter((i) => i.id !== id);
+function removeFromCart(lineId) {
+  cart = cart.filter((i) => i.lineId !== lineId);
   saveCart(cart);
   renderCart();
 }
 
-function changeQty(id, qty) {
-  const item = cart.find((i) => i.id === id);
+function changeQty(lineId, qty) {
+  const item = cart.find((i) => i.lineId === lineId);
   if (item) item.quantity = Math.max(1, qty);
   saveCart(cart);
   renderCart();
@@ -380,16 +462,16 @@ function renderCart() {
     row.className = "cart-item";
     row.innerHTML = `
       <div class="cart-item-info">
-        <p class="cart-item-name">${item.product_name}</p>
+        <p class="cart-item-name">${item.product_name}${item.variant ? ` <span style="color:var(--ink-soft); font-weight:600;">(${item.variant})</span>` : ""}</p>
         <p class="cart-item-brand">${item.brand || ""} · ${CAT_LABEL[item.category_id] || ""}</p>
       </div>
       <input type="number" class="cart-item-qty" min="1" value="${item.quantity}">
       <button class="cart-item-remove" aria-label="Eliminar">&times;</button>
     `;
     row.querySelector(".cart-item-qty").addEventListener("change", (e) => {
-      changeQty(item.id, parseInt(e.target.value, 10) || 1);
+      changeQty(item.lineId, parseInt(e.target.value, 10) || 1);
     });
-    row.querySelector(".cart-item-remove").addEventListener("click", () => removeFromCart(item.id));
+    row.querySelector(".cart-item-remove").addEventListener("click", () => removeFromCart(item.lineId));
     cartItemsEl.appendChild(row);
   });
 }

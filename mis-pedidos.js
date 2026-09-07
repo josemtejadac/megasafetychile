@@ -88,7 +88,7 @@ async function loadOrders() {
     const priced = q.status === "cotizada" || q.status === "pagada";
     const itemsHtml = items
       .map((it) => {
-        const name = `${it.quantity} x ${it.product_name}${it.brand ? ` (${it.brand})` : ""}`;
+        const name = `${it.quantity} x ${it.product_name}${it.brand ? ` (${it.brand})` : ""}${it.variant ? ` [${it.variant}]` : ""}`;
         if (priced) {
           const subtotal = (it.quantity || 0) * (it.unit_price || 0);
           return `<li>${name} — $${subtotal.toLocaleString("es-CL")}</li>`;

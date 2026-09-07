@@ -74,7 +74,7 @@ export function buildQuoteSentEmailHtml(quote, items, origin) {
   const itemsHtml = items
     .map((i) => {
       const subtotal = (i.quantity || 0) * (i.unit_price || 0);
-      const name = i.brand ? `${i.product_name} (${i.brand})` : i.product_name;
+      const name = `${i.product_name}${i.brand ? ` (${i.brand})` : ""}${i.variant ? ` [${i.variant}]` : ""}`;
       return `<tr>
           <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#10141c;">${name}</td>
           <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#4a5468;text-align:center;">${i.quantity}</td>
@@ -129,7 +129,7 @@ export function buildQuotePaidEmailHtml(quote, items, origin) {
   const itemsHtml = items
     .map((i) => {
       const subtotal = (i.quantity || 0) * (i.unit_price || 0);
-      const name = i.brand ? `${i.product_name} (${i.brand})` : i.product_name;
+      const name = `${i.product_name}${i.brand ? ` (${i.brand})` : ""}${i.variant ? ` [${i.variant}]` : ""}`;
       return `<tr>
           <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#10141c;">${name}</td>
           <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#4a5468;text-align:center;">${i.quantity}</td>

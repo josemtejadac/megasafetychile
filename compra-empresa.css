@@ -170,16 +170,20 @@
 .detail-variant-group { margin-bottom: 18px; }
 .detail-variant-label { display: block; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); margin-bottom: 8px; }
 .detail-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
-.swatch { width: 26px; height: 26px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--border); }
+.swatch { width: 28px; height: 28px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--border); padding: 0; }
+.swatch.is-selected { box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--navy); transform: scale(1.1); }
 .detail-size-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .size-chip {
+  background: #fff;
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 5px 10px;
   font-size: 0.8rem;
   font-weight: 600;
+  font-family: inherit;
   color: var(--navy);
 }
+.size-chip.is-selected { border-color: var(--navy); background: var(--navy); color: #fff; }
 .product-thumb {
   width: 100%;
   aspect-ratio: 4/3;
@@ -228,6 +232,7 @@
 }
 .add-btn:hover { background: var(--gold-dark); }
 .add-btn.is-added { background: #25d366; color: #fff; }
+.add-btn:disabled { background: var(--bg-alt); color: var(--ink-soft); cursor: not-allowed; }
 
 .empty-state { text-align: center; color: var(--ink-soft); padding: 40px 0; }
 

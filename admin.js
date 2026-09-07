@@ -479,6 +479,85 @@ async function uploadDocument(file, docType) {
 fichaInput.addEventListener("change", (e) => uploadDocument(e.target.files[0], "ficha_tecnica"));
 ispInput.addEventListener("change", (e) => uploadDocument(e.target.files[0], "registro_isp"));
 
+// ---------- Variants (color/talla) + per-variant stock ----------
+const variantsListEl = document.getElementById("variants-list");
+
+async function loadVariants(productId) {
+  const { data, error } = await sbClient
+    .from("megasafety_product_variants")
+    .select("*")
+    .eq("product_id", productId)
+    .order("color", { ascending: true })
+    .order("size", { ascending: true });
+  if (error) {
+    variantsListEl.innerHTML = `<p class="form-note is-error">Error cargando variantes: ${error.message}</p>`;
+    return;
+  }
+  renderVariants(productId, data || []);
+}
+
+function renderVariants(productId, variants) {
+  if (!variants.length) {
+    variantsListEl.innerHTML = `<p style="color:var(--ink-soft); font-size:0.85rem;">Sin variantes todavía. Completa colores/tallas arriba y usa "Generar variantes".</p>`;
+    return;
+  }
+  variantsListEl.innerHTML = variants
+    .map(
+      (v) => `
+      <div class="price-row" style="display:flex; align-items:center; gap:10px; margin-bottom:6px;" data-variant-id="${v.id}">
+        <span style="flex:1; font-size:0.88rem;">${[v.color, v.size].filter(Boolean).join(" / ") || "(sin color/talla)"}</span>
+        <input type="number" min="0" class="variant-stock-input" data-variant-id="${v.id}" value="${v.stock}" style="width:90px;" title="Stock (0 = agotado, no seleccionable)">
+        <button type="button" class="variant-remove-btn" data-variant-id="${v.id}" style="background:none; border:none; color:#b91c1c; font-size:1.1rem; cursor:pointer; padding:0 4px;">✕</button>
+      </div>`
+    )
+    .join("");
+
+  variantsListEl.querySelectorAll(".variant-stock-input").forEach((input) => {
+    input.addEventListener("change", async () => {
+      await sbClient
+        .from("megasafety_product_variants")
+        .update({ stock: Number(input.value) || 0 })
+        .eq("id", input.dataset.variantId);
+    });
+  });
+  variantsListEl.querySelectorAll(".variant-remove-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await sbClient.from("megasafety_product_variants").delete().eq("id", btn.dataset.variantId);
+      loadVariants(productId);
+    });
+  });
+}
+
+document.getElementById("generate-variants-btn").addEventListener("click", async () => {
+  const productId = productForm.elements.id.value;
+  if (!productId) return;
+  const colors = productForm.elements.colors.value.split(",").map((c) => c.trim()).filter(Boolean);
+  const sizes = productForm.elements.sizes.value.split(",").map((s) => s.trim()).filter(Boolean);
+  if (!colors.length && !sizes.length) {
+    productNote.textContent = "Completa al menos colores o tallas antes de generar variantes.";
+    productNote.className = "form-note is-error";
+    return;
+  }
+  const combos = [];
+  if (colors.length && sizes.length) {
+    colors.forEach((c) => sizes.forEach((s) => combos.push({ color: c, size: s })));
+  } else if (colors.length) {
+    colors.forEach((c) => combos.push({ color: c, size: null }));
+  } else {
+    sizes.forEach((s) => combos.push({ color: null, size: s }));
+  }
+  const rows = combos.map((c) => ({ product_id: productId, color: c.color, size: c.size, stock: 100 }));
+  const { error } = await sbClient
+    .from("megasafety_product_variants")
+    .upsert(rows, { onConflict: "product_id,color,size", ignoreDuplicates: true });
+  if (error) {
+    productNote.textContent = "Error generando variantes: " + error.message;
+    productNote.className = "form-note is-error";
+    return;
+  }
+  loadVariants(productId);
+});
+
 document.getElementById("new-product-btn").addEventListener("click", () => {
   productForm.reset();
   productForm.elements.id.value = "";
@@ -491,6 +570,7 @@ document.getElementById("new-product-btn").addEventListener("click", () => {
   setDocLink(fichaLink, fichaRemoveBtn, null);
   setDocLink(ispLink, ispRemoveBtn, null);
   docHint.textContent = "";
+  document.getElementById("variants-section").hidden = true;
   populateSubcategoryOptions(productForm.elements.category_id.value, "");
   openProductPanel();
 });
@@ -516,6 +596,10 @@ function openProductForm(p) {
   setDocLink(fichaLink, fichaRemoveBtn, p.ficha_tecnica_url);
   setDocLink(ispLink, ispRemoveBtn, p.registro_isp_url);
   docHint.textContent = "";
+  productForm.elements.colors.value = (p.colors || []).join(", ");
+  productForm.elements.sizes.value = (p.sizes || []).join(", ");
+  document.getElementById("variants-section").hidden = false;
+  loadVariants(p.id);
   productNote.textContent = "";
   openProductPanel();
 }
@@ -542,19 +626,29 @@ productForm.addEventListener("submit", async (e) => {
     sort_order: Number(fd.get("sort_order")) || 0,
     active: fd.get("active") === "on",
     is_featured: fd.get("is_featured") === "on",
+    colors: (fd.get("colors") || "").split(",").map((c) => c.trim()).filter(Boolean),
+    sizes: (fd.get("sizes") || "").split(",").map((s) => s.trim()).filter(Boolean),
   };
 
   productNote.textContent = "Guardando...";
   productNote.className = "form-note is-loading";
 
   const query = id
-    ? sbClient.from("megasafety_products").update(payload).eq("id", id)
-    : sbClient.from("megasafety_products").insert(payload);
+    ? sbClient.from("megasafety_products").update(payload).eq("id", id).select().single()
+    : sbClient.from("megasafety_products").insert(payload).select().single();
 
-  const { error } = await query;
+  const { data: saved, error } = await query;
   if (error) {
     productNote.textContent = "Error: " + error.message;
     productNote.className = "form-note is-error";
+    return;
+  }
+  if (!id) {
+    // Brand-new product: reopen it (now with an id) so colors/tallas can be
+    // used to generate variants right away instead of needing a second save.
+    await loadProducts();
+    openProductForm(saved);
+    productNote.textContent = "Producto creado. Ya puedes subir foto, documentos y generar variantes.";
     return;
   }
   closeProductPanel();
@@ -692,7 +786,7 @@ function openQuoteDetail(q) {
     .map(
       (i) => `
       <div class="price-row" style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-        <span style="flex:1; font-size:0.88rem;">${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}</span>
+        <span style="flex:1; font-size:0.88rem;">${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}${i.variant ? ` <strong>[${i.variant}]</strong>` : ""}</span>
         <input type="number" min="0" class="item-price-input" data-item-id="${i.id}" data-qty="${i.quantity}" value="${i.unit_price || ""}" placeholder="Precio unit." style="width:120px;" ${!canPrice ? "disabled" : ""}>
         ${canPrice ? `<button type="button" class="remove-item-btn" data-item-id="${i.id}" title="Quitar producto" style="background:none; border:none; color:#b91c1c; font-size:1.1rem; cursor:pointer; padding:0 4px;">✕</button>` : ""}
       </div>`
