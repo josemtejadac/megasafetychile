@@ -131,7 +131,10 @@
           <h1>Cotizaciones</h1>
           <p class="admin-subtitle">Solicitudes que llegan desde el sitio — tómalas y regístralas al vender <span id="live-indicator" style="color:#15803d;">● en vivo</span></p>
         </div>
-        <button class="btn btn--outline" id="refresh-quotes-btn" type="button">↻ Actualizar</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn--primary" id="new-manual-quote-btn" type="button">+ Cotización manual</button>
+          <button class="btn btn--outline" id="refresh-quotes-btn" type="button">↻ Actualizar</button>
+        </div>
       </div>
 
       <div class="admin-stats" id="quotes-stats">
@@ -311,6 +314,47 @@
     <button class="cat-menu-close" id="quote-close-btn" aria-label="Cerrar">&times;</button>
   </div>
   <div id="quote-panel-body" class="quote-detail-body"></div>
+</aside>
+
+<!-- Manual quote creation drawer (phone / WhatsApp orders) -->
+<div class="cat-menu-overlay" id="manual-quote-overlay"></div>
+<aside class="cart-panel form-panel" id="manual-quote-panel" aria-hidden="true">
+  <div class="cat-menu-head">
+    <h3>Nueva cotización manual</h3>
+    <button class="cat-menu-close" id="manual-quote-close-btn" aria-label="Cerrar">&times;</button>
+  </div>
+  <form id="manual-quote-form" class="quote-form">
+    <p class="admin-help" style="margin:0 0 10px;">Para clientes que piden por teléfono o WhatsApp. Queda igual que una solicitud normal: sin precio hasta que la cotices.</p>
+    <label>Razón social *<input type="text" name="razon_social" required></label>
+    <label>RUT *<input type="text" name="rut" required></label>
+    <label>Nombre de contacto *<input type="text" name="nombre_contacto" required></label>
+    <div class="form-row">
+      <label>Teléfono *<input type="text" name="telefono" required></label>
+      <label>Correo *<input type="email" name="correo" required></label>
+    </div>
+    <label>Dirección<input type="text" name="direccion"></label>
+    <div class="form-row">
+      <label>Comuna<input type="text" name="comuna"></label>
+      <label>Región<input type="text" name="region"></label>
+    </div>
+    <label class="checkbox-row"><input type="checkbox" name="requiere_despacho"> Requiere despacho</label>
+    <label>Observaciones<textarea name="observaciones" rows="2"></textarea></label>
+
+    <div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
+      <p style="margin:0 0 8px; font-weight:700; font-size:0.9rem;">Productos solicitados</p>
+      <div id="manual-quote-items"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+        <input type="text" id="manual-item-name" placeholder="Nombre del producto" list="manual-item-suggestions" style="flex:2; min-width:140px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+        <datalist id="manual-item-suggestions"></datalist>
+        <input type="text" id="manual-item-brand" placeholder="Marca (opcional)" style="flex:1; min-width:100px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+        <input type="number" id="manual-item-qty" placeholder="Cant." min="1" value="1" style="width:70px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+        <button type="button" class="btn btn--outline" id="manual-item-add-btn">+ Agregar</button>
+      </div>
+    </div>
+
+    <p class="form-note" id="manual-quote-note"></p>
+    <button type="submit" class="btn btn--primary" style="margin-top:14px;">Crear cotización</button>
+  </form>
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

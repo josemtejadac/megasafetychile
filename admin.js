@@ -1095,6 +1095,132 @@ function openQuoteDetail(q) {
   openQuotePanel();
 }
 
+// ---------- Cotización manual (pedidos por teléfono / WhatsApp) ----------
+const manualQuotePanel = document.getElementById("manual-quote-panel");
+const manualQuoteOverlay = document.getElementById("manual-quote-overlay");
+const manualQuoteForm = document.getElementById("manual-quote-form");
+const manualQuoteNote = document.getElementById("manual-quote-note");
+const manualQuoteItemsEl = document.getElementById("manual-quote-items");
+let manualQuoteItems = [];
+
+function openManualQuotePanel() {
+  manualQuoteItems = [];
+  renderManualQuoteItems();
+  manualQuoteForm.reset();
+  manualQuoteNote.textContent = "";
+  if (allProducts.length === 0) loadProducts();
+  const suggestions = document.getElementById("manual-item-suggestions");
+  suggestions.innerHTML = allProducts.map((p) => `<option value="${p.name}">`).join("");
+  manualQuotePanel.classList.add("is-open");
+  manualQuoteOverlay.classList.add("is-open");
+  manualQuotePanel.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeManualQuotePanel() {
+  manualQuotePanel.classList.remove("is-open");
+  manualQuoteOverlay.classList.remove("is-open");
+  manualQuotePanel.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+document.getElementById("new-manual-quote-btn").addEventListener("click", openManualQuotePanel);
+document.getElementById("manual-quote-close-btn").addEventListener("click", closeManualQuotePanel);
+manualQuoteOverlay.addEventListener("click", closeManualQuotePanel);
+
+function renderManualQuoteItems() {
+  if (!manualQuoteItems.length) {
+    manualQuoteItemsEl.innerHTML = `<p style="color:var(--ink-soft); font-size:0.85rem; margin:0;">Sin productos agregados todavía.</p>`;
+    return;
+  }
+  manualQuoteItemsEl.innerHTML = manualQuoteItems
+    .map(
+      (it, idx) => `
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="flex:1; font-size:0.88rem;">${it.quantity} x ${it.product_name}${it.brand ? ` (${it.brand})` : ""}</span>
+        <button type="button" class="manual-item-remove" data-idx="${idx}" style="background:none; border:none; color:#b91c1c; font-size:1.1rem; cursor:pointer; padding:0 4px;">✕</button>
+      </div>`
+    )
+    .join("");
+  manualQuoteItemsEl.querySelectorAll(".manual-item-remove").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      manualQuoteItems.splice(Number(btn.dataset.idx), 1);
+      renderManualQuoteItems();
+    });
+  });
+}
+
+document.getElementById("manual-item-add-btn").addEventListener("click", () => {
+  const nameInput = document.getElementById("manual-item-name");
+  const brandInput = document.getElementById("manual-item-brand");
+  const qtyInput = document.getElementById("manual-item-qty");
+  const name = nameInput.value.trim();
+  const brand = brandInput.value.trim();
+  const qty = Number(qtyInput.value) || 1;
+  if (!name) {
+    manualQuoteNote.textContent = "Ingresa el nombre del producto a agregar.";
+    manualQuoteNote.className = "form-note is-error";
+    return;
+  }
+  const match = allProducts.find((p) => p.name.toLowerCase() === name.toLowerCase());
+  manualQuoteItems.push({
+    product_name: name,
+    brand: brand || match?.brand || null,
+    quantity: qty,
+    category_id: match?.category_id || null,
+  });
+  nameInput.value = "";
+  brandInput.value = "";
+  qtyInput.value = "1";
+  manualQuoteNote.textContent = "";
+  renderManualQuoteItems();
+  nameInput.focus();
+});
+
+manualQuoteForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!manualQuoteItems.length) {
+    manualQuoteNote.textContent = "Agrega al menos un producto.";
+    manualQuoteNote.className = "form-note is-error";
+    return;
+  }
+  const fd = new FormData(manualQuoteForm);
+  const empresa = {
+    razon_social: fd.get("razon_social"),
+    rut: fd.get("rut"),
+    nombre_contacto: fd.get("nombre_contacto"),
+    telefono: fd.get("telefono"),
+    correo: fd.get("correo"),
+    direccion: fd.get("direccion"),
+    comuna: fd.get("comuna"),
+    region: fd.get("region"),
+    requiere_despacho: fd.get("requiere_despacho") === "on",
+    observaciones: fd.get("observaciones"),
+  };
+
+  const submitBtn = manualQuoteForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  manualQuoteNote.textContent = "Creando cotización...";
+  manualQuoteNote.className = "form-note is-loading";
+
+  try {
+    const token = await getFreshAccessToken();
+    const res = await fetch("/api/quote/create-manual", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ empresa, items: manualQuoteItems }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "No se pudo crear la cotización.");
+
+    closeManualQuotePanel();
+    loadQuotes();
+  } catch (err) {
+    manualQuoteNote.textContent = err.message || "No se pudo crear la cotización.";
+    manualQuoteNote.className = "form-note is-error";
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
 // ---------- Equipo (solo admin) ----------
 const staffTbody = document.getElementById("staff-tbody");
 const staffForm = document.getElementById("staff-form");
