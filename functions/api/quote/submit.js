@@ -107,9 +107,9 @@ export async function onRequestPost({ request, env }) {
       }
     }
 
+    const origin = new URL(request.url).origin;
     let rfqPdfBase64 = null;
     try {
-      const origin = new URL(request.url).origin;
       const { base64 } = await buildRfqPdfBase64(quote, itemRows, origin);
       rfqPdfBase64 = base64;
     } catch {

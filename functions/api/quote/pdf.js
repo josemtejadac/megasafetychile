@@ -1,6 +1,6 @@
 // Downloads a quote as PDF. Allowed for: staff/admin (any quote), or the
 // customer who owns the quote (their own only).
-import { buildQuotePdfBase64 } from "../../_lib/quote-pdf.js";
+import { buildQuotePdfBase64, buildRfqPdfBase64 } from "../../_lib/quote-pdf.js";
 
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 
@@ -59,7 +59,10 @@ export async function onRequestGet({ request, env }) {
   const items = await itemsRes.json();
 
   const origin = new URL(request.url).origin;
-  const { bytes } = await buildQuotePdfBase64(quote, items, origin);
+  const priced = quote.status === "cotizada" || quote.status === "pagada";
+  const { bytes } = priced
+    ? await buildQuotePdfBase64(quote, items, origin)
+    : await buildRfqPdfBase64(quote, items, origin);
 
   return new Response(bytes, {
     status: 200,
