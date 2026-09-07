@@ -85,9 +85,9 @@ export async function buildQuotePdfBase64(quote, items, origin) {
   // --- Header row: COTIZACIÓN (left) / ID + fecha (right) ---
   ops.push({ type: "text", text: "COTIZACIÓN", x: marginX, y: 748, size: 22, bold: true, color: navy });
   const dateStr = new Date(quote.quoted_at || quote.created_at).toLocaleDateString("es-CL");
-  ops.push({ type: "text", text: "ID único", x: 430, y: 754, size: 9, bold: true, color: gray });
-  ops.push({ type: "text", text: quote.correlative_code, x: 470, y: 754, size: 9, color: navy });
-  ops.push({ type: "text", text: dateStr, x: rightX - dateStr.length * 5.2, y: 754, size: 9, color: gray });
+  ops.push({ type: "text", text: "ID único", x: 430, y: 758, size: 8, bold: true, color: gray });
+  ops.push({ type: "text", text: quote.correlative_code, x: 430, y: 746, size: 10, bold: true, color: navy });
+  ops.push({ type: "text", text: dateStr, x: 430, y: 734, size: 9, color: gray });
 
   // --- Logo + company info block ---
   const logoW = 120;
@@ -260,9 +260,9 @@ export async function buildRfqPdfBase64(quote, items, origin) {
 
   ops.push({ type: "text", text: "SOLICITUD DE COTIZACIÓN", x: marginX, y: 748, size: 20, bold: true, color: navy });
   const dateStr = new Date(quote.created_at || Date.now()).toLocaleDateString("es-CL");
-  ops.push({ type: "text", text: "ID único", x: 430, y: 754, size: 9, bold: true, color: gray });
-  ops.push({ type: "text", text: quote.correlative_code, x: 470, y: 754, size: 9, color: navy });
-  ops.push({ type: "text", text: dateStr, x: rightX - dateStr.length * 5.2, y: 754, size: 9, color: gray });
+  ops.push({ type: "text", text: "ID único", x: 430, y: 758, size: 8, bold: true, color: gray });
+  ops.push({ type: "text", text: quote.correlative_code, x: 430, y: 746, size: 10, bold: true, color: navy });
+  ops.push({ type: "text", text: dateStr, x: 430, y: 734, size: 9, color: gray });
 
   const logoW = 120;
   const logoH = 45;
