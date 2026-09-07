@@ -70,8 +70,9 @@ h1, h2, h3 {
   gap: 16px;
   min-height: 76px;
   padding-top: 10px;
-  max-width: none;
+  max-width: 1600px;
   width: 100%;
+  margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;
   box-sizing: border-box;
