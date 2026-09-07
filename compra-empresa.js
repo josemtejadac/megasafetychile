@@ -603,3 +603,10 @@ form.addEventListener("submit", async (e) => {
 
 loadProducts();
 renderCart();
+
+// Arriving from a "Cotizar" button elsewhere on the site (e.g. the
+// featured-products carousel) that just added an item to this same cart —
+// open the cart panel so the customer sees it landed and can continue.
+if (new URLSearchParams(window.location.search).get("added") === "1") {
+  cartPanelCtl.open();
+}
