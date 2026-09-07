@@ -85,64 +85,12 @@
     }
   </style>
 
-  <section class="upload-banner">
-    <div class="upload-banner-stripes upload-banner-stripes--left" aria-hidden="true"></div>
-    <div class="upload-banner-stripes upload-banner-stripes--right" aria-hidden="true"></div>
-    <div class="container upload-banner-inner">
-      <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:18px;">
-        <span style="height:2px; width:44px; background:var(--gold);"></span>
-        <p class="eyebrow" style="margin:0;">Cotiza en 1 paso</p>
-        <span style="height:2px; width:44px; background:var(--gold);"></span>
-      </div>
-
-      <div class="upload-banner-grid">
-        <div class="upload-banner-perks">
-          <div class="upload-perk">
-            <span class="upload-perk-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><path d="M9 2h6a2 2 0 0 1 2 2v16l-5-3-5 3V4a2 2 0 0 1 2-2Z"/></svg></span>
-            <span>Cotización<br>rápida</span>
-          </div>
-          <div class="upload-perk">
-            <span class="upload-perk-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2 3 6v6c0 5 3.8 9 9 10 5.2-1 9-5 9-10V6l-9-4Z"/><path d="m9 12 2 2 4-4"/></svg></span>
-            <span>Asesoría<br>personalizada</span>
-          </div>
-          <div class="upload-perk">
-            <span class="upload-perk-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></span>
-            <span>Especialistas en seguridad<br>e insumos industriales</span>
-          </div>
-        </div>
-
-        <div class="upload-banner-main">
-          <h2 class="upload-banner-title">¿Ya tienes <span>tu listado armado?</span></h2>
-          <p class="upload-banner-sub">Súbelo aquí y te cotizamos rápidamente.</p>
-
-          <div id="home-dropzone" class="upload-dropzone" role="button" tabindex="0" aria-label="Subir listado de productos">
-            <input type="file" id="home-upload-input" accept=".xlsx,.xls,.csv,.pdf,image/*" hidden>
-            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#fff" stroke-width="1.8" style="margin-bottom:8px;"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-            <p class="upload-dropzone-title">ARRASTRA TU ARCHIVO AQUÍ</p>
-            <p class="upload-dropzone-sub">o haz clic para seleccionar</p>
-            <div class="upload-filetypes">
-              <span class="upload-filetype"><strong style="color:#1d6f42;">X</strong> Excel</span>
-              <span class="upload-filetype"><strong style="color:#c0392b;">▤</strong> PDF</span>
-              <span class="upload-filetype"><strong style="color:#4a5468;">▨</strong> JPG / PNG</span>
-            </div>
-            <p class="upload-dropzone-status" id="home-upload-status"></p>
-          </div>
-        </div>
-      </div>
-
-      <div class="upload-banner-footer">
-        <div class="upload-footer-item">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--navy)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-          Te respondemos en el menor tiempo
-        </div>
-        <div class="upload-footer-item">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--navy)" stroke-width="2"><path d="M9 2h6a2 2 0 0 1 2 2v16l-5-3-5 3V4a2 2 0 0 1 2-2Z"/></svg>
-          Cotización a tu medida
-        </div>
-        <div class="upload-footer-item">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--navy)" stroke-width="2"><path d="m11 17-4-4 1.4-1.4L11 14.2l6.6-6.6L19 9l-8 8Z"/><circle cx="12" cy="12" r="9"/></svg>
-          Productos certificados y de calidad
-        </div>
+  <section class="upload-banner-img">
+    <div class="container upload-banner-img-inner">
+      <img src="assets/img/upload-banner.jpg" alt="Cotiza en 1 paso — ¿Ya tienes tu listado armado? Súbelo aquí y te cotizamos rápidamente." style="width:100%; display:block; border-radius:10px;">
+      <div id="home-dropzone" class="upload-banner-hotspot" role="button" tabindex="0" aria-label="Subir listado de productos: arrastra tu archivo o haz clic para seleccionar">
+        <input type="file" id="home-upload-input" accept=".xlsx,.xls,.csv,.pdf,image/*" hidden>
+        <span class="upload-banner-status" id="home-upload-status"></span>
       </div>
     </div>
   </section>
