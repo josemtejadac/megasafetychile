@@ -13,6 +13,60 @@ function truncate(text, max) {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
+// A dedicated second page with every field the customer filled in, in
+// full (no truncation) — so it's always there regardless of how tight the
+// items table on page 1 is. Shared by both PDF variants (unpriced RFQ and
+// priced quote) so the customer-data layout is identical either way.
+function buildCustomerDataPageOps(quote) {
+  const marginX = 50;
+  const rightX = 562;
+  const navy = [0.043, 0.122, 0.227];
+  const gold = [0.961, 0.706, 0.0];
+  const gray = [0.29, 0.33, 0.41];
+
+  const ops = [];
+  ops.push({ type: "text", text: "DATOS DEL CLIENTE", x: marginX, y: 748, size: 18, bold: true, color: navy });
+  ops.push({ type: "text", text: quote.correlative_code, x: marginX, y: 728, size: 10, color: gray });
+  ops.push({ type: "line", x1: marginX, y1: 716, x2: rightX, y2: 716, color: navy, width: 1.5 });
+
+  const rows = [
+    ["Razón social", quote.razon_social],
+    ["RUT", quote.rut],
+    ["Nombre de contacto", quote.nombre_contacto],
+    ["Teléfono", quote.telefono],
+    ["Correo", quote.correo],
+    ["Dirección", quote.direccion || "-"],
+    ["Comuna", quote.comuna || "-"],
+    ["Región", quote.region || "-"],
+    ["Requiere despacho", quote.requiere_despacho ? "Sí" : "No"],
+    ["Observaciones", quote.observaciones || "-"],
+  ];
+
+  let y = 686;
+  rows.forEach(([label, value]) => {
+    ops.push({ type: "text", text: label.toUpperCase(), x: marginX, y, size: 8.5, bold: true, color: gold });
+    y -= 15;
+    const text = String(value);
+    const maxCharsPerLine = 95;
+    for (let i = 0; i < text.length; i += maxCharsPerLine) {
+      ops.push({ type: "text", text: text.slice(i, i + maxCharsPerLine), x: marginX, y, size: 10.5, color: navy });
+      y -= 15;
+    }
+    y -= 8;
+  });
+
+  ops.push({ type: "line", x1: marginX, y1: 60, x2: rightX, y2: 60, color: [0.85, 0.87, 0.91], width: 1 });
+  ops.push({
+    type: "text",
+    text: "Mega Safety Chile — Artículos de seguridad industrial · +56 9 8306 1338",
+    x: marginX,
+    y: 44,
+    size: 9,
+    color: gray,
+  });
+  return ops;
+}
+
 // quote: row from megasafety_b2b_quotes; items: rows from megasafety_b2b_quote_items (with unit_price)
 export async function buildQuotePdfBase64(quote, items, origin) {
   const logoRes = await fetch(new URL(LOGO_PDF_PATH, origin));
@@ -180,7 +234,7 @@ export async function buildQuotePdfBase64(quote, items, origin) {
   });
 
   const pdfBytes = buildInvoicePdf({
-    ops,
+    pages: [ops, buildCustomerDataPageOps(quote)],
     image: { bytes: logoBytes, width: LOGO_PDF_WIDTH, height: LOGO_PDF_HEIGHT },
   });
   return { base64: bytesToBase64(pdfBytes), bytes: pdfBytes };
@@ -288,7 +342,7 @@ export async function buildRfqPdfBase64(quote, items, origin) {
   });
 
   const pdfBytes = buildInvoicePdf({
-    ops,
+    pages: [ops, buildCustomerDataPageOps(quote)],
     image: { bytes: logoBytes, width: LOGO_PDF_WIDTH, height: LOGO_PDF_HEIGHT },
   });
   return { base64: bytesToBase64(pdfBytes), bytes: pdfBytes };

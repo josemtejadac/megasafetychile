@@ -1211,6 +1211,9 @@ manualQuoteForm.addEventListener("submit", async (e) => {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "No se pudo crear la cotización.");
 
+    if (!data.email?.sent) {
+      alert(`Cotización ${data.correlative_code} creada, pero no se pudo enviar el correo al cliente: ${data.email?.reason || "error desconocido"}`);
+    }
     closeManualQuotePanel();
     loadQuotes();
   } catch (err) {

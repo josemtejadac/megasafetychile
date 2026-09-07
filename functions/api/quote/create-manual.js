@@ -5,6 +5,8 @@
 // flow — the only difference is it's auto-claimed by whoever created it and
 // doesn't trigger the company-notification email (staff already know).
 import { insertQuote, insertQuoteItems } from "../../_lib/supabase.js";
+import { sendManualRfqToCustomer } from "../../_lib/email.js";
+import { buildRfqPdfBase64 } from "../../_lib/quote-pdf.js";
 
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 
@@ -86,10 +88,19 @@ export async function onRequestPost({ request, env }) {
     }));
     await insertQuoteItems(env, itemRows);
 
-    return new Response(JSON.stringify({ ok: true, correlative_code: quote.correlative_code }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    let emailResult = { sent: false, reason: "RESEND_API_KEY no configurada" };
+    try {
+      const origin = new URL(request.url).origin;
+      const { base64: rfqPdfBase64 } = await buildRfqPdfBase64(quote, itemRows, origin);
+      emailResult = await sendManualRfqToCustomer(env, quote, itemRows, rfqPdfBase64);
+    } catch (err) {
+      emailResult = { sent: false, reason: String(err.message || err) };
+    }
+
+    return new Response(
+      JSON.stringify({ ok: true, correlative_code: quote.correlative_code, email: emailResult }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (err) {
     return new Response(JSON.stringify({ ok: false, error: String(err.message || err) }), {
       status: 500,

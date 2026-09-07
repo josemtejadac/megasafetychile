@@ -86,23 +86,13 @@ class PdfBuilder {
   }
 }
 
-// content: array of drawing ops, each one of:
+// Renders one page's ops array into a content-stream byte array. Each op is
+// one of:
 //  { type: 'text', text, x, y, size, bold, color: [r,g,b] 0-1 }
 //  { type: 'rect', x, y, w, h, fill?: [r,g,b], stroke?: [r,g,b], lineWidth? }
 //  { type: 'line', x1, y1, x2, y2, color: [r,g,b], width? }
-//  { type: 'image', ref, x, y, w, h }  // ref = XObject name, e.g. /Im1
-export function buildInvoicePdf({ ops, image }) {
-  const pdf = new PdfBuilder();
-  const pageWidth = 612;
-  const pageHeight = 792;
-
-  const catalogNum = pdf.reserve();
-  const pagesNum = pdf.reserve();
-  const pageNum = pdf.reserve();
-  const fontRegularNum = pdf.reserve();
-  const fontBoldNum = pdf.reserve();
-  const imageNum = image ? pdf.reserve() : null;
-
+//  { type: 'image', x, y, w, h }  // draws the page's shared /Im1 XObject
+function renderOpsStream(ops, hasImage) {
   const streamParts = [];
   for (const op of ops) {
     if (op.type === "text") {
@@ -127,23 +117,45 @@ export function buildInvoicePdf({ ops, image }) {
       streamParts.push(
         ascii(`${op.width || 1} w\n${r} ${g} ${b} RG\n${op.x1} ${op.y1} m\n${op.x2} ${op.y2} l\nS\n`)
       );
-    } else if (op.type === "image" && image) {
+    } else if (op.type === "image" && hasImage) {
       streamParts.push(ascii(`q\n${op.w} 0 0 ${op.h} ${op.x} ${op.y} cm\n/Im1 Do\nQ\n`));
     }
   }
-  const streamBytes = concatBytes(streamParts);
-  const contentsNum = pdf.addStream(`<< /Length ${streamBytes.length} >>`, streamBytes);
+  return concatBytes(streamParts);
+}
+
+// `pages`: array of ops arrays (one per page) — or pass `ops` for a
+// single-page document (back-compat). `image`, if given, is shared as /Im1
+// across every page's resources (only pages with an 'image' op actually
+// draw it).
+export function buildInvoicePdf({ ops, pages, image }) {
+  const pageOpsList = pages || [ops];
+  const pdf = new PdfBuilder();
+  const pageWidth = 612;
+  const pageHeight = 792;
+
+  const catalogNum = pdf.reserve();
+  const pagesNum = pdf.reserve();
+  const pageNums = pageOpsList.map(() => pdf.reserve());
+  const fontRegularNum = pdf.reserve();
+  const fontBoldNum = pdf.reserve();
+  const imageNum = image ? pdf.reserve() : null;
 
   const resources = image
     ? `/Resources << /Font << /F1 ${fontRegularNum} 0 R /F2 ${fontBoldNum} 0 R >> /XObject << /Im1 ${imageNum} 0 R >> >>`
     : `/Resources << /Font << /F1 ${fontRegularNum} 0 R /F2 ${fontBoldNum} 0 R >> >>`;
 
+  pageOpsList.forEach((pageOps, i) => {
+    const streamBytes = renderOpsStream(pageOps, Boolean(image));
+    const contentsNum = pdf.addStream(`<< /Length ${streamBytes.length} >>`, streamBytes);
+    pdf.set(
+      pageNums[i],
+      `<< /Type /Page /Parent ${pagesNum} 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] ${resources} /Contents ${contentsNum} 0 R >>`
+    );
+  });
+
   pdf.set(catalogNum, `<< /Type /Catalog /Pages ${pagesNum} 0 R >>`);
-  pdf.set(pagesNum, `<< /Type /Pages /Kids [${pageNum} 0 R] /Count 1 >>`);
-  pdf.set(
-    pageNum,
-    `<< /Type /Page /Parent ${pagesNum} 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] ${resources} /Contents ${contentsNum} 0 R >>`
-  );
+  pdf.set(pagesNum, `<< /Type /Pages /Kids [${pageNums.map((n) => `${n} 0 R`).join(" ")}] /Count ${pageNums.length} >>`);
   pdf.set(
     fontRegularNum,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
