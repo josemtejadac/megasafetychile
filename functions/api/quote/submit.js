@@ -18,7 +18,8 @@ export async function onRequestPost({ request, env }) {
   }
 
   const { empresa, items, attachment } = body || {};
-  if (!empresa || !Array.isArray(items) || items.length === 0) {
+  const hasAttachment = Boolean(attachment && attachment.base64 && attachment.filename);
+  if (!empresa || !Array.isArray(items) || (items.length === 0 && !hasAttachment)) {
     return badRequest("Faltan datos de empresa o productos");
   }
 
@@ -69,7 +70,7 @@ export async function onRequestPost({ request, env }) {
       quantity: item.quantity,
       variant: item.variant || null,
     }));
-    await insertQuoteItems(env, itemRows);
+    if (itemRows.length) await insertQuoteItems(env, itemRows);
 
     // Persist the customer's attached file (PDF/Excel/photo) to storage so
     // staff can open it from the admin panel, not just find it buried in an

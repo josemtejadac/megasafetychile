@@ -85,6 +85,45 @@
     }
   </style>
 
+  <section class="section" style="padding-top:28px; padding-bottom:8px;">
+    <div class="container" style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; max-width:1000px;">
+      <a href="compra-empresa.html#catalogo" style="display:flex; align-items:center; gap:14px; text-align:left; padding:18px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); text-decoration:none; color:inherit;">
+        <div style="flex-shrink:0; width:42px; height:42px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.2rem;">🔍</div>
+        <div style="flex:1; min-width:0;">
+          <h3 style="margin:0 0 2px; font-size:0.95rem;">Buscar productos</h3>
+          <p style="margin:0; font-size:0.82rem; color:var(--ink-soft);">Por nombre o marca.</p>
+        </div>
+        <span style="color:var(--ink-soft); font-size:1.15rem;">›</span>
+      </a>
+      <a href="compra-empresa.html#catalogo" style="display:flex; align-items:center; gap:14px; text-align:left; padding:18px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); text-decoration:none; color:inherit;">
+        <div style="flex-shrink:0; width:42px; height:42px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.2rem;">📂</div>
+        <div style="flex:1; min-width:0;">
+          <h3 style="margin:0 0 2px; font-size:0.95rem;">Explorar categorías</h3>
+          <p style="margin:0; font-size:0.82rem; color:var(--ink-soft);">Navega el catálogo B2B.</p>
+        </div>
+        <span style="color:var(--ink-soft); font-size:1.15rem;">›</span>
+      </a>
+      <a href="compra-empresa.html?upload=1" style="display:flex; align-items:center; gap:14px; text-align:left; padding:18px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); text-decoration:none; color:inherit;">
+        <div style="flex-shrink:0; width:42px; height:42px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.2rem;">📎</div>
+        <div style="flex:1; min-width:0;">
+          <h3 style="margin:0 0 2px; font-size:0.95rem;">Subir listado</h3>
+          <p style="margin:0; font-size:0.82rem; color:var(--ink-soft);">Adjunta tu Excel, PDF o imagen.</p>
+        </div>
+        <span style="color:var(--ink-soft); font-size:1.15rem;">›</span>
+      </a>
+    </div>
+  </section>
+  <style>
+    @media (max-width:760px){
+      .section .container[style*="grid-template-columns:repeat(3,1fr)"][style*="max-width:1000px"] { grid-template-columns:repeat(3,1fr) !important; gap:8px !important; }
+      .section .container[style*="max-width:1000px"] a { flex-direction:column !important; align-items:center !important; text-align:center !important; gap:6px !important; padding:10px 6px !important; }
+      .section .container[style*="max-width:1000px"] a div:first-child { width:32px !important; height:32px !important; font-size:1rem !important; }
+      .section .container[style*="max-width:1000px"] a h3 { font-size:0.72rem !important; line-height:1.2; }
+      .section .container[style*="max-width:1000px"] a p,
+      .section .container[style*="max-width:1000px"] a span:last-child { display:none !important; }
+    }
+  </style>
+
   <section class="promo-carousel" id="promo-carousel" aria-label="Promociones destacadas">
     <div class="promo-track" id="promo-track"></div>
     <button class="promo-arrow promo-arrow--prev" id="promo-prev" aria-label="Anterior">‹</button>

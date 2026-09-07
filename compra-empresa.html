@@ -94,6 +94,7 @@
         <label for="upload-file">Adjuntar archivo (Excel, PDF o imagen, máx. 5MB)</label>
         <input type="file" id="upload-file" accept=".xlsx,.xls,.csv,.pdf,image/*">
         <p class="upload-hint" id="upload-hint"></p>
+        <button class="btn btn--primary" id="upload-send-btn" type="button" hidden style="margin-top:10px;">Enviar solicitud con este archivo</button>
       </div>
     </div>
   </section>
@@ -203,6 +204,7 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="script.js"></script>
 <script src="account.js"></script>
 <script src="compra-empresa.js"></script>

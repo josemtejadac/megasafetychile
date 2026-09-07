@@ -536,6 +536,55 @@ const uploadPanel = document.getElementById("upload-panel");
 document.getElementById("upload-option-btn").addEventListener("click", () => {
   uploadPanel.hidden = !uploadPanel.hidden;
 });
+const uploadSendBtn = document.getElementById("upload-send-btn");
+
+// Best-effort, no-cost extraction for spreadsheets: looks for a header row
+// naming a product/description column and a quantity column (falls back to
+// column A / column B), so a customer's own price-list format usually works
+// without them retyping it. PDFs and photos aren't parsed — those still go
+// through as a plain attachment for a staff member to read manually.
+function detectColumns(headerRow) {
+  const nameIdx = headerRow.findIndex((h) => /producto|descripci[oó]n|item|art[ií]culo/i.test(String(h || "")));
+  const qtyIdx = headerRow.findIndex((h) => /cantidad|cant\.?|qty/i.test(String(h || "")));
+  return { nameIdx, qtyIdx };
+}
+
+async function parseListingFile(file) {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+  if (!rows.length) return [];
+
+  let start = 0;
+  let nameIdx = 0;
+  let qtyIdx = 1;
+  const detected = detectColumns(rows[0]);
+  if (detected.nameIdx !== -1 || detected.qtyIdx !== -1) {
+    nameIdx = detected.nameIdx !== -1 ? detected.nameIdx : 0;
+    qtyIdx = detected.qtyIdx !== -1 ? detected.qtyIdx : 1;
+    start = 1;
+  }
+
+  const items = [];
+  for (let i = start; i < rows.length; i++) {
+    const row = rows[i];
+    const name = row[nameIdx];
+    if (!name || String(name).trim() === "") continue;
+    let qty = parseInt(row[qtyIdx], 10);
+    if (!qty || qty < 1) qty = 1;
+    items.push({ product_name: String(name).trim(), quantity: qty });
+  }
+  return items;
+}
+
+function addCustomToCart(name, qty) {
+  const lineId = `custom::${name}::${Date.now()}::${Math.random().toString(36).slice(2)}`;
+  cart.push({ id: null, lineId, category_id: null, product_name: name, brand: null, variant: null, quantity: qty });
+  saveCart(cart);
+  renderCart();
+}
+
 document.getElementById("upload-file").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   const hint = document.getElementById("upload-hint");
@@ -543,11 +592,34 @@ document.getElementById("upload-file").addEventListener("change", async (e) => {
   if (file.size > 5 * 1024 * 1024) {
     hint.textContent = "El archivo supera 5MB. Elige uno más liviano.";
     attachment = null;
+    uploadSendBtn.hidden = true;
     return;
   }
   const base64 = await fileToBase64(file);
   attachment = { filename: file.name, mime: file.type || "application/octet-stream", base64 };
-  hint.textContent = `Adjunto listo: ${file.name}. Completa el formulario de empresa para enviarlo con tu solicitud.`;
+
+  const isSpreadsheet = /\.(xlsx|xls|csv)$/i.test(file.name);
+  if (isSpreadsheet) {
+    try {
+      const items = await parseListingFile(file);
+      if (items.length) {
+        items.forEach((it) => addCustomToCart(it.product_name, it.quantity));
+        hint.textContent = `Se detectaron ${items.length} producto(s) en el archivo y se agregaron a tu cotización. Revísalos en "Mi cotización" antes de enviar.`;
+        uploadSendBtn.hidden = true;
+        cartPanelCtl.open();
+        return;
+      }
+    } catch {
+      // Unrecognized spreadsheet layout — fall through to the plain
+      // attach-only flow below so the request still goes out.
+    }
+  }
+
+  hint.textContent = `Adjunto listo: ${file.name}. Si quieres, también puedes seleccionar productos del catálogo antes de enviar.`;
+  uploadSendBtn.hidden = false;
+});
+uploadSendBtn.addEventListener("click", () => {
+  formPanelCtl.open();
 });
 
 function fileToBase64(file) {
@@ -566,8 +638,8 @@ const submitBtn = document.getElementById("form-submit-btn");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (cart.length === 0) {
-    formNote.textContent = "Agrega al menos un producto antes de enviar.";
+  if (cart.length === 0 && !attachment) {
+    formNote.textContent = "Agrega al menos un producto o adjunta un archivo antes de enviar.";
     formNote.className = "form-note is-error";
     return;
   }
@@ -609,6 +681,7 @@ form.addEventListener("submit", async (e) => {
     form.reset();
     attachment = null;
     uploadPanel.hidden = true;
+    uploadSendBtn.hidden = true;
     cart = [];
     saveCart(cart);
     renderCart();
@@ -629,4 +702,11 @@ renderCart();
 // open the cart panel so the customer sees it landed and can continue.
 if (new URLSearchParams(window.location.search).get("added") === "1") {
   cartPanelCtl.open();
+}
+
+// Arriving from the "Subir listado" shortcut on the home page — open the
+// upload panel directly instead of making them find the option again.
+if (new URLSearchParams(window.location.search).get("upload") === "1") {
+  uploadPanel.hidden = false;
+  document.getElementById("step-inicio").scrollIntoView({ behavior: "smooth" });
 }
