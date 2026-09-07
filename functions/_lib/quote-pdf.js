@@ -116,7 +116,7 @@ export async function buildQuotePdfBase64(quote, items, origin) {
     y -= rowHeight;
   });
 
-  ops.push({ type: "line", x1: marginX, y1: y + rowHeight - 4, x2: rightX, y2: y + rowHeight - 4, color: navy, width: 1 });
+  ops.push({ type: "line", x1: marginX, y1: y + 6, x2: rightX, y2: y + 6, color: navy, width: 1 });
 
   // --- Totals ---
   y -= 10;
@@ -265,7 +265,7 @@ export async function buildRfqPdfBase64(quote, items, origin) {
     if (y < 90) return; // safety margin — extremely long carts just get truncated on the PDF, full list is always in the email body too
   });
 
-  ops.push({ type: "line", x1: marginX, y1: y + rowHeight - 4, x2: rightX, y2: y + rowHeight - 4, color: navy, width: 1 });
+  ops.push({ type: "line", x1: marginX, y1: y + 6, x2: rightX, y2: y + 6, color: navy, width: 1 });
 
   y -= 20;
   ops.push({
