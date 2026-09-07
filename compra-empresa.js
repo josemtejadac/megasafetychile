@@ -11,7 +11,7 @@ const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 const CATEGORIES = [
-  { id: "cat-seguridad-industrial", label: "Seguridad industrial" },
+  { id: "cat-seguridad-industrial", label: "Seguridad personal" },
   { id: "cat-herramientas", label: "Herramientas y equipos" },
   { id: "cat-abrasivos", label: "Abrasivos y discos" },
   { id: "cat-soldadura", label: "Soldadura" },

@@ -25,7 +25,7 @@ async function getFreshAccessToken() {
 }
 
 const CATEGORY_LABELS = {
-  "cat-seguridad-industrial": "Seguridad industrial",
+  "cat-seguridad-industrial": "Seguridad personal",
   "cat-herramientas": "Herramientas y equipos",
   "cat-abrasivos": "Abrasivos y discos",
   "cat-soldadura": "Soldadura",
