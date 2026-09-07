@@ -40,29 +40,55 @@
   <!-- Paso 1: Inicio -->
   <section id="step-inicio" class="b2b-step">
     <div class="container">
-      <div class="b2b-hero">
-        <p class="eyebrow">Compra Empresa</p>
-        <h1>Cotiza para tu empresa</h1>
-        <p class="b2b-hero-text">Selecciona los productos y cantidades que necesitas y recibe una cotización personalizada de Mega Safety Chile.</p>
+      <div class="b2b-hero b2b-hero-compact" style="text-align:center; max-width:640px; margin:0 auto 40px;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:14px;">
+          <span style="height:2px; width:44px; background:var(--gold);"></span>
+          <p class="eyebrow" style="margin:0;">Cotiza para tu empresa</p>
+          <span style="height:2px; width:44px; background:var(--gold);"></span>
+        </div>
+        <h1 style="margin:0 0 12px;">Solicita tu cotización</h1>
+        <p class="b2b-hero-text" style="margin:0;">Selecciona una opción y recibe una cotización personalizada de Mega Safety Chile.</p>
       </div>
 
-      <div class="b2b-options">
-        <button class="b2b-option" data-scroll="#catalogo">
-          <div class="b2b-option-icon">🔍</div>
-          <h3>Buscar productos</h3>
-          <p>Encuentra productos por nombre o marca.</p>
+      <div class="b2b-options b2b-options-compact" style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+        <button class="b2b-option" data-scroll="#catalogo" style="display:flex; align-items:center; gap:14px; text-align:left; padding:20px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); cursor:pointer;">
+          <div class="b2b-option-icon" style="flex-shrink:0; width:44px; height:44px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🔍</div>
+          <div style="flex:1; min-width:0;">
+            <h3 style="margin:0 0 2px; font-size:1rem;">Buscar productos</h3>
+            <p class="b2b-option-desc" style="margin:0; font-size:0.85rem; color:var(--ink-soft);">Encuentra productos por nombre o marca.</p>
+          </div>
+          <span class="b2b-option-chevron" style="color:var(--ink-soft); font-size:1.2rem;">›</span>
         </button>
-        <button class="b2b-option" data-scroll="#catalogo">
-          <div class="b2b-option-icon">📂</div>
-          <h3>Explorar por categorías</h3>
-          <p>Navega el catálogo completo por línea de producto.</p>
+        <button class="b2b-option" data-scroll="#catalogo" style="display:flex; align-items:center; gap:14px; text-align:left; padding:20px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); cursor:pointer;">
+          <div class="b2b-option-icon" style="flex-shrink:0; width:44px; height:44px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">📂</div>
+          <div style="flex:1; min-width:0;">
+            <h3 style="margin:0 0 2px; font-size:1rem;">Explorar categorías</h3>
+            <p class="b2b-option-desc" style="margin:0; font-size:0.85rem; color:var(--ink-soft);">Navega el catálogo por línea de producto.</p>
+          </div>
+          <span class="b2b-option-chevron" style="color:var(--ink-soft); font-size:1.2rem;">›</span>
         </button>
-        <button class="b2b-option" id="upload-option-btn">
-          <div class="b2b-option-icon">📎</div>
-          <h3>Subir listado para cotizar</h3>
-          <p>Adjunta tu Excel, PDF o imagen con lo que necesitas.</p>
+        <button class="b2b-option" id="upload-option-btn" style="display:flex; align-items:center; gap:14px; text-align:left; padding:20px; border:1px solid var(--border); border-radius:14px; background:#fff; box-shadow:0 4px 14px -8px rgba(11,31,58,0.15); cursor:pointer;">
+          <div class="b2b-option-icon" style="flex-shrink:0; width:44px; height:44px; border-radius:10px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">📎</div>
+          <div style="flex:1; min-width:0;">
+            <h3 style="margin:0 0 2px; font-size:1rem;">Subir listado</h3>
+            <p class="b2b-option-desc" style="margin:0; font-size:0.85rem; color:var(--ink-soft);">Adjunta tu Excel, PDF o imagen con lo que necesitas.</p>
+          </div>
+          <span class="b2b-option-chevron" style="color:var(--ink-soft); font-size:1.2rem;">›</span>
         </button>
       </div>
+      <style>
+        @media (max-width:760px){
+          .b2b-hero-compact { margin-bottom:16px !important; }
+          .b2b-hero-compact h1 { font-size:1.4rem !important; }
+          .b2b-hero-compact .b2b-hero-text { display:none !important; }
+          .b2b-options-compact { grid-template-columns:repeat(3,1fr) !important; gap:8px !important; }
+          .b2b-options-compact .b2b-option { flex-direction:column !important; align-items:center !important; text-align:center !important; gap:6px !important; padding:10px 6px !important; }
+          .b2b-options-compact .b2b-option-icon { width:32px !important; height:32px !important; font-size:1rem !important; }
+          .b2b-options-compact .b2b-option h3 { font-size:0.72rem !important; line-height:1.2; }
+          .b2b-options-compact .b2b-option-desc,
+          .b2b-options-compact .b2b-option-chevron { display:none !important; }
+        }
+      </style>
 
       <div class="upload-panel" id="upload-panel" hidden>
         <label for="upload-file">Adjuntar archivo (Excel, PDF o imagen, máx. 5MB)</label>
@@ -73,7 +99,7 @@
   </section>
 
   <!-- Paso 2: Catálogo -->
-  <section id="catalogo" class="b2b-step section--alt">
+  <section id="catalogo" class="b2b-step section--alt" style="scroll-margin-top:90px;">
     <div class="container">
       <div class="section-head">
         <p class="eyebrow">Catálogo B2B</p>
