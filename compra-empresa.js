@@ -585,10 +585,8 @@ function addCustomToCart(name, qty) {
   renderCart();
 }
 
-document.getElementById("upload-file").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
+async function processUploadedFile(file) {
   const hint = document.getElementById("upload-hint");
-  if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
     hint.textContent = "El archivo supera 5MB. Elige uno más liviano.";
     attachment = null;
@@ -617,10 +615,34 @@ document.getElementById("upload-file").addEventListener("change", async (e) => {
 
   hint.textContent = `Adjunto listo: ${file.name}. Si quieres, también puedes seleccionar productos del catálogo antes de enviar.`;
   uploadSendBtn.hidden = false;
+}
+
+document.getElementById("upload-file").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) processUploadedFile(file);
 });
 uploadSendBtn.addEventListener("click", () => {
   formPanelCtl.open();
 });
+
+// A file dropped/selected on the home page's "¿Ya tienes tu listado
+// armado?" shortcut arrives here via sessionStorage (that page has no
+// cart/catalog context of its own) — pick it up as if it had been
+// selected right in this page's own upload input.
+(function handlePendingUploadHandoff() {
+  const pending = sessionStorage.getItem("msc_pending_upload");
+  if (!pending) return;
+  sessionStorage.removeItem("msc_pending_upload");
+  try {
+    const { filename, mime, base64 } = JSON.parse(pending);
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const file = new File([bytes], filename, { type: mime });
+    uploadPanel.hidden = false;
+    processUploadedFile(file);
+  } catch {
+    // Malformed handoff payload — nothing to recover, just skip it.
+  }
+})();
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {

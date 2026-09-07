@@ -539,6 +539,90 @@ h1, h2, h3 {
   to { transform: translateX(-50%); }
 }
 
+/* Upload banner ("¿Ya tienes tu listado armado?") */
+.upload-banner {
+  position: relative;
+  overflow: hidden;
+  background: #f4f6fa;
+  padding: 36px 0 28px;
+}
+.upload-banner-stripes {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 220px;
+  z-index: 0;
+  pointer-events: none;
+  background-size: 34px 34px;
+}
+.upload-banner-stripes--left {
+  left: -60px;
+  background-image: repeating-linear-gradient(135deg, #dfe3ea 0, #dfe3ea 12px, transparent 12px, transparent 34px);
+  mask-image: linear-gradient(to right, black, transparent);
+}
+.upload-banner-stripes--right {
+  right: -60px;
+  background-image: repeating-linear-gradient(135deg, var(--gold) 0, var(--gold) 12px, transparent 12px, transparent 34px);
+  opacity: 0.35;
+  mask-image: linear-gradient(to left, black, transparent);
+}
+.upload-banner-inner { position: relative; z-index: 1; }
+
+.upload-banner-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 36px;
+  align-items: center;
+  max-width: 980px;
+  margin: 0 auto;
+}
+.upload-banner-perks { display: flex; flex-direction: column; gap: 20px; }
+.upload-perk { display: flex; align-items: center; gap: 12px; font-family: var(--font-head); font-weight: 700; font-size: 0.92rem; color: var(--navy); text-transform: uppercase; line-height: 1.25; }
+.upload-perk-icon { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; }
+
+.upload-banner-main { text-align: center; }
+.upload-banner-title { font-family: var(--font-head); font-weight: 800; font-size: clamp(1.5rem, 3vw, 2.1rem); color: var(--ink); margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.01em; }
+.upload-banner-title span { color: var(--navy); }
+.upload-banner-sub { margin: 0 0 18px; color: var(--ink-soft); font-size: 1rem; }
+
+.upload-dropzone {
+  border: 2px dashed rgba(255,255,255,0.55);
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--navy), #1a3865);
+  padding: 22px 20px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 14px 32px -16px rgba(11,31,58,0.55);
+}
+.upload-dropzone:hover, .upload-dropzone:focus-visible { transform: translateY(-2px); box-shadow: 0 18px 38px -16px rgba(11,31,58,0.65); outline: none; }
+.upload-dropzone.is-dragover { border-color: var(--gold); background: linear-gradient(135deg, #14284a, #1f3f73); }
+.upload-dropzone-title { margin: 0; color: var(--gold); font-family: var(--font-head); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.03em; }
+.upload-dropzone-sub { margin: 2px 0 14px; color: #dbe3f0; font-size: 0.9rem; }
+.upload-filetypes { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.upload-filetype { display: inline-flex; align-items: center; gap: 6px; background: #fff; border-radius: 8px; padding: 6px 12px; font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+.upload-dropzone-status { margin: 10px 0 0; font-size: 0.85rem; color: var(--gold); font-weight: 600; min-height: 1.1em; }
+
+.upload-banner-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.upload-footer-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+
+@media (max-width: 760px) {
+  .upload-banner-grid { grid-template-columns: 1fr; gap: 20px; }
+  .upload-banner-perks { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 14px 20px; }
+  .upload-perk { flex-direction: column; text-align: center; gap: 6px; font-size: 0.72rem; width: 30%; }
+  .upload-perk span { line-height: 1.2; }
+  .upload-banner-footer { gap: 10px 18px; }
+  .upload-footer-item { font-size: 0.78rem; }
+}
+
 /* Trust bar */
 .trust-bar { padding: 0 0 24px; }
 .trust-bar-inner {

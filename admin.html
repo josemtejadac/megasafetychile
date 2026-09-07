@@ -325,8 +325,13 @@
   </div>
   <form id="manual-quote-form" class="quote-form">
     <p class="admin-help" style="margin:0 0 10px;">Para clientes que piden por teléfono o WhatsApp. Queda igual que una solicitud normal: sin precio hasta que la cotices.</p>
-    <label>Razón social *<input type="text" name="razon_social" required></label>
-    <label>RUT *<input type="text" name="rut" required></label>
+    <label style="position:relative;">Razón social *
+      <input type="text" name="razon_social" id="manual-razon-social" autocomplete="off" required>
+      <div id="customer-lookup-dropdown" hidden style="position:absolute; top:100%; left:0; right:0; z-index:10; background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 20px -8px rgba(11,31,58,0.3); max-height:220px; overflow-y:auto;"></div>
+    </label>
+    <label>RUT *
+      <input type="text" name="rut" id="manual-rut" autocomplete="off" required>
+    </label>
     <label>Nombre de contacto *<input type="text" name="nombre_contacto" required></label>
     <div class="form-row">
       <label>Teléfono *<input type="text" name="telefono" required></label>

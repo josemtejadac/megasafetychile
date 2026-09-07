@@ -1126,6 +1126,64 @@ document.getElementById("new-manual-quote-btn").addEventListener("click", openMa
 document.getElementById("manual-quote-close-btn").addEventListener("click", closeManualQuotePanel);
 manualQuoteOverlay.addEventListener("click", closeManualQuotePanel);
 
+// ---------- Customer lookup (auto-fill from a previous quote by RUT/razón social) ----------
+const customerLookupDropdown = document.getElementById("customer-lookup-dropdown");
+let customerLookupTimer = null;
+
+function fillCustomerFields(c) {
+  manualQuoteForm.querySelector('[name="razon_social"]').value = c.razon_social || "";
+  manualQuoteForm.querySelector('[name="rut"]').value = c.rut || "";
+  manualQuoteForm.querySelector('[name="nombre_contacto"]').value = c.nombre_contacto || "";
+  manualQuoteForm.querySelector('[name="telefono"]').value = c.telefono || "";
+  manualQuoteForm.querySelector('[name="correo"]').value = c.correo || "";
+  manualQuoteForm.querySelector('[name="direccion"]').value = c.direccion || "";
+  manualQuoteForm.querySelector('[name="comuna"]').value = c.comuna || "";
+  manualQuoteForm.querySelector('[name="region"]').value = c.region || "";
+  customerLookupDropdown.hidden = true;
+}
+
+async function runCustomerLookup(term) {
+  if (term.trim().length < 2) {
+    customerLookupDropdown.hidden = true;
+    return;
+  }
+  const token = await getFreshAccessToken();
+  const res = await fetch(`/api/admin/search-customers?q=${encodeURIComponent(term)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!data.ok || !data.customers.length) {
+    customerLookupDropdown.hidden = true;
+    return;
+  }
+  customerLookupDropdown.innerHTML = data.customers
+    .map(
+      (c, idx) => `
+      <button type="button" class="customer-lookup-item" data-idx="${idx}" style="display:block; width:100%; text-align:left; padding:8px 10px; border:none; background:none; border-bottom:1px solid var(--border); cursor:pointer; font-size:0.82rem;">
+        <strong style="color:var(--navy);">${c.razon_social}</strong><br>
+        <span style="color:var(--ink-soft);">${c.rut} · ${c.nombre_contacto || ""}</span>
+      </button>`
+    )
+    .join("");
+  customerLookupDropdown.querySelectorAll(".customer-lookup-item").forEach((btn) => {
+    btn.addEventListener("click", () => fillCustomerFields(data.customers[Number(btn.dataset.idx)]));
+  });
+  customerLookupDropdown.hidden = false;
+}
+
+["manual-razon-social", "manual-rut"].forEach((id) => {
+  document.getElementById(id).addEventListener("input", (e) => {
+    clearTimeout(customerLookupTimer);
+    const term = e.target.value;
+    customerLookupTimer = setTimeout(() => runCustomerLookup(term), 300);
+  });
+});
+document.addEventListener("click", (e) => {
+  if (!customerLookupDropdown.hidden && !e.target.closest('label[style*="position:relative"]')) {
+    customerLookupDropdown.hidden = true;
+  }
+});
+
 const manualQuoteTotalEl = document.getElementById("manual-quote-total");
 
 function renderManualQuoteItems() {

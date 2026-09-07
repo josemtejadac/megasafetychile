@@ -62,3 +62,66 @@ catMenuPanel.querySelectorAll(".cat-menu-toggle").forEach((btn) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeCatMenu();
 });
+
+// ---------- Home page upload dropzone (¿Ya tienes tu listado armado?) ----------
+// Lets a visitor drag/drop or click-select a file right from the home page;
+// the file is handed off via sessionStorage to compra-empresa.html, which
+// already knows how to parse/attach it (same code path as its own upload
+// input) — this just adds a second entry point into that same flow.
+(function () {
+  const dropzone = document.getElementById("home-dropzone");
+  if (!dropzone) return;
+
+  const input = document.getElementById("home-upload-input");
+  const status = document.getElementById("home-upload-status");
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleFile(file) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      status.textContent = "El archivo supera 5MB. Elige uno más liviano.";
+      return;
+    }
+    status.textContent = "Subiendo...";
+    const base64 = await fileToBase64(file);
+    sessionStorage.setItem(
+      "msc_pending_upload",
+      JSON.stringify({ filename: file.name, mime: file.type || "application/octet-stream", base64 })
+    );
+    window.location.href = "compra-empresa.html?upload=1";
+  }
+
+  dropzone.addEventListener("click", () => input.click());
+  dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      input.click();
+    }
+  });
+  input.addEventListener("change", () => handleFile(input.files[0]));
+
+  ["dragenter", "dragover"].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add("is-dragover");
+    });
+  });
+  ["dragleave", "drop"].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("is-dragover");
+    });
+  });
+  dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    handleFile(file);
+  });
+})();

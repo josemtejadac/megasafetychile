@@ -98,8 +98,7 @@ export async function buildQuotePdfBase64(quote, items, origin) {
     "MEGA SAFETY CHILE SPA",
     "RUT: 78.463.919-3",
     "Venta al por menor de elementos de protección personal (EPP)",
-    "San Eduardo 0446, La Cisterna",
-    "Los Militares 5620, of. 905, Las Condes",
+    "San Eduardo 0446, La Cisterna · Los Militares 5620, of. 905, Las Condes",
     "www.megasafetychile.cl · contacto@megasafetychile.cl",
   ];
   let cy = 718;
