@@ -70,7 +70,10 @@ export function buildOrderEmailHtml(order, origin) {
 
 export function buildQuoteSentEmailHtml(quote, items, origin) {
   const logoUrl = new URL(LOGO_URL_PATH, origin).toString();
-  const acceptUrl = new URL("/mis-pedidos.html", origin).toString();
+  // Links straight to the standalone accept/pay page (works even without an
+  // account — the quote's own id is the access link, same model as the
+  // existing PDF/payment endpoints) instead of the login-gated order list.
+  const acceptUrl = new URL(`/pagar.html?id=${quote.id}`, origin).toString();
   const itemsHtml = items
     .map((i) => {
       const subtotal = (i.quantity || 0) * (i.unit_price || 0);

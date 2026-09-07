@@ -12,17 +12,14 @@ const sbHeaders = (env, extra = {}) => ({
 export async function onRequestPost({ request, env }) {
   const authHeader = request.headers.get("Authorization") || "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token) {
-    return new Response(JSON.stringify({ ok: false, error: "No autorizado" }), { status: 401 });
-  }
 
-  const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
-  });
-  if (!userRes.ok) {
-    return new Response(JSON.stringify({ ok: false, error: "Sesión inválida" }), { status: 401 });
+  let user = null;
+  if (token) {
+    const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+    });
+    if (userRes.ok) user = await userRes.json();
   }
-  const user = await userRes.json();
 
   const { quote_id, reason } = await request.json().catch(() => ({}));
   if (!quote_id) {
@@ -37,7 +34,11 @@ export async function onRequestPost({ request, env }) {
   if (!quote) {
     return new Response(JSON.stringify({ ok: false, error: "Cotización no encontrada" }), { status: 404 });
   }
-  if (quote.customer_user_id !== user.id) {
+  // A quote with no linked account (created manually, or the customer never
+  // registered) has nothing to check the caller's identity against — the
+  // quote's own unguessable UUID is the access control, same as /api/quote/pay.
+  // Otherwise it must be the logged-in owner.
+  if (quote.customer_user_id && quote.customer_user_id !== user?.id) {
     return new Response(JSON.stringify({ ok: false, error: "No autorizado" }), { status: 403 });
   }
   if (quote.status !== "cotizada") {
@@ -60,7 +61,7 @@ export async function onRequestPost({ request, env }) {
   await fetch(`${env.SUPABASE_URL}/rest/v1/megasafety_quote_events`, {
     method: "POST",
     headers: sbHeaders(env),
-    body: JSON.stringify([{ quote_id, user_id: user.id, event_type: "rejected_by_customer", detail: { reason: reason || null } }]),
+    body: JSON.stringify([{ quote_id, user_id: user?.id || null, event_type: "rejected_by_customer", detail: { reason: reason || null } }]),
   });
 
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });

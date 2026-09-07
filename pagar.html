@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tu cotización | Mega Safety Chile</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="compra-empresa.css?v=2">
+<link rel="stylesheet" href="admin.css?v=2">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">MEGA</span><span class="brand-mark brand-mark--accent">SAFETY</span>
+      <span class="brand-sub">CHILE</span>
+    </a>
+    <span class="b2b-badge">Tu cotización</span>
+    <div class="header-actions">
+      <a href="index.html" class="btn btn--outline">Volver al sitio</a>
+    </div>
+  </div>
+</header>
+
+<main class="admin-main">
+  <div class="container" style="max-width:640px;">
+
+    <p id="pagar-loading" style="text-align:center; color:var(--ink-soft);">Cargando tu cotización...</p>
+    <p id="pagar-error" class="empty-state" hidden></p>
+
+    <section id="pagar-view" hidden>
+      <div class="stat-card" style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <strong style="font-family:var(--font-head); font-size:1.4rem; color:var(--navy);" id="pagar-code"></strong>
+          <span class="quote-badge" id="pagar-status" style="padding:4px 12px; border-radius:999px; font-size:0.78rem; font-weight:700;"></span>
+        </div>
+        <p style="margin:6px 0 0; color:var(--ink-soft); font-size:0.9rem;" id="pagar-empresa"></p>
+        <ul style="margin:14px 0 0; padding-left:18px; font-size:0.9rem; color:var(--ink);" id="pagar-items"></ul>
+        <p style="margin:14px 0 0; font-weight:800; font-size:1.2rem; color:var(--navy);" id="pagar-total"></p>
+
+        <div id="pagar-actions" style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
+          <button class="btn btn--primary" id="pagar-pay-btn" type="button">Aceptar y pagar con Flow</button>
+          <button class="btn btn--outline" id="pagar-reject-btn" type="button" style="color:#b91c1c; border-color:#b91c1c;">Rechazar cotización</button>
+        </div>
+        <p class="form-note" id="pagar-note"></p>
+      </div>
+
+      <div class="stat-card" id="pagar-signup-card" style="text-align:center;">
+        <p style="margin:0 0 4px; font-weight:700; color:var(--navy);">¿Quieres guardar tu historial de compras?</p>
+        <p style="margin:0 0 14px; color:var(--ink-soft); font-size:0.9rem;">Crea tu cuenta con este mismo correo y vas a poder ver todas tus cotizaciones y pedidos en un solo lugar.</p>
+        <button class="btn btn--outline" id="pagar-signup-btn" type="button">Crear mi cuenta</button>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="account.js?v=2"></script>
+<script src="pagar.js?v=2"></script>
+</body>
+</html>
