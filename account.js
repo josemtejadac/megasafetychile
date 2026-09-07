@@ -99,11 +99,13 @@ function injectAccountUI() {
     panel.classList.add("is-open");
     overlay.classList.add("is-open");
     panel.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
   };
   const close = () => {
     panel.classList.remove("is-open");
     overlay.classList.remove("is-open");
     panel.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
   };
   btn.addEventListener("click", open);
   overlay.addEventListener("click", close);

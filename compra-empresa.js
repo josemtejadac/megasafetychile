@@ -384,12 +384,14 @@ async function openProductDetail(p) {
   detailPanel.classList.add("is-open");
   detailOverlay.classList.add("is-open");
   detailPanel.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
 }
 
 function closeProductDetail() {
   detailPanel.classList.remove("is-open");
   detailOverlay.classList.remove("is-open");
   detailPanel.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
 }
 document.getElementById("detail-close-btn").addEventListener("click", closeProductDetail);
 detailOverlay.addEventListener("click", closeProductDetail);
@@ -484,11 +486,14 @@ function setupPanel(panelId, overlayId, openBtnIds, closeBtnId) {
     panel.classList.remove("is-open");
     overlay.classList.remove("is-open");
     panel.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
   };
   const open = () => {
     panel.classList.add("is-open");
     overlay.classList.add("is-open");
     panel.setAttribute("aria-hidden", "false");
+    // Lock background scroll so a touch-drag scrolls the panel, not the page.
+    document.body.style.overflow = "hidden";
   };
   openBtnIds.forEach((id) => document.getElementById(id)?.addEventListener("click", open));
   document.getElementById(closeBtnId).addEventListener("click", close);

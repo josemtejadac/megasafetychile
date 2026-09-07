@@ -31,6 +31,9 @@ function openCatMenu() {
   catMenuOverlay.classList.add("is-open");
   catMenuPanel.setAttribute("aria-hidden", "false");
   catMenuBtn.setAttribute("aria-expanded", "true");
+  // Lock background scroll so a touch-drag on mobile scrolls the panel's
+  // own content instead of the page underneath it.
+  document.body.style.overflow = "hidden";
 }
 
 function closeCatMenu() {
@@ -38,6 +41,7 @@ function closeCatMenu() {
   catMenuOverlay.classList.remove("is-open");
   catMenuPanel.setAttribute("aria-hidden", "true");
   catMenuBtn.setAttribute("aria-expanded", "false");
+  document.body.style.overflow = "";
 }
 
 catMenuBtn.addEventListener("click", openCatMenu);

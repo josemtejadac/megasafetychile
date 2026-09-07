@@ -354,11 +354,13 @@ function openProductPanel() {
   productPanel.classList.add("is-open");
   productOverlay.classList.add("is-open");
   productPanel.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
 }
 function closeProductPanel() {
   productPanel.classList.remove("is-open");
   productOverlay.classList.remove("is-open");
   productPanel.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
 }
 document.getElementById("product-close-btn").addEventListener("click", closeProductPanel);
 productOverlay.addEventListener("click", closeProductPanel);
@@ -756,11 +758,13 @@ function openQuotePanel() {
   quotePanel.classList.add("is-open");
   quoteOverlay.classList.add("is-open");
   quotePanel.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
 }
 function closeQuotePanel() {
   quotePanel.classList.remove("is-open");
   quoteOverlay.classList.remove("is-open");
   quotePanel.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
 }
 document.getElementById("quote-close-btn").addEventListener("click", closeQuotePanel);
 quoteOverlay.addEventListener("click", closeQuotePanel);
