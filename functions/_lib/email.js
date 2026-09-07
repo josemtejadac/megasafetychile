@@ -1,4 +1,4 @@
-export async function sendQuoteNotification(env, quote, items, attachment) {
+export async function sendQuoteNotification(env, quote, items, attachment, rfqPdfBase64) {
   if (!env.RESEND_API_KEY) return { sent: false, reason: "RESEND_API_KEY no configurada" };
 
   const to = env.RFQ_NOTIFY_EMAIL || "contacto@megasafetychile.cl";
@@ -27,9 +27,14 @@ export async function sendQuoteNotification(env, quote, items, attachment) {
     html,
   };
 
-  if (attachment && attachment.base64 && attachment.filename) {
-    payload.attachments = [{ filename: attachment.filename, content: attachment.base64 }];
+  payload.attachments = [];
+  if (rfqPdfBase64) {
+    payload.attachments.push({ filename: `${quote.correlative_code}.pdf`, content: rfqPdfBase64 });
   }
+  if (attachment && attachment.base64 && attachment.filename) {
+    payload.attachments.push({ filename: attachment.filename, content: attachment.base64 });
+  }
+  if (!payload.attachments.length) delete payload.attachments;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

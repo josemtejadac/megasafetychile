@@ -185,3 +185,111 @@ export async function buildQuotePdfBase64(quote, items, origin) {
   });
   return { base64: bytesToBase64(pdfBytes), bytes: pdfBytes };
 }
+
+// Simpler PDF sent right when the customer submits a request for quote —
+// no prices yet (staff hasn't quoted it), just their data and what they
+// asked for, so the company's inbox always gets a clean summary document
+// alongside the notification email, not just plain HTML.
+export async function buildRfqPdfBase64(quote, items, origin) {
+  const logoRes = await fetch(new URL(LOGO_PDF_PATH, origin));
+  const logoBytes = new Uint8Array(await logoRes.arrayBuffer());
+
+  const marginX = 50;
+  const rightX = 562;
+  const navy = [0.043, 0.122, 0.227];
+  const gold = [0.961, 0.706, 0.0];
+  const gray = [0.29, 0.33, 0.41];
+  const lightGray = [0.95, 0.96, 0.98];
+  const white = [1, 1, 1];
+
+  const ops = [];
+
+  ops.push({ type: "text", text: "SOLICITUD DE COTIZACIÓN", x: marginX, y: 748, size: 20, bold: true, color: navy });
+  const dateStr = new Date(quote.created_at || Date.now()).toLocaleDateString("es-CL");
+  ops.push({ type: "text", text: "ID único", x: 430, y: 754, size: 9, bold: true, color: gray });
+  ops.push({ type: "text", text: quote.correlative_code, x: 470, y: 754, size: 9, color: navy });
+  ops.push({ type: "text", text: dateStr, x: rightX - dateStr.length * 5.2, y: 754, size: 9, color: gray });
+
+  const logoW = 120;
+  const logoH = 45;
+  ops.push({ type: "image", x: marginX, y: 680, w: logoW, h: logoH });
+  ops.push({ type: "text", text: "MEGA SAFETY CHILE SPA", x: 190, y: 718, size: 11, bold: true, color: navy });
+  ops.push({ type: "text", text: "RUT: 78.463.919-3 · www.megasafetychile.cl · contacto@megasafetychile.cl", x: 190, y: 702, size: 9, color: gray });
+
+  ops.push({ type: "line", x1: marginX, y1: 672, x2: rightX, y2: 672, color: navy, width: 1.5 });
+
+  ops.push({ type: "text", text: "DATOS DEL CLIENTE", x: marginX, y: 650, size: 9, bold: true, color: gold });
+  ops.push({ type: "text", text: quote.razon_social, x: marginX, y: 634, size: 12, bold: true, color: navy });
+  ops.push({ type: "text", text: `RUT: ${quote.rut}`, x: marginX, y: 618, size: 10, color: gray });
+  ops.push({
+    type: "text",
+    text: `${quote.direccion ? quote.direccion + ", " : ""}${quote.comuna || ""}${quote.region ? ", " + quote.region : ""}`,
+    x: marginX,
+    y: 602,
+    size: 10,
+    color: gray,
+  });
+  ops.push({ type: "text", text: `${quote.nombre_contacto} · ${quote.telefono} · ${quote.correo}`, x: marginX, y: 586, size: 10, color: gray });
+  ops.push({
+    type: "text",
+    text: `Requiere despacho: ${quote.requiere_despacho ? "Sí" : "No"}`,
+    x: marginX,
+    y: 570,
+    size: 10,
+    color: gray,
+  });
+  if (quote.observaciones) {
+    ops.push({ type: "text", text: `Observaciones: ${truncate(quote.observaciones, 90)}`, x: marginX, y: 554, size: 9.5, color: gray });
+  }
+
+  const colDesc = marginX + 10;
+  const colBrand = 340;
+  const colQty = rightX - 10;
+  const rowHeight = 22;
+  let y = 520;
+
+  ops.push({ type: "rect", x: marginX, y: y - rowHeight + 6, w: rightX - marginX, h: rowHeight, fill: navy });
+  ops.push({ type: "text", text: "PRODUCTO SOLICITADO", x: colDesc, y: y - 10, size: 9, bold: true, color: white });
+  ops.push({ type: "text", text: "MARCA", x: colBrand, y: y - 10, size: 9, bold: true, color: white });
+  ops.push({ type: "text", text: "CANT.", x: colQty - 30, y: y - 10, size: 9, bold: true, color: white });
+  y -= rowHeight;
+
+  items.forEach((item, idx) => {
+    if (idx % 2 === 1) {
+      ops.push({ type: "rect", x: marginX, y: y - rowHeight + 6, w: rightX - marginX, h: rowHeight, fill: lightGray });
+    }
+    ops.push({ type: "text", text: truncate(item.product_name, 40), x: colDesc, y: y - 10, size: 10, color: navy });
+    ops.push({ type: "text", text: truncate(item.brand || "-", 18), x: colBrand, y: y - 10, size: 10, color: gray });
+    ops.push({ type: "text", text: String(item.quantity), x: colQty - 20, y: y - 10, size: 10, bold: true, color: navy });
+    y -= rowHeight;
+    if (y < 90) return; // safety margin — extremely long carts just get truncated on the PDF, full list is always in the email body too
+  });
+
+  ops.push({ type: "line", x1: marginX, y1: y + rowHeight - 4, x2: rightX, y2: y + rowHeight - 4, color: navy, width: 1 });
+
+  y -= 20;
+  ops.push({
+    type: "text",
+    text: "Esta solicitud aún no tiene precio — un vendedor la revisará y enviará la cotización con precio a tu correo.",
+    x: marginX,
+    y,
+    size: 9.5,
+    color: gray,
+  });
+
+  ops.push({ type: "line", x1: marginX, y1: 60, x2: rightX, y2: 60, color: [0.85, 0.87, 0.91], width: 1 });
+  ops.push({
+    type: "text",
+    text: "Mega Safety Chile — Artículos de seguridad industrial · +56 9 8306 1338",
+    x: marginX,
+    y: 44,
+    size: 9,
+    color: gray,
+  });
+
+  const pdfBytes = buildInvoicePdf({
+    ops,
+    image: { bytes: logoBytes, width: LOGO_PDF_WIDTH, height: LOGO_PDF_HEIGHT },
+  });
+  return { base64: bytesToBase64(pdfBytes), bytes: pdfBytes };
+}

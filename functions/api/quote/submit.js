@@ -1,5 +1,6 @@
 import { insertQuote, insertQuoteItems, markEmailSent } from "../../_lib/supabase.js";
 import { sendQuoteNotification } from "../../_lib/email.js";
+import { buildRfqPdfBase64 } from "../../_lib/quote-pdf.js";
 
 function badRequest(message) {
   return new Response(JSON.stringify({ ok: false, error: message }), {
@@ -106,7 +107,17 @@ export async function onRequestPost({ request, env }) {
       }
     }
 
-    const emailResult = await sendQuoteNotification(env, quote, itemRows, attachment);
+    let rfqPdfBase64 = null;
+    try {
+      const origin = new URL(request.url).origin;
+      const { base64 } = await buildRfqPdfBase64(quote, itemRows, origin);
+      rfqPdfBase64 = base64;
+    } catch {
+      // Non-fatal — the notification email still goes out with the full
+      // request details in the HTML body even if the PDF fails to build.
+    }
+
+    const emailResult = await sendQuoteNotification(env, quote, itemRows, attachment, rfqPdfBase64);
     if (emailResult.sent) await markEmailSent(env, quote.id);
 
     return new Response(
