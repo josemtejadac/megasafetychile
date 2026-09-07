@@ -730,7 +730,8 @@ function renderQuotesList() {
   filtered.forEach((q) => {
     const card = document.createElement("div");
     card.className = "quote-card";
-    const date = new Date(q.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+    const date = new Date(q.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" }) +
+      " " + new Date(q.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
     const itemCount = (q.megasafety_b2b_quote_items || []).reduce((s, i) => s + i.quantity, 0);
     card.innerHTML = `
       <div class="quote-card-top">
@@ -777,6 +778,40 @@ async function logQuoteEvent(quoteId, eventType, detail) {
     detail: detail || null,
   });
 }
+
+// Counts weekdays (Mon-Fri) strictly between the quote's creation date and
+// today — used to gate the follow-up WhatsApp button until 5 business days
+// have passed, per the owner's rule.
+function businessDaysSince(dateStr) {
+  const start = new Date(dateStr);
+  start.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let count = 0;
+  const d = new Date(start);
+  while (d < today) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return count;
+}
+
+function normalizeChileanPhone(raw) {
+  const digits = String(raw || "").replace(/\D/g, "");
+  if (digits.startsWith("56")) return digits;
+  if (digits.startsWith("9") && digits.length === 9) return "56" + digits;
+  return digits;
+}
+
+const FOLLOWUP_MESSAGE = `Hola 👋 Somos Mega Safety Chile.
+
+Queríamos saber si pudiste revisar tu cotización. Si necesitas asesoría, realizar algún cambio o ver una muestra de algún producto antes de decidir, podemos coordinarlo contigo (sujeto a disponibilidad).
+
+Tu cotización sigue activa y estamos disponibles para ayudarte. 😊
+
+Mega Safety Chile
+Seguridad y abastecimiento industrial`;
 
 function openQuoteDetail(q) {
   document.getElementById("quote-panel-title").textContent = q.correlative_code;
@@ -830,6 +865,7 @@ function openQuoteDetail(q) {
       <h4>Empresa</h4>
       <p class="quote-detail-row"><strong>${q.razon_social}</strong> — ${q.rut}</p>
       <p class="quote-detail-row">${q.nombre_contacto} · ${q.telefono} · ${q.correo}</p>
+      <p class="quote-detail-row" style="color:var(--ink-soft); font-size:0.82rem;">Recibida: ${new Date(q.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })} a las ${new Date(q.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</p>
       <p class="quote-detail-row">${q.direccion || "-"}, ${q.comuna || "-"}, ${q.region || "-"} — Despacho: ${q.requiere_despacho ? "Sí" : "No"}</p>
       ${q.observaciones ? `<p class="quote-detail-row">Obs: ${q.observaciones}</p>` : ""}
       ${attachmentHtml}
@@ -866,6 +902,16 @@ function openQuoteDetail(q) {
     <div class="quote-detail-section" style="display:flex; gap:10px; flex-wrap:wrap;">
       <button class="btn btn--outline" id="download-pdf-btn" type="button">Descargar PDF</button>
       ${isAdmin ? `<button class="btn btn--outline" id="delete-quote-btn" type="button" style="color:#b91c1c; border-color:#b91c1c;">Eliminar cotización</button>` : ""}
+      ${(() => {
+        const daysPassed = businessDaysSince(q.created_at);
+        const phone = normalizeChileanPhone(q.telefono);
+        if (daysPassed >= 5 && phone) {
+          const waLink = `https://wa.me/${phone}?text=${encodeURIComponent(FOLLOWUP_MESSAGE)}`;
+          return `<a class="btn btn--primary" href="${waLink}" target="_blank" rel="noopener" style="background:#25d366; border-color:#25d366;">💬 Seguimiento por WhatsApp</a>`;
+        }
+        const remaining = Math.max(0, 5 - daysPassed);
+        return `<span style="font-size:0.8rem; color:var(--ink-soft); align-self:center;">Seguimiento disponible en ${remaining} día(s) hábil(es)</span>`;
+      })()}
     </div>
     <p class="form-note" id="quote-action-note"></p>
   `;
