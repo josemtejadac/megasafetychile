@@ -107,7 +107,7 @@ function renderChips() {
     activeCategory = btn.dataset.cat;
     activeSubcategory = null;
     chipsEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-active", c === btn));
-    renderSubcategoryBanner();
+    renderSubcategoryChips();
     renderGrid();
   });
 
@@ -121,30 +121,62 @@ function renderChips() {
     const targetChip = chipsEl.querySelector(`[data-cat="${catParam}"]`);
     if (allChip) allChip.classList.remove("is-active");
     if (targetChip) targetChip.classList.add("is-active");
-    renderSubcategoryBanner();
+    renderSubcategoryChips();
+    setTimeout(() => {
+      document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
+    }, 150);
+  }
+
+  // Arriving from the header's live search (any page) with a chosen term.
+  const qParam = params.get("q");
+  if (qParam) {
+    searchTerm = qParam;
+    searchInput.value = qParam;
+    renderGrid();
     setTimeout(() => {
       document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
     }, 150);
   }
 }
 
-function renderSubcategoryBanner() {
-  let banner = document.getElementById("subcategory-banner");
-  if (!activeSubcategory) {
-    if (banner) banner.remove();
+// Same subcategories offered in the header's "Menú de compra" mega-menu,
+// but as chips right on the catalog so switching between them doesn't
+// require going back to the menu — only shown once a real category (not
+// "Todos") is selected.
+function renderSubcategoryChips() {
+  let row = document.getElementById("subcategory-chips");
+  if (activeCategory === "all") {
+    if (row) row.remove();
     return;
   }
-  if (!banner) {
-    banner = document.createElement("div");
-    banner.id = "subcategory-banner";
-    banner.className = "subcategory-banner";
-    chipsEl.insertAdjacentElement("afterend", banner);
+
+  const subs = Array.from(
+    new Set(products.filter((p) => p.category_id === activeCategory && p.subcategory).map((p) => p.subcategory))
+  ).sort((a, b) => a.localeCompare(b, "es"));
+
+  if (!subs.length) {
+    if (row) row.remove();
+    return;
   }
-  banner.innerHTML = `Mostrando: <strong>${activeSubcategory}</strong> <button type="button" id="clear-sub-btn">Ver toda la categoría ✕</button>`;
-  document.getElementById("clear-sub-btn").addEventListener("click", () => {
-    activeSubcategory = null;
-    renderSubcategoryBanner();
-    renderGrid();
+
+  if (!row) {
+    row = document.createElement("div");
+    row.id = "subcategory-chips";
+    row.className = "cat-filter-chips subcategory-chips";
+    chipsEl.insertAdjacentElement("afterend", row);
+  }
+  row.innerHTML =
+    `<button type="button" class="chip chip--sub ${!activeSubcategory ? "is-active" : ""}" data-sub="">Todas</button>` +
+    subs
+      .map((s) => `<button type="button" class="chip chip--sub ${activeSubcategory === s ? "is-active" : ""}" data-sub="${s}">${s}</button>`)
+      .join("");
+
+  row.querySelectorAll(".chip--sub").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      activeSubcategory = btn.dataset.sub || null;
+      row.querySelectorAll(".chip--sub").forEach((c) => c.classList.toggle("is-active", c === btn));
+      renderGrid();
+    });
   });
 }
 

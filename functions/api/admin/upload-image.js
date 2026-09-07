@@ -41,6 +41,17 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({ ok: false, error: "Falta file o product_id" }), { status: 400 });
   }
 
+  const MAX_IMAGES = 5;
+  const productRes = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/megasafety_products?id=eq.${productId}&select=image_urls`,
+    { headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` } }
+  );
+  const [product] = await productRes.json();
+  const existingImages = product?.image_urls || [];
+  if (existingImages.length >= MAX_IMAGES) {
+    return new Response(JSON.stringify({ ok: false, error: `Máximo ${MAX_IMAGES} fotos por producto. Quita alguna antes de subir otra.` }), { status: 400 });
+  }
+
   const ext = (file.name || "photo.jpg").split(".").pop().toLowerCase();
   const path = `${productId}-${Date.now()}.${ext}`;
 
@@ -61,6 +72,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   const imageUrl = `${env.SUPABASE_URL}/storage/v1/object/public/megasafety-products/${path}`;
+  const newImages = [...existingImages, imageUrl];
 
   const updateRes = await fetch(`${env.SUPABASE_URL}/rest/v1/megasafety_products?id=eq.${productId}`, {
     method: "PATCH",
@@ -69,7 +81,10 @@ export async function onRequestPost({ request, env }) {
       Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ image_url: imageUrl }),
+    // image_url stays the "cover" photo (first in the gallery) — every other
+    // consumer of this product (catalog cards, cart, PDFs, emails) only
+    // knows about that single field, so it must always mirror image_urls[0].
+    body: JSON.stringify({ image_url: newImages[0], image_urls: newImages }),
   });
 
   if (!updateRes.ok) {
@@ -78,7 +93,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, image_url: imageUrl }), {
+  return new Response(JSON.stringify({ ok: true, image_url: newImages[0], image_urls: newImages }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

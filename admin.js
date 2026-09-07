@@ -365,24 +365,71 @@ function closeProductPanel() {
 document.getElementById("product-close-btn").addEventListener("click", closeProductPanel);
 productOverlay.addEventListener("click", closeProductPanel);
 
-// ---------- Photo upload ----------
-const photoPreview = document.getElementById("photo-preview");
+// ---------- Photo gallery (up to 5 per product) ----------
+const MAX_PRODUCT_IMAGES = 5;
+const photoGallery = document.getElementById("photo-gallery");
 const photoInput = document.getElementById("photo-input");
 const photoHint = document.getElementById("photo-hint");
-const PLACEHOLDER_THUMB_SVG =
-  '<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>';
+let currentGalleryImages = [];
+let currentGalleryProductId = null;
 
-function setPhotoPreview(url) {
-  photoPreview.innerHTML = url ? `<img src="${url}" alt="">` : PLACEHOLDER_THUMB_SVG;
+function renderPhotoGallery() {
+  if (!currentGalleryImages.length) {
+    photoGallery.innerHTML = `<p style="margin:0; font-size:0.82rem; color:var(--ink-soft);">Sin fotos todavía.</p>`;
+  } else {
+    photoGallery.innerHTML = currentGalleryImages
+      .map(
+        (url, idx) => `
+        <div style="position:relative; width:72px; height:72px;">
+          <img src="${url}" alt="" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+          ${idx === 0 ? `<span style="position:absolute; bottom:2px; left:2px; background:var(--navy); color:#fff; font-size:0.6rem; padding:1px 5px; border-radius:4px;">Portada</span>` : ""}
+          <button type="button" class="gallery-remove-btn" data-url="${url}" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#b91c1c; color:#fff; border:none; font-size:0.7rem; cursor:pointer; line-height:1;">✕</button>
+        </div>`
+      )
+      .join("");
+    photoGallery.querySelectorAll(".gallery-remove-btn").forEach((btn) => {
+      btn.addEventListener("click", () => removeGalleryImage(btn.dataset.url));
+    });
+  }
+  setPhotoFieldState(currentGalleryProductId);
+}
+
+async function removeGalleryImage(url) {
+  photoHint.textContent = "Quitando...";
+  try {
+    const { data: { session } } = await sbClient.auth.getSession();
+    const res = await fetch("/api/admin/delete-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ product_id: currentGalleryProductId, image_url: url }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "No se pudo quitar la foto");
+    currentGalleryImages = data.image_urls || [];
+    renderPhotoGallery();
+    photoHint.textContent = "Foto quitada.";
+    loadProducts();
+  } catch (err) {
+    photoHint.textContent = err.message || "No se pudo quitar la foto.";
+  }
+}
+
+function setPhotoGallery(productId, images) {
+  currentGalleryProductId = productId;
+  currentGalleryImages = images || [];
+  renderPhotoGallery();
 }
 
 function setPhotoFieldState(productId) {
-  if (productId) {
-    photoInput.disabled = false;
-    photoHint.textContent = "JPG o PNG, se sube directo al guardar el archivo.";
-  } else {
+  if (!productId) {
     photoInput.disabled = true;
-    photoHint.textContent = "Guarda el producto primero para poder subir su foto.";
+    photoHint.textContent = "Guarda el producto primero para poder subir sus fotos.";
+  } else if (currentGalleryImages.length >= MAX_PRODUCT_IMAGES) {
+    photoInput.disabled = true;
+    photoHint.textContent = `Ya tienes el máximo de ${MAX_PRODUCT_IMAGES} fotos. Quita una para subir otra.`;
+  } else {
+    photoInput.disabled = false;
+    photoHint.textContent = "JPG o PNG, se sube directo al elegir el archivo.";
   }
 }
 
@@ -404,8 +451,10 @@ photoInput.addEventListener("change", async (e) => {
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "Error al subir la foto");
-    setPhotoPreview(data.image_url);
-    photoHint.textContent = "Foto actualizada.";
+    currentGalleryImages = data.image_urls || [];
+    renderPhotoGallery();
+    photoHint.textContent = "Foto agregada.";
+    photoInput.value = "";
     loadProducts();
   } catch (err) {
     photoHint.textContent = err.message || "No se pudo subir la foto.";
@@ -567,8 +616,7 @@ document.getElementById("new-product-btn").addEventListener("click", () => {
   productPanelTitle.textContent = "Nuevo producto";
   deleteBtn.hidden = true;
   productNote.textContent = "";
-  setPhotoPreview(null);
-  setPhotoFieldState(null);
+  setPhotoGallery(null, []);
   setDocLink(fichaLink, fichaRemoveBtn, null);
   setDocLink(ispLink, ispRemoveBtn, null);
   docHint.textContent = "";
@@ -593,8 +641,7 @@ function openProductForm(p) {
   productForm.elements.is_featured.checked = !!p.is_featured;
   productPanelTitle.textContent = "Editar producto";
   deleteBtn.hidden = false;
-  setPhotoPreview(p.image_url);
-  setPhotoFieldState(p.id);
+  setPhotoGallery(p.id, p.image_urls && p.image_urls.length ? p.image_urls : (p.image_url ? [p.image_url] : []));
   setDocLink(fichaLink, fichaRemoveBtn, p.ficha_tecnica_url);
   setDocLink(ispLink, ispRemoveBtn, p.registro_isp_url);
   docHint.textContent = "";

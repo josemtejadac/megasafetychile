@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=5">
-<link rel="stylesheet" href="compra-empresa.css?v=5">
-<link rel="stylesheet" href="admin.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="compra-empresa.css?v=6">
+<link rel="stylesheet" href="admin.css?v=6">
 </head>
 <body>
 
@@ -236,15 +236,14 @@
   <form id="product-form" class="quote-form">
     <input type="hidden" name="id">
     <div class="photo-field">
-      <div class="photo-preview" id="photo-preview">
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
-      </div>
+      <p style="margin:0 0 8px; font-size:0.85rem; font-weight:600; color:var(--navy);">Fotos del producto (máx. 5)</p>
+      <div id="photo-gallery" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;"></div>
       <div class="photo-field-actions">
         <label class="photo-upload-btn">
           Subir foto
           <input type="file" id="photo-input" accept="image/*" hidden>
         </label>
-        <p class="photo-hint" id="photo-hint">Guarda el producto primero para poder subir su foto.</p>
+        <p class="photo-hint" id="photo-hint">Guarda el producto primero para poder subir sus fotos.</p>
       </div>
     </div>
     <div class="photo-field-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
@@ -380,6 +379,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=5"></script>
+<script src="admin.js?v=6"></script>
 </body>
 </html>

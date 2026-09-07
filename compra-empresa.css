@@ -121,6 +121,10 @@
 .chip:hover { border-color: var(--gold); }
 .chip.is-active { background: var(--navy); color: #fff; border-color: var(--navy); }
 
+.subcategory-chips { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.chip--sub { padding: 6px 14px; font-size: 0.8rem; background: var(--bg-alt); }
+.chip--sub.is-active { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+
 .subcategory-banner {
   display: flex;
   align-items: center;
