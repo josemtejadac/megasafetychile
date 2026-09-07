@@ -125,3 +125,92 @@ document.addEventListener("keydown", (e) => {
     handleFile(file);
   });
 })();
+
+// ---------- Header live product search ----------
+(function () {
+  const btn = document.getElementById("header-search-btn");
+  const panel = document.getElementById("header-search-panel");
+  if (!btn || !panel) return;
+
+  const input = document.getElementById("header-search-input");
+  const results = document.getElementById("header-search-results");
+  const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
+
+  let debounceTimer = null;
+
+  function open() {
+    panel.hidden = false;
+    btn.classList.add("is-active");
+    btn.setAttribute("aria-expanded", "true");
+    input.focus();
+  }
+  function close() {
+    panel.hidden = true;
+    btn.classList.remove("is-active");
+    btn.setAttribute("aria-expanded", "false");
+  }
+  btn.addEventListener("click", () => (panel.hidden ? open() : close()));
+  document.addEventListener("click", (e) => {
+    if (!panel.hidden && !e.target.closest(".header-search")) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+
+  function renderHint(text) {
+    results.innerHTML = `<p class="header-search-hint">${text}</p>`;
+  }
+
+  async function runSearch(term) {
+    const q = term.trim();
+    if (q.length < 2) {
+      renderHint("Escribe al menos 2 letras.");
+      return;
+    }
+    renderHint("Buscando...");
+    const pattern = encodeURIComponent(`*${q}*`);
+    const url =
+      `${SUPABASE_URL}/rest/v1/megasafety_products` +
+      `?active=eq.true&or=(name.ilike.${pattern},brand.ilike.${pattern},sku.ilike.${pattern})` +
+      `&select=id,name,brand,image_url&limit=6`;
+    try {
+      const res = await fetch(url, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } });
+      const products = await res.json();
+      if (!Array.isArray(products) || !products.length) {
+        renderHint("Sin resultados. Prueba con otra palabra.");
+        return;
+      }
+      const seeAllUrl = `compra-empresa.html?q=${encodeURIComponent(q)}`;
+      results.innerHTML =
+        products
+          .map(
+            (p) => `
+            <a class="header-search-item" href="compra-empresa.html?q=${encodeURIComponent(p.name)}">
+              ${p.image_url ? `<img src="${p.image_url}" alt="">` : `<div style="width:40px;height:40px;border-radius:6px;background:var(--bg-alt);flex-shrink:0;"></div>`}
+              <span>
+                <span class="header-search-item-name" style="display:block;">${p.name}</span>
+                ${p.brand ? `<span class="header-search-item-brand">${p.brand}</span>` : ""}
+              </span>
+            </a>`
+          )
+          .join("") + `<a class="header-search-seeall" href="${seeAllUrl}">Ver todos los resultados para "${q}"</a>`;
+    } catch {
+      renderHint("No se pudo buscar. Intenta de nuevo.");
+    }
+  }
+
+  input.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    const term = input.value;
+    debounceTimer = setTimeout(() => runSearch(term), 300);
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      window.location.href = `compra-empresa.html?q=${encodeURIComponent(input.value.trim())}`;
+    }
+  });
+
+  renderHint("Escribe al menos 2 letras.");
+})();
