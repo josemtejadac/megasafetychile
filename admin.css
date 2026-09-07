@@ -1,26 +1,6 @@
 .admin-main { padding: 48px 0 80px; min-height: 60vh; }
 
-/* Centered modal (not a side drawer) — used for the manual-quote form. */
-.modal-panel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: min(560px, 92vw);
-  max-height: 86vh;
-  background: #fff;
-  z-index: 91;
-  border-radius: 16px;
-  box-shadow: 0 24px 60px -20px rgba(0,0,0,0.35);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, -50%) scale(0.96);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.modal-panel.is-open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-.modal-panel .cat-menu-head { position: sticky; top: 0; background: #fff; z-index: 1; }
+/* .modal-panel now lives in styles.css (loaded site-wide). */
 
 .admin-login { max-width: 380px; margin: 40px auto; }
 .admin-login h1 { text-align: center; margin-bottom: 24px; }

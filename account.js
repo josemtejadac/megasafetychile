@@ -57,7 +57,7 @@ function injectAccountUI() {
   overlay.id = "account-overlay";
 
   const panel = document.createElement("aside");
-  panel.className = "cart-panel form-panel";
+  panel.className = "modal-panel form-panel";
   panel.id = "account-panel";
   panel.setAttribute("aria-hidden", "true");
   panel.innerHTML = `
@@ -96,6 +96,7 @@ function injectAccountUI() {
   document.body.appendChild(panel);
 
   const open = () => {
+    refreshAccountState();
     panel.classList.add("is-open");
     overlay.classList.add("is-open");
     panel.setAttribute("aria-hidden", "false");
@@ -139,6 +140,7 @@ function injectAccountUI() {
     }
     note.textContent = "";
     await refreshAccountState();
+    await claimPastQuotes();
   });
 
   document.getElementById("account-signup-form").addEventListener("submit", async (e) => {
@@ -160,6 +162,7 @@ function injectAccountUI() {
     note.textContent = "Cuenta creada. Ya puedes ver tus cotizaciones.";
     note.className = "form-note";
     await refreshAccountState();
+    await claimPastQuotes();
   });
 
   document.getElementById("account-logout-btn").addEventListener("click", async () => {
@@ -170,13 +173,39 @@ function injectAccountUI() {
   });
 
   refreshAccountState();
+  claimPastQuotes();
+}
+
+// Links any quotes submitted with this email before the customer had (or
+// used) an account, so their history shows up right after they log in.
+async function claimPastQuotes() {
+  try {
+    const { data: { session } } = await accountClient.auth.getSession();
+    if (!session) return;
+    await fetch("/api/account/claim-quotes", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+  } catch {
+    // Best-effort — the customer can still see quotes filed after they
+    // logged in even if this particular linking call fails.
+  }
 }
 
 async function refreshAccountState() {
-  const { data: { session } } = await accountClient.auth.getSession();
   const loggedOut = document.getElementById("account-logged-out");
   const loggedIn = document.getElementById("account-logged-in");
   const label = document.getElementById("account-btn-label");
+  if (!loggedOut || !loggedIn || !label) return;
+  // Always resolve to exactly one visible state, even if getSession()
+  // rejects — a previous version of this left both views visible when a
+  // stale/expired session caused an error partway through.
+  let session = null;
+  try {
+    ({ data: { session } } = await accountClient.auth.getSession());
+  } catch {
+    session = null;
+  }
   if (session) {
     loggedOut.hidden = true;
     loggedIn.hidden = false;

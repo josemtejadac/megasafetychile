@@ -225,6 +225,34 @@ h1, h2, h3 {
   text-transform: uppercase;
   color: var(--ink-soft);
 }
+
+.checkbox-row { flex-direction: row !important; align-items: center; gap: 8px !important; }
+.checkbox-row input { width: auto; }
+
+/* Centered modal (not a side drawer) — used site-wide by the "Mi cuenta"
+   panel (account.js) and, on admin.html, the manual-quote form. Defined
+   here (loaded on every page) rather than only in admin.css, which
+   index.html/compra-empresa.html don't load. */
+.modal-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(560px, 92vw);
+  max-height: 86vh;
+  background: #fff;
+  z-index: 91;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.96);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.modal-panel.is-open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+.modal-panel .cat-menu-head { position: sticky; top: 0; background: #fff; z-index: 1; }
 .cat-menu-list { padding: 0 8px 16px; list-style: none; margin: 0; }
 .cat-menu-item { border-bottom: 1px solid var(--border); }
 
