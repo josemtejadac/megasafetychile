@@ -51,33 +51,18 @@
 
 <main>
 
-  <section class="hero">
-    <video class="hero-video" autoplay muted loop playsinline poster="assets/video/hero-poster.jpg">
-      <source src="assets/video/hero-bg.mp4" type="video/mp4">
-    </video>
-    <div class="hero-overlay" aria-hidden="true"></div>
-    <div class="container hero-inner">
-      <div class="hero-copy">
-        <p class="eyebrow">Tu operación más segura, siempre</p>
-        <h1>Equipamos a personas y empresas con soluciones confiables</h1>
-        <p class="hero-text">Para un entorno de trabajo seguro. EPP, herramientas, soldadura, abrasivos, señalización vial, bloqueo LOTO, iluminación industrial y ropa de trabajo, para empresas y faenas en todo Chile.</p>
-        <div class="hero-actions">
-          <a href="#productos" class="btn btn--primary">Ver categorías</a>
-          <a href="#contacto" class="btn btn--outline">Cotizar ahora</a>
-        </div>
-        <ul class="hero-stats">
-          <li><strong>Productos</strong> certificados</li>
-          <li><strong>Asesoría</strong> especializada</li>
-          <li><strong>Despachos</strong> a todo Chile</li>
-        </ul>
-      </div>
-      <div class="hero-visual" aria-hidden="true">
-        <div class="hero-badge">
-          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 6v6c0 5 3.8 9 9 10 5.2-1 9-5 9-10V6l-9-4Z"/><path d="m9 12 2 2 4-4"/></svg>
-          <span>Calidad certificada</span>
-        </div>
-        <p class="hero-tagline">Juntos por un entorno más seguro</p>
-      </div>
+  <section id="productos" style="background:#0b1f3a;">
+    <div style="position:relative; max-width:640px; margin:0 auto;">
+      <img src="assets/img/hero-full.jpg" alt="Tu operación más segura, siempre — Mega Safety Chile. Elementos de protección personal, herramientas y abrasivos, soldadura y consumibles, ropa de trabajo, seguridad vial, bloqueo LOTO, iluminación industrial, insumos generales" style="width:100%; display:block;">
+      <a href="compra-empresa.html?cat=cat-seguridad-industrial" aria-label="Elementos de protección personal" style="position:absolute; left:0%; top:44%; width:24%; height:18%;"></a>
+      <a href="compra-empresa.html?cat=cat-herramientas" aria-label="Herramientas y abrasivos" style="position:absolute; left:25%; top:44%; width:24%; height:18%;"></a>
+      <a href="compra-empresa.html?cat=cat-soldadura" aria-label="Soldadura y consumibles" style="position:absolute; left:50%; top:44%; width:24%; height:18%;"></a>
+      <a href="compra-empresa.html?cat=cat-ropa" aria-label="Ropa de trabajo y uniformes" style="position:absolute; left:75%; top:44%; width:24%; height:18%;"></a>
+      <a href="compra-empresa.html?cat=cat-vial" aria-label="Seguridad vial y señalización" style="position:absolute; left:0%; top:64%; width:24%; height:17%;"></a>
+      <a href="compra-empresa.html?cat=cat-loto" aria-label="Bloqueo L.O.T.O." style="position:absolute; left:25%; top:64%; width:24%; height:17%;"></a>
+      <a href="compra-empresa.html?cat=cat-iluminacion" aria-label="Iluminación industrial" style="position:absolute; left:50%; top:64%; width:24%; height:17%;"></a>
+      <a href="compra-empresa.html" aria-label="Insumos generales para faena" style="position:absolute; left:75%; top:64%; width:24%; height:17%;"></a>
+      <a href="compra-empresa.html" aria-label="Ver todos los productos" style="position:absolute; left:2%; top:90%; width:96%; height:6.5%;"></a>
     </div>
   </section>
 
@@ -142,23 +127,6 @@
     </div>
   </section>
   <style>@media (max-width: 760px) { .section .container[style*="grid-template-columns:repeat(3,1fr)"] { grid-template-columns: 1fr !important; } }</style>
-
-  <section id="productos" class="section">
-    <div class="container">
-      <div class="cat-grid-image-wrap" style="position:relative; max-width:900px; margin:0 auto; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);">
-        <img src="assets/img/categorias-destacadas.jpg" alt="Categorías destacadas: Seguridad personal, Herramientas y equipos, Soldadura y consumibles, Abrasivos, Seguridad vial y señalización, Bloqueo L.O.T.O., Iluminación industrial, Ropa de trabajo y uniformes" style="width:100%; display:block;">
-        <a href="compra-empresa.html?cat=cat-seguridad-industrial" aria-label="Seguridad personal" style="position:absolute; left:1.6%; top:20.5%; width:23.7%; height:33.6%;"></a>
-        <a href="compra-empresa.html?cat=cat-herramientas" aria-label="Herramientas y equipos" style="position:absolute; left:26.9%; top:20.5%; width:23.6%; height:33.6%;"></a>
-        <a href="compra-empresa.html?cat=cat-soldadura" aria-label="Soldadura y consumibles" style="position:absolute; left:52.2%; top:20.5%; width:23.6%; height:33.6%;"></a>
-        <a href="compra-empresa.html?cat=cat-abrasivos" aria-label="Abrasivos" style="position:absolute; left:77.5%; top:20.5%; width:20.9%; height:33.6%;"></a>
-        <a href="compra-empresa.html?cat=cat-vial" aria-label="Seguridad vial y señalización" style="position:absolute; left:1.6%; top:56.8%; width:23.7%; height:33.7%;"></a>
-        <a href="compra-empresa.html?cat=cat-loto" aria-label="Bloqueo L.O.T.O." style="position:absolute; left:26.9%; top:56.8%; width:23.6%; height:33.7%;"></a>
-        <a href="compra-empresa.html?cat=cat-iluminacion" aria-label="Iluminación industrial" style="position:absolute; left:52.2%; top:56.8%; width:23.6%; height:33.7%;"></a>
-        <a href="compra-empresa.html?cat=cat-ropa" aria-label="Ropa de trabajo y uniformes" style="position:absolute; left:77.5%; top:56.8%; width:20.9%; height:33.7%;"></a>
-      </div>
-      <p class="cat-note">¿Buscas Izaje de carga u otro producto específico? <a href="compra-empresa.html?cat=cat-izaje">Ver Izaje de carga</a> o <a href="#contacto">escríbenos</a> y te ayudamos.</p>
-    </div>
-  </section>
 
   <section class="trust-bar">
     <div class="container trust-bar-inner">
