@@ -804,7 +804,8 @@ function normalizeChileanPhone(raw) {
   return digits;
 }
 
-const FOLLOWUP_MESSAGE = `Hola 👋 Somos Mega Safety Chile.
+function buildFollowupMessage(customerName) {
+  return `Hola ${customerName || ""} 👋 Somos Mega Safety Chile.
 
 Queríamos saber si pudiste revisar tu cotización. Si necesitas asesoría, realizar algún cambio o ver una muestra de algún producto antes de decidir, podemos coordinarlo contigo (sujeto a disponibilidad).
 
@@ -812,6 +813,7 @@ Tu cotización sigue activa y estamos disponibles para ayudarte. 😊
 
 Mega Safety Chile
 Seguridad y abastecimiento industrial`;
+}
 
 function openQuoteDetail(q) {
   document.getElementById("quote-panel-title").textContent = q.correlative_code;
@@ -906,7 +908,7 @@ function openQuoteDetail(q) {
         const daysPassed = businessDaysSince(q.created_at);
         const phone = normalizeChileanPhone(q.telefono);
         if (daysPassed >= 5 && phone) {
-          const waLink = `https://wa.me/${phone}?text=${encodeURIComponent(FOLLOWUP_MESSAGE)}`;
+          const waLink = `https://wa.me/${phone}?text=${encodeURIComponent(buildFollowupMessage(q.nombre_contacto))}`;
           return `<a class="btn btn--primary" href="${waLink}" target="_blank" rel="noopener" style="background:#25d366; border-color:#25d366;">💬 Seguimiento por WhatsApp</a>`;
         }
         const remaining = Math.max(0, 5 - daysPassed);
