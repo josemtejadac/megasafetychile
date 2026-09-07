@@ -121,13 +121,10 @@
     </div>
   </section>
 
-  <section class="brands-strip" style="background:#fff; padding:28px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); overflow:hidden;">
-    <p class="brands-label" style="text-align:center; font-size:0.75rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 16px;">Marcas representadas</p>
+  <section class="brands-strip" style="background:var(--navy); padding:24px 0; overflow:hidden;">
+    <p class="brands-label" style="text-align:center; font-size:0.75rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#c7d1e3; margin:0 0 16px;">Marcas representadas</p>
     <div class="brands-marquee" style="overflow:hidden;">
-      <div class="brands-track" style="display:flex; width:max-content; gap:56px; animation:brands-scroll 22s linear infinite;">
-        <span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Kbeen</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Saga</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Vortex</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Force</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Bufalo</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Daumer</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Prodelta</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">MegaSafety</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Jmak</span>
-        <span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Kbeen</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Saga</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Vortex</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Force</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Bufalo</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Daumer</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Prodelta</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">MegaSafety</span><span style="font-family:var(--font-head); font-weight:800; font-size:1.3rem; color:var(--navy); opacity:0.55; white-space:nowrap;">Jmak</span>
-      </div>
+      <div class="brands-track" id="brands-track" style="display:flex; align-items:center; width:max-content; gap:40px; animation:brands-scroll 26s linear infinite;"></div>
     </div>
   </section>
   <style>@keyframes brands-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }</style>
@@ -394,6 +391,7 @@
 <script src="account.js"></script>
 <script src="promo-carousel.js"></script>
 <script src="featured-products.js"></script>
+<script src="brands-marquee.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
