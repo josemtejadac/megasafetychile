@@ -150,7 +150,7 @@ h1, h2, h3 {
 }
 .account-tab.is-active { background: var(--navy); color: #fff; border-color: var(--navy); }
 #account-login-form, #account-signup-form { padding: 0 24px 20px; }
-#account-logged-in { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 12px; }
+#account-logged-in:not([hidden]) { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 12px; }
 .account-welcome { color: var(--ink-soft); }
 .account-orders-link, .account-logout-btn { width: 100%; justify-content: center; }
 
