@@ -78,6 +78,7 @@ export function buildQuoteSentEmailHtml(quote, items, origin) {
       return `<tr>
           <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#10141c;">${name}</td>
           <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#4a5468;text-align:center;">${i.quantity}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#4a5468;text-align:right;">${money(i.unit_price)}</td>
           <td style="padding:10px 12px;border-bottom:1px solid #e3e7ee;font-size:14px;color:#10141c;text-align:right;font-weight:700;">${money(subtotal)}</td>
         </tr>`;
     })
@@ -99,6 +100,7 @@ export function buildQuoteSentEmailHtml(quote, items, origin) {
             <tr>
               <th style="text-align:left;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Producto</th>
               <th style="text-align:center;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Cant.</th>
+              <th style="text-align:right;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Valor Unit.</th>
               <th style="text-align:right;padding:8px 12px;font-size:12px;color:#4a5468;text-transform:uppercase;border-bottom:2px solid #0b1f3a;">Subtotal</th>
             </tr>
           </thead>
