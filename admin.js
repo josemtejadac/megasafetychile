@@ -1175,6 +1175,86 @@ document.getElementById("manual-item-add-btn").addEventListener("click", () => {
   nameInput.focus();
 });
 
+// ---------- Product picker (browse the store catalog from the manual quote form) ----------
+const productPickerPanel = document.getElementById("product-picker-panel");
+const productPickerOverlay = document.getElementById("product-picker-overlay");
+const productPickerList = document.getElementById("product-picker-list");
+const productPickerSearch = document.getElementById("product-picker-search");
+
+function openProductPicker() {
+  if (allProducts.length === 0) loadProducts();
+  productPickerSearch.value = "";
+  renderProductPickerList("");
+  productPickerPanel.classList.add("is-open");
+  productPickerOverlay.classList.add("is-open");
+  productPickerPanel.setAttribute("aria-hidden", "false");
+  productPickerSearch.focus();
+}
+function closeProductPicker() {
+  productPickerPanel.classList.remove("is-open");
+  productPickerOverlay.classList.remove("is-open");
+  productPickerPanel.setAttribute("aria-hidden", "true");
+}
+document.getElementById("open-product-picker-btn").addEventListener("click", openProductPicker);
+document.getElementById("product-picker-close-btn").addEventListener("click", closeProductPicker);
+productPickerOverlay.addEventListener("click", closeProductPicker);
+
+function renderProductPickerList(term) {
+  const q = term.trim().toLowerCase();
+  const matches = allProducts.filter((p) => {
+    if (!q) return true;
+    return p.name.toLowerCase().includes(q) || (p.brand || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q);
+  });
+
+  if (!allProducts.length) {
+    productPickerList.innerHTML = `<p style="color:var(--ink-soft); font-size:0.85rem;">Cargando catálogo...</p>`;
+    return;
+  }
+  if (!matches.length) {
+    productPickerList.innerHTML = `<p style="color:var(--ink-soft); font-size:0.85rem;">Sin resultados.</p>`;
+    return;
+  }
+
+  productPickerList.innerHTML = matches
+    .slice(0, 80)
+    .map(
+      (p) => `
+      <div style="display:flex; align-items:center; gap:10px; padding:8px; border:1px solid var(--border); border-radius:10px;">
+        <div style="flex:1; min-width:0;">
+          <p style="margin:0; font-weight:700; font-size:0.9rem; color:var(--navy);">${p.name}</p>
+          <p style="margin:0; font-size:0.78rem; color:var(--ink-soft);">${p.brand || "-"}${p.sku ? ` · SKU ${p.sku}` : ""}</p>
+        </div>
+        <input type="number" min="1" value="1" class="picker-qty" data-id="${p.id}" style="width:60px; padding:6px; border:1px solid var(--border); border-radius:6px;">
+        <button type="button" class="btn btn--outline picker-add-btn" data-id="${p.id}" style="white-space:nowrap;">+ Agregar</button>
+      </div>`
+    )
+    .join("");
+
+  productPickerList.querySelectorAll(".picker-add-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const product = allProducts.find((p) => String(p.id) === btn.dataset.id);
+      if (!product) return;
+      const qtyInput = productPickerList.querySelector(`.picker-qty[data-id="${btn.dataset.id}"]`);
+      const qty = Number(qtyInput.value) || 1;
+      manualQuoteItems.push({
+        product_name: product.name,
+        brand: product.brand || null,
+        quantity: qty,
+        category_id: product.category_id || null,
+      });
+      renderManualQuoteItems();
+      btn.textContent = "✓ Agregado";
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = "+ Agregar";
+        btn.disabled = false;
+      }, 1200);
+    });
+  });
+}
+
+productPickerSearch.addEventListener("input", () => renderProductPickerList(productPickerSearch.value));
+
 manualQuoteForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!manualQuoteItems.length) {

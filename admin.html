@@ -349,12 +349,26 @@
         <input type="text" id="manual-item-brand" placeholder="Marca (opcional)" style="flex:1; min-width:100px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
         <input type="number" id="manual-item-qty" placeholder="Cant." min="1" value="1" style="width:70px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
         <button type="button" class="btn btn--outline" id="manual-item-add-btn">+ Agregar</button>
+        <button type="button" class="btn btn--outline" id="open-product-picker-btn">🔍 Elegir del catálogo</button>
       </div>
     </div>
 
     <p class="form-note" id="manual-quote-note"></p>
     <button type="submit" class="btn btn--primary" style="margin-top:14px;">Crear cotización</button>
   </form>
+</aside>
+
+<!-- Catalog product picker (for manual quotes) -->
+<div class="cat-menu-overlay" id="product-picker-overlay" style="z-index:94;"></div>
+<aside class="modal-panel" id="product-picker-panel" aria-hidden="true" style="z-index:95;">
+  <div class="cat-menu-head">
+    <h3>Elegir del catálogo</h3>
+    <button class="cat-menu-close" id="product-picker-close-btn" aria-label="Cerrar">&times;</button>
+  </div>
+  <div style="padding:0 24px 20px;">
+    <input type="search" id="product-picker-search" placeholder="Buscar por nombre, marca o SKU..." style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--border); border-radius:8px; margin-bottom:14px;">
+    <div id="product-picker-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
