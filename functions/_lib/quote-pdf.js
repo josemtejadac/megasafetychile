@@ -221,6 +221,21 @@ export async function buildQuotePdfBase64(quote, items, origin) {
     y -= 14;
   });
 
+  // Staff notes on the quote (payment terms agreed verbally, delivery
+  // conditions, etc.) — shown right on the priced PDF so the customer sees
+  // them without having to dig into page 2's full data sheet.
+  if (quote.observaciones) {
+    y -= 8;
+    ops.push({ type: "text", text: "OBSERVACIONES", x: marginX, y, size: 9, bold: true, color: gold });
+    y -= 14;
+    const obsText = String(quote.observaciones);
+    const maxCharsPerLine = 95;
+    for (let i = 0; i < obsText.length; i += maxCharsPerLine) {
+      ops.push({ type: "text", text: obsText.slice(i, i + maxCharsPerLine), x: marginX, y, size: 9.5, color: navy });
+      y -= 13;
+    }
+  }
+
   // --- Footer ---
   ops.push({ type: "line", x1: marginX, y1: 60, x2: rightX, y2: 60, color: [0.85, 0.87, 0.91], width: 1 });
   ops.push({
