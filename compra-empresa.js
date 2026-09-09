@@ -80,6 +80,7 @@ async function loadProducts() {
       price: p.price,
       discount_percent: p.discount_percent || 0,
       image_url: p.image_url,
+      image_urls: p.image_urls && p.image_urls.length ? p.image_urls : (p.image_url ? [p.image_url] : []),
       colors: p.colors || [],
       sizes: p.sizes || [],
       subcategory: p.subcategory,
@@ -358,14 +359,28 @@ async function openProductDetail(p) {
     ${(hasColors || hasSizes) ? `<p class="form-note" id="variant-stock-note" style="margin:4px 0 0;"></p>` : ""}
   `;
 
+  const photos = p.image_urls && p.image_urls.length ? p.image_urls : [];
   detailBody.innerHTML = `
-    <div class="detail-photo">
+    <div class="detail-photo" id="detail-photo">
       ${
-        p.image_url
-          ? `<img src="${p.image_url}" alt="">`
+        photos.length
+          ? `<img src="${photos[0]}" alt="" id="detail-photo-img">`
           : `<svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`
       }
+      ${
+        photos.length > 1
+          ? `<button type="button" class="detail-photo-arrow detail-photo-arrow--prev" id="detail-photo-prev" aria-label="Foto anterior">‹</button>
+             <button type="button" class="detail-photo-arrow detail-photo-arrow--next" id="detail-photo-next" aria-label="Foto siguiente">›</button>`
+          : ""
+      }
     </div>
+    ${
+      photos.length > 1
+        ? `<div class="detail-photo-dots" id="detail-photo-dots">${photos
+            .map((_, i) => `<button type="button" class="detail-photo-dot${i === 0 ? " is-active" : ""}" data-idx="${i}" aria-label="Ver foto ${i + 1}"></button>`)
+            .join("")}</div>`
+        : ""
+    }
     <p class="detail-brand">${p.brand || CAT_LABEL[p.category_id] || ""}</p>
     <h2 class="detail-name">${p.name}</h2>
     ${p.sku ? `<p class="detail-sku">SKU: ${p.sku}</p>` : ""}
@@ -394,6 +409,32 @@ async function openProductDetail(p) {
       <button class="add-btn" type="button">Agregar a cotización</button>
     </div>
   `;
+
+  if (photos.length > 1) {
+    let photoIdx = 0;
+    const photoImg = document.getElementById("detail-photo-img");
+    const dots = Array.from(document.querySelectorAll(".detail-photo-dot"));
+    function showPhoto(idx) {
+      photoIdx = (idx + photos.length) % photos.length;
+      photoImg.src = photos[photoIdx];
+      dots.forEach((d, i) => d.classList.toggle("is-active", i === photoIdx));
+    }
+    document.getElementById("detail-photo-prev")?.addEventListener("click", () => showPhoto(photoIdx - 1));
+    document.getElementById("detail-photo-next")?.addEventListener("click", () => showPhoto(photoIdx + 1));
+    dots.forEach((d) => d.addEventListener("click", () => showPhoto(Number(d.dataset.idx))));
+
+    // Swipe left/right on touch devices — the owner specifically asked for
+    // "deslizar" (swipe) support, not just tapping arrows.
+    const photoEl = document.getElementById("detail-photo");
+    let touchStartX = null;
+    photoEl.addEventListener("touchstart", (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    photoEl.addEventListener("touchend", (e) => {
+      if (touchStartX == null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 40) showPhoto(dx < 0 ? photoIdx + 1 : photoIdx - 1);
+      touchStartX = null;
+    });
+  }
 
   const stock = currentStock();
   const outOfStock = stock === 0;
