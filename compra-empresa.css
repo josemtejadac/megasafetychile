@@ -229,6 +229,7 @@
 }
 .size-chip.is-selected { border-color: var(--navy); background: var(--navy); color: #fff; }
 .product-thumb {
+  position: relative;
   width: 100%;
   aspect-ratio: 4/3;
   background: var(--bg-alt);
@@ -241,6 +242,18 @@
 }
 .product-thumb:not(:has(img)) { opacity: 0.35; }
 .product-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.product-thumb-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
 .product-brand { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold-dark); }
 .product-name { font-size: 1rem; font-weight: 700; color: var(--navy); margin: 0; }
 .product-desc { font-size: 0.85rem; color: var(--ink-soft); margin: 0; flex: 1; }
@@ -255,6 +268,10 @@
 }
 .product-price-note { font-size: 0.8rem; color: var(--red); font-weight: 600; }
 .product-price-note.has-price { color: var(--navy); font-size: 1.05rem; font-weight: 800; font-family: var(--font-head); }
+.product-price-note.has-discount, .detail-price.has-discount { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.price-original { font-size: 0.78em; font-weight: 600; color: var(--ink-soft); text-decoration: line-through; }
+.price-discounted { color: var(--red); }
+.price-discount-badge { background: var(--red); color: #fff; font-size: 0.68em; font-weight: 800; padding: 2px 7px; border-radius: 999px; }
 .product-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .qty-stepper { flex-shrink: 0; }
 .product-actions .add-btn { flex: 1 1 auto; min-width: 0; white-space: nowrap; }

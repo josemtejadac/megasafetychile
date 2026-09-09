@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=7">
-<link rel="stylesheet" href="compra-empresa.css?v=7">
-<link rel="stylesheet" href="admin.css?v=7">
+<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="compra-empresa.css?v=8">
+<link rel="stylesheet" href="admin.css?v=8">
 </head>
 <body>
 
@@ -240,8 +240,8 @@
       <div id="photo-gallery" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;"></div>
       <div class="photo-field-actions">
         <label class="photo-upload-btn">
-          Subir foto
-          <input type="file" id="photo-input" accept="image/*" hidden>
+          Subir fotos
+          <input type="file" id="photo-input" accept="image/*" multiple hidden>
         </label>
         <p class="photo-hint" id="photo-hint">Guarda el producto primero para poder subir sus fotos.</p>
       </div>
@@ -284,10 +284,12 @@
     </label>
     <label>Descripción<textarea name="description" rows="3"></textarea></label>
     <label>Certificaciones (separadas por coma)<input type="text" name="certifications" placeholder="ANSI Z89.1, EN 388"></label>
-    <label>Precio CLP (vacío = "Solicitar cotización")<input type="number" name="price" min="0" step="1"></label>
+    <label>Precio CLP (vacío = "Solicitar cotización")<input type="number" name="price" id="price-input" min="0" step="1"></label>
+    <label>Descuento % (0 = sin oferta)<input type="number" name="discount_percent" id="discount-input" min="0" max="90" step="1" value="0"></label>
+    <p class="admin-help" id="discount-preview" style="margin-top:-8px;"></p>
     <label>Orden<input type="number" name="sort_order" value="0"></label>
     <label class="checkbox-row"><input type="checkbox" name="active" checked> Activo (visible en el sitio)</label>
-    <label class="checkbox-row"><input type="checkbox" name="is_featured"> Destacar en portada (carrusel "Productos destacados")</label>
+    <label class="checkbox-row"><input type="checkbox" name="is_featured"> Destacar en portada (carrusel "Productos destacados" — también aparece ahí si tiene descuento)</label>
 
     <label>Colores disponibles (separados por coma)<input type="text" name="colors" id="colors-input" placeholder="rojo, azul, amarillo"></label>
     <label>Tallas disponibles (separadas por coma)<input type="text" name="sizes" id="sizes-input" placeholder="S, M, L, XL"></label>
@@ -379,6 +381,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=7"></script>
+<script src="admin.js?v=8"></script>
 </body>
 </html>

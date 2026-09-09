@@ -350,6 +350,21 @@ const productNote = document.getElementById("product-note");
 const productPanelTitle = document.getElementById("product-panel-title");
 const deleteBtn = document.getElementById("delete-product-btn");
 
+// ---------- Discount / "oferta del mes" live preview ----------
+function updateDiscountPreview() {
+  const preview = document.getElementById("discount-preview");
+  const price = Number(productForm.elements.price.value);
+  const pct = Number(productForm.elements.discount_percent.value) || 0;
+  if (!price || pct <= 0) {
+    preview.textContent = "";
+    return;
+  }
+  const discounted = Math.round(price * (1 - pct / 100));
+  preview.textContent = `Precio real: $${price.toLocaleString("es-CL")} → Con ${pct}% de descuento: $${discounted.toLocaleString("es-CL")}`;
+}
+productForm.elements.price?.addEventListener("input", updateDiscountPreview);
+productForm.elements.discount_percent?.addEventListener("input", updateDiscountPreview);
+
 function openProductPanel() {
   productPanel.classList.add("is-open");
   productOverlay.classList.add("is-open");
@@ -434,26 +449,34 @@ function setPhotoFieldState(productId) {
 }
 
 photoInput.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
+  const files = Array.from(e.target.files || []);
   const productId = productForm.elements.id.value;
-  if (!file || !productId) return;
+  if (!files.length || !productId) return;
 
-  photoHint.textContent = "Subiendo...";
+  const room = MAX_PRODUCT_IMAGES - currentGalleryImages.length;
+  const toUpload = files.slice(0, room);
+  if (files.length > room) {
+    photoHint.textContent = `Solo se subirán ${room} de las ${files.length} fotos elegidas (máximo ${MAX_PRODUCT_IMAGES} por producto).`;
+  }
+
   try {
     const { data: { session } } = await sbClient.auth.getSession();
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("product_id", productId);
-    const res = await fetch("/api/admin/upload-image", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${session.access_token}` },
-      body: fd,
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "Error al subir la foto");
-    currentGalleryImages = data.image_urls || [];
-    renderPhotoGallery();
-    photoHint.textContent = "Foto agregada.";
+    for (let i = 0; i < toUpload.length; i++) {
+      photoHint.textContent = `Subiendo foto ${i + 1} de ${toUpload.length}...`;
+      const fd = new FormData();
+      fd.append("file", toUpload[i]);
+      fd.append("product_id", productId);
+      const res = await fetch("/api/admin/upload-image", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Error al subir la foto");
+      currentGalleryImages = data.image_urls || [];
+      renderPhotoGallery();
+    }
+    photoHint.textContent = toUpload.length > 1 ? `${toUpload.length} fotos agregadas.` : "Foto agregada.";
     photoInput.value = "";
     loadProducts();
   } catch (err) {
@@ -622,6 +645,7 @@ document.getElementById("new-product-btn").addEventListener("click", () => {
   docHint.textContent = "";
   document.getElementById("variants-section").hidden = true;
   populateSubcategoryOptions(productForm.elements.category_id.value, "");
+  updateDiscountPreview();
   openProductPanel();
 });
 
@@ -639,6 +663,8 @@ function openProductForm(p) {
   productForm.elements.sort_order.value = p.sort_order || 0;
   productForm.elements.active.checked = p.active;
   productForm.elements.is_featured.checked = !!p.is_featured;
+  productForm.elements.discount_percent.value = p.discount_percent || 0;
+  updateDiscountPreview();
   productPanelTitle.textContent = "Editar producto";
   deleteBtn.hidden = false;
   setPhotoGallery(p.id, p.image_urls && p.image_urls.length ? p.image_urls : (p.image_url ? [p.image_url] : []));
@@ -675,6 +701,7 @@ productForm.addEventListener("submit", async (e) => {
     sort_order: Number(fd.get("sort_order")) || 0,
     active: fd.get("active") === "on",
     is_featured: fd.get("is_featured") === "on",
+    discount_percent: Number(fd.get("discount_percent")) || 0,
     colors: (fd.get("colors") || "").split(",").map((c) => c.trim()).filter(Boolean),
     sizes: (fd.get("sizes") || "").split(",").map((s) => s.trim()).filter(Boolean),
   };

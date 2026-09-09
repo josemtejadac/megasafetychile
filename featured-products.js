@@ -38,7 +38,7 @@
   const track = document.getElementById("featured-track");
   if (!track) return;
 
-  const baseUrl = `${SUPABASE_URL}/rest/v1/megasafety_products?select=id,sku,name,brand,image_url,price,category_id&active=eq.true&image_url=not.is.null`;
+  const baseUrl = `${SUPABASE_URL}/rest/v1/megasafety_products?select=id,sku,name,brand,image_url,price,discount_percent,category_id&active=eq.true&image_url=not.is.null`;
   const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
   // Prefer admin-curated picks (is_featured=true); only fall back to an
@@ -61,12 +61,19 @@
   function renderCards(products) {
     track.innerHTML = products
       .map((p) => {
-        const priceHtml =
-          p.price != null
+        const hasDiscount = p.price != null && p.discount_percent > 0;
+        const discounted = hasDiscount ? Math.round(p.price * (1 - p.discount_percent / 100)) : null;
+        const priceHtml = hasDiscount
+          ? `<div style="display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;">
+               <span style="font-size:0.78rem; color:var(--ink-soft); text-decoration:line-through;">$${Number(p.price).toLocaleString("es-CL")}</span>
+               <span style="font-size:1.05rem; color:var(--red); font-weight:800; font-family:var(--font-head);">$${discounted.toLocaleString("es-CL")}</span>
+             </div>`
+          : p.price != null
             ? `<p style="font-size:1.05rem; color:var(--navy); font-weight:800; font-family:var(--font-head); margin:0;">$${Number(p.price).toLocaleString("es-CL")}</p>`
             : `<p style="font-size:0.78rem; color:var(--ink-soft); font-weight:600; margin:0;">Precio a cotizar</p>`;
         return `
-        <div class="featured-card" style="scroll-snap-align:start; flex:0 0 200px; width:200px; height:330px; background:#fff; border:1px solid #e3e7ee; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px; box-shadow:0 6px 18px -8px rgba(11,31,58,0.18);">
+        <div class="featured-card" style="scroll-snap-align:start; flex:0 0 200px; width:200px; height:330px; background:#fff; border:1px solid #e3e7ee; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px; box-shadow:0 6px 18px -8px rgba(11,31,58,0.18); position:relative;">
+          ${hasDiscount ? `<span style="position:absolute; top:10px; left:10px; z-index:1; background:var(--red); color:#fff; font-size:0.72rem; font-weight:800; padding:3px 8px; border-radius:999px;">-${p.discount_percent}%</span>` : ""}
           <a href="compra-empresa.html?cat=${p.category_id}" aria-label="${p.name}" style="display:block; width:100%; height:130px; background:#f4f6fa; border-radius:10px; overflow:hidden; flex-shrink:0;">
             <img src="${p.image_url}" alt="${p.name}" loading="lazy" style="width:100%; height:100%; object-fit:contain; display:block;">
           </a>

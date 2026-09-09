@@ -78,6 +78,7 @@ async function loadProducts() {
       description: p.description,
       certifications: p.certifications || [],
       price: p.price,
+      discount_percent: p.discount_percent || 0,
       image_url: p.image_url,
       colors: p.colors || [],
       sizes: p.sizes || [],
@@ -180,6 +181,25 @@ function renderSubcategoryChips() {
   });
 }
 
+// Shared price markup for both the catalog card and the detail panel —
+// shows the crossed-out real price + discounted price + "-X%" badge when
+// a product has an active discount, otherwise the plain price (or the
+// "ask for quote" fallback when there's no price at all).
+function priceHtml(p, cls) {
+  if (p.price == null) {
+    return `<p class="${cls}">Precio empresa según volumen</p>`;
+  }
+  if (p.discount_percent > 0) {
+    const discounted = Math.round(p.price * (1 - p.discount_percent / 100));
+    return `<p class="${cls} has-price has-discount">
+      <span class="price-discount-badge">-${p.discount_percent}%</span>
+      <span class="price-original">$${Number(p.price).toLocaleString("es-CL")}</span>
+      <span class="price-discounted">$${discounted.toLocaleString("es-CL")}</span>
+    </p>`;
+  }
+  return `<p class="${cls} has-price">$${Number(p.price).toLocaleString("es-CL")}</p>`;
+}
+
 function renderGrid() {
   const term = searchTerm.trim().toLowerCase();
   const filtered = products.filter((p) => {
@@ -207,6 +227,7 @@ function renderGrid() {
     card.className = "product-card";
     card.innerHTML = `
       <div class="product-thumb" aria-hidden="true">
+        ${p.discount_percent > 0 ? `<span class="product-thumb-badge">-${p.discount_percent}%</span>` : ""}
         ${
           p.image_url
             ? `<img src="${p.image_url}" alt="" loading="lazy">`
@@ -221,9 +242,7 @@ function renderGrid() {
           ? `<div class="product-certs">${p.certifications.map((c) => `<span class="cert-badge">${c}</span>`).join("")}</div>`
           : ""
       }
-      <p class="product-price-note ${p.price != null ? "has-price" : ""}">${
-        p.price != null ? "$" + Number(p.price).toLocaleString("es-CL") : "Precio empresa según volumen"
-      }</p>
+      ${priceHtml(p, "product-price-note")}
       <div class="product-actions">
         <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
           <button type="button" class="qty-minus" aria-label="Restar" style="width:32px; height:36px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.1rem; cursor:pointer;">−</button>
@@ -365,9 +384,7 @@ async function openProductDetail(p) {
         : ""
     }
     ${variantsHtml}
-    <p class="detail-price ${p.price != null ? "has-price" : ""}">${
-      p.price != null ? "$" + Number(p.price).toLocaleString("es-CL") : "Precio empresa según volumen"
-    }</p>
+    ${priceHtml(p, "detail-price")}
     <div class="detail-actions">
       <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
         <button type="button" class="qty-minus" aria-label="Restar" style="width:36px; height:40px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.2rem; cursor:pointer;">−</button>
