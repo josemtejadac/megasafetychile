@@ -47,18 +47,26 @@ function closeCatMenu() {
 catMenuBtn.addEventListener("click", openCatMenu);
 catMenuClose.addEventListener("click", closeCatMenu);
 catMenuOverlay.addEventListener("click", closeCatMenu);
-catMenuPanel.querySelectorAll("a").forEach((link) => {
-  link.addEventListener("click", closeCatMenu);
-});
 
-catMenuPanel.querySelectorAll(".cat-menu-toggle").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const item = btn.closest(".cat-menu-item");
-    const wasOpen = item.classList.contains("is-open");
-    catMenuPanel.querySelectorAll(".cat-menu-item").forEach((i) => i.classList.remove("is-open"));
-    if (!wasOpen) item.classList.add("is-open");
+// Wires link-closes-menu and toggle-expands-submenu behavior within
+// `scope` — called once for the static menu at load, and again (scoped to
+// just the newly-injected items) whenever a category the admin created
+// gets appended live, so it doesn't need double-binding the original ones.
+function wireCatMenuScope(scope) {
+  scope.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeCatMenu);
   });
-});
+  scope.querySelectorAll(".cat-menu-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const item = btn.closest(".cat-menu-item");
+      const wasOpen = item.classList.contains("is-open");
+      catMenuPanel.querySelectorAll(".cat-menu-item").forEach((i) => i.classList.remove("is-open"));
+      if (!wasOpen) item.classList.add("is-open");
+    });
+  });
+}
+wireCatMenuScope(catMenuPanel);
+
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeCatMenu();
 });
@@ -213,4 +221,73 @@ document.addEventListener("keydown", (e) => {
   });
 
   renderHint("Escribe al menos 2 letras.");
+})();
+
+// ---------- Extra categories the admin created (mega-menu) ----------
+// The 9 curated categories above stay static (they're baked into the
+// portada's own hero image too, unrelated to this menu) — this only
+// appends categories that don't already have a static <li> here, so a
+// brand-new category the admin adds from /admin.html shows up in the
+// header menu without needing a code change, and live (no reload) if
+// someone already has the menu open when it's created.
+(function () {
+  const list = document.getElementById("cat-menu-list");
+  if (!list) return;
+
+  const SUPABASE_URL = "https://wiuuzsiiaagqldtxfouj.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
+  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  }
+
+  async function refreshExtraCategories() {
+    const knownIds = new Set(
+      Array.from(list.querySelectorAll(".cat-menu-item:not(.cat-menu-item--dynamic) .cat-submenu a"))
+        .map((a) => new URL(a.href).searchParams.get("cat"))
+    );
+
+    const [catsRes, prodsRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/megasafety_categories?select=id,label&order=sort_order.asc`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/megasafety_products?select=category_id,subcategory&active=eq.true`, { headers }),
+    ]);
+    if (!catsRes.ok || !prodsRes.ok) return;
+    const categories = await catsRes.json();
+    const products = await prodsRes.json();
+
+    const extra = categories.filter((c) => !knownIds.has(c.id));
+
+    list.querySelectorAll(".cat-menu-item--dynamic").forEach((el) => el.remove());
+    if (!extra.length) return;
+
+    const frag = document.createDocumentFragment();
+    extra.forEach((cat) => {
+      const subs = Array.from(
+        new Set(products.filter((p) => p.category_id === cat.id && p.subcategory).map((p) => p.subcategory))
+      ).sort((a, b) => a.localeCompare(b, "es"));
+
+      const li = document.createElement("li");
+      li.className = "cat-menu-item cat-menu-item--dynamic";
+      li.innerHTML = `
+        <button class="cat-menu-toggle" type="button">${escapeHtml(cat.label)} <span>›</span></button>
+        <ul class="cat-submenu">
+          <li><a href="compra-empresa.html?cat=${encodeURIComponent(cat.id)}">Ver todo</a></li>
+          ${subs
+            .map((s) => `<li><a href="compra-empresa.html?cat=${encodeURIComponent(cat.id)}&sub=${encodeURIComponent(s)}">${escapeHtml(s)}</a></li>`)
+            .join("")}
+        </ul>`;
+      frag.appendChild(li);
+    });
+    list.appendChild(frag);
+    list.querySelectorAll(".cat-menu-item--dynamic").forEach((li) => wireCatMenuScope(li));
+  }
+
+  refreshExtraCategories();
+
+  const rtClient = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_ANON_KEY);
+  rtClient
+    ?.channel("menu-categories-live")
+    .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_categories" }, refreshExtraCategories)
+    .subscribe();
 })();

@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=9">
-<link rel="stylesheet" href="compra-empresa.css?v=9">
-<link rel="stylesheet" href="admin.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
+<link rel="stylesheet" href="compra-empresa.css?v=10">
+<link rel="stylesheet" href="admin.css?v=10">
 </head>
 <body>
 
@@ -265,22 +265,24 @@
     <label>Nombre *<input type="text" name="name" required></label>
     <label>Marca<input type="text" name="brand"></label>
     <label>Categoría *
-      <select name="category_id" required>
-        <option value="cat-seguridad-industrial">Seguridad personal</option>
-        <option value="cat-herramientas">Herramientas y equipos</option>
-        <option value="cat-abrasivos">Abrasivos y discos</option>
-        <option value="cat-soldadura">Soldadura</option>
-        <option value="cat-vial">Seguridad vial y señalización</option>
-        <option value="cat-loto">Bloqueo L.O.T.O.</option>
-        <option value="cat-iluminacion">Iluminación industrial</option>
-        <option value="cat-ropa">Ropa de trabajo y corporativa</option>
-        <option value="cat-izaje">Izaje de carga</option>
-      </select>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select name="category_id" id="category-select" required style="flex:1;">
+          <option value="cat-seguridad-industrial">Seguridad personal</option>
+          <option value="cat-herramientas">Herramientas y equipos</option>
+          <option value="cat-abrasivos">Abrasivos y discos</option>
+          <option value="cat-soldadura">Soldadura</option>
+          <option value="cat-vial">Seguridad vial y señalización</option>
+          <option value="cat-loto">Bloqueo L.O.T.O.</option>
+          <option value="cat-iluminacion">Iluminación industrial</option>
+          <option value="cat-ropa">Ropa de trabajo y corporativa</option>
+          <option value="cat-izaje">Izaje de carga</option>
+        </select>
+        <button type="button" class="btn btn--outline" id="new-category-btn" style="flex-shrink:0; padding:8px 12px; font-size:0.82rem; white-space:nowrap;">+ Nueva</button>
+      </div>
     </label>
     <label>Subcategoría
-      <select name="subcategory" id="subcategory-select">
-        <option value="">— Elige primero una categoría —</option>
-      </select>
+      <input type="text" name="subcategory" id="subcategory-input" list="subcategory-datalist" placeholder="Escribe una nueva o elige una existente" autocomplete="off">
+      <datalist id="subcategory-datalist"></datalist>
     </label>
     <label>Descripción<textarea name="description" rows="3"></textarea></label>
     <label>Certificaciones (separadas por coma)<input type="text" name="certifications" placeholder="ANSI Z89.1, EN 388"></label>
@@ -381,6 +383,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=9"></script>
+<script src="admin.js?v=10"></script>
 </body>
 </html>

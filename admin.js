@@ -53,13 +53,27 @@ async function getFreshAccessToken() {
   let { data: { session: s } } = await sbClient.auth.getSession();
   const expiresInMs = s ? s.expires_at * 1000 - Date.now() : -1;
   if (!s || expiresInMs < 60000) {
-    const { data } = await sbClient.auth.refreshSession();
-    s = data.session;
+    const { data, error } = await sbClient.auth.refreshSession();
+    if (!error && data.session) {
+      s = data.session;
+    } else {
+      // Our manual refresh can lose a race with supabase-js's own
+      // background auto-refresh (Supabase rotates the refresh token on
+      // every use, so whichever call runs second fails with "already
+      // used") — re-check getSession() once more in case the background
+      // refresh already installed a fresh session, instead of sending a
+      // guaranteed-invalid "Bearer null" request and failing every action
+      // on the page until a manual reload.
+      const retry = await sbClient.auth.getSession();
+      s = retry.data.session;
+    }
   }
   return s?.access_token || null;
 }
 
-const CATEGORY_LABELS = {
+// Loaded from megasafety_categories (admin-manageable) — this hardcoded
+// object is only the fallback used before that fetch resolves.
+let CATEGORY_LABELS = {
   "cat-seguridad-industrial": "Seguridad personal",
   "cat-herramientas": "Herramientas y equipos",
   "cat-abrasivos": "Abrasivos y discos",
@@ -70,6 +84,59 @@ const CATEGORY_LABELS = {
   "cat-ropa": "Ropa de trabajo y corporativa",
   "cat-izaje": "Izaje de carga",
 };
+let allCategories = Object.entries(CATEGORY_LABELS).map(([id, label]) => ({ id, label }));
+
+function renderCategoryOptions() {
+  const selects = [document.getElementById("category-select"), document.getElementById("admin-cat-filter")];
+  selects.forEach((sel) => {
+    if (!sel) return;
+    const keepAll = sel.id === "admin-cat-filter";
+    const current = sel.value;
+    sel.innerHTML =
+      (keepAll ? `<option value="all">Todas las categorías</option>` : "") +
+      allCategories.map((c) => `<option value="${c.id}">${c.label}</option>`).join("");
+    if ([...sel.options].some((o) => o.value === current)) sel.value = current;
+  });
+}
+
+async function loadCategories() {
+  const { data, error } = await sbClient
+    .from("megasafety_categories")
+    .select("id, label")
+    .order("sort_order", { ascending: true });
+  if (!error && data && data.length) {
+    allCategories = data;
+    CATEGORY_LABELS = Object.fromEntries(data.map((c) => [c.id, c.label]));
+  }
+  renderCategoryOptions();
+}
+
+document.getElementById("new-category-btn")?.addEventListener("click", async () => {
+  const label = prompt("Nombre de la nueva categoría (ej. \"Equipos de rescate\"):");
+  if (!label || !label.trim()) return;
+  const slug = label
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const id = `cat-${slug}`;
+  if (allCategories.some((c) => c.id === id)) {
+    alert("Ya existe una categoría con ese nombre.");
+    return;
+  }
+  const { error } = await sbClient
+    .from("megasafety_categories")
+    .insert({ id, label: label.trim(), sort_order: allCategories.length + 1 });
+  if (error) {
+    alert("No se pudo crear la categoría: " + error.message);
+    return;
+  }
+  await loadCategories();
+  const sel = document.getElementById("category-select");
+  if (sel) sel.value = id;
+});
 
 const loginView = document.getElementById("login-view");
 const panelView = document.getElementById("panel-view");
@@ -132,6 +199,13 @@ function subscribeToQuoteUpdates() {
 }
 
 document.getElementById("refresh-quotes-btn")?.addEventListener("click", () => loadQuotes());
+
+// A new/renamed category shows up immediately in every open tab (this
+// panel and the public catalog) without anyone having to reload.
+sbClient
+  .channel("admin-categories-live")
+  .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_categories" }, () => loadCategories())
+  .subscribe();
 
 function setupTabs() {
   const tabs = document.querySelectorAll(".admin-tab");
@@ -337,12 +411,19 @@ const SUBCATS_BY_CATEGORY = {
   ],
 };
 
-const subcategorySelect = document.getElementById("subcategory-select");
+// The subcategory field is now a free-text input (admin can type a brand
+// new one) with a datalist offering the curated defaults above plus any
+// subcategory already in use on other products of the same category —
+// so the storefront's filter chips (which derive subcategories from real
+// product data) and this input stay in sync without a fixed list.
+const subcategoryInput = document.getElementById("subcategory-input");
+const subcategoryDatalist = document.getElementById("subcategory-datalist");
 function populateSubcategoryOptions(categoryId, selected) {
-  const subs = SUBCATS_BY_CATEGORY[categoryId] || [];
-  subcategorySelect.innerHTML =
-    `<option value="">Sin subcategoría</option>` + subs.map((s) => `<option value="${s}">${s}</option>`).join("");
-  subcategorySelect.value = subs.includes(selected) ? selected : "";
+  const curated = SUBCATS_BY_CATEGORY[categoryId] || [];
+  const inUse = allProducts.filter((p) => p.category_id === categoryId && p.subcategory).map((p) => p.subcategory);
+  const subs = Array.from(new Set([...curated, ...inUse])).sort((a, b) => a.localeCompare(b, "es"));
+  subcategoryDatalist.innerHTML = subs.map((s) => `<option value="${s}">`).join("");
+  subcategoryInput.value = selected || "";
 }
 const productForm = document.getElementById("product-form");
 productForm.elements.category_id?.addEventListener("change", (e) => populateSubcategoryOptions(e.target.value, ""));
@@ -1454,13 +1535,21 @@ manualQuoteForm.addEventListener("submit", async (e) => {
 
   try {
     const token = await getFreshAccessToken();
+    if (!token) {
+      throw new Error("Tu sesión expiró. Nada de lo que escribiste se perdió: abre el panel en otra pestaña, inicia sesión de nuevo ahí, y en esta vuelve a apretar \"Crear cotización\".");
+    }
     const res = await fetch("/api/quote/create-manual", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ empresa, items: manualQuoteItems }),
     });
     const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "No se pudo crear la cotización.");
+    if (!data.ok) {
+      if (res.status === 403) {
+        throw new Error("Tu sesión expiró. Nada de lo que escribiste se perdió: abre el panel en otra pestaña, inicia sesión de nuevo ahí, y en esta vuelve a apretar \"Crear cotización\".");
+      }
+      throw new Error(data.error || "No se pudo crear la cotización.");
+    }
 
     if (!data.email?.sent) {
       alert(`Cotización ${data.correlative_code} creada, pero no se pudo enviar el correo al cliente: ${data.email?.reason || "error desconocido"}`);
@@ -1578,3 +1667,4 @@ staffForm.addEventListener("submit", async (e) => {
 });
 
 showAppropriateView();
+loadCategories();

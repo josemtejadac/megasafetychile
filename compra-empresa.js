@@ -10,7 +10,9 @@ const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { storageKey: "msc_customer_auth", storage: customerAuthStorage },
 });
 
-const CATEGORIES = [
+// Loaded from megasafety_categories (admin-manageable) instead of a fixed
+// list — this hardcoded array is only the fallback if that fetch fails.
+let CATEGORIES = [
   { id: "cat-seguridad-industrial", label: "Seguridad personal" },
   { id: "cat-herramientas", label: "Herramientas y equipos" },
   { id: "cat-abrasivos", label: "Abrasivos y discos" },
@@ -21,7 +23,18 @@ const CATEGORIES = [
   { id: "cat-ropa", label: "Ropa de trabajo y corporativa" },
   { id: "cat-izaje", label: "Izaje de carga" },
 ];
-const CAT_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.id, c.label]));
+let CAT_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.id, c.label]));
+
+async function loadCategories() {
+  const { data, error } = await sbClient
+    .from("megasafety_categories")
+    .select("id, label")
+    .order("sort_order", { ascending: true });
+  if (!error && data && data.length) {
+    CATEGORIES = data;
+    CAT_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.id, c.label]));
+  }
+}
 const CART_KEY = "msc_b2b_cart";
 
 let products = [];
@@ -851,7 +864,26 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-loadProducts();
+loadCategories().then(loadProducts);
+
+// A category the admin adds/renames shows up here live, without a reload —
+// only append chips for genuinely new ids so the active filter/selection
+// isn't disturbed for everyone already browsing.
+sbClient
+  .channel("catalog-categories-live")
+  .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_categories" }, async () => {
+    await loadCategories();
+    const existingIds = new Set(Array.from(chipsEl.querySelectorAll(".chip[data-cat]")).map((c) => c.dataset.cat));
+    CATEGORIES.forEach((cat) => {
+      if (existingIds.has(cat.id)) return;
+      const btn = document.createElement("button");
+      btn.className = "chip";
+      btn.dataset.cat = cat.id;
+      btn.textContent = cat.label;
+      chipsEl.appendChild(btn);
+    });
+  })
+  .subscribe();
 renderCart();
 
 // Arriving from a "Cotizar" button elsewhere on the site (e.g. the
