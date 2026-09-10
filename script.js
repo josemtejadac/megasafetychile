@@ -248,15 +248,18 @@ document.addEventListener("keydown", (e) => {
         .map((a) => new URL(a.href).searchParams.get("cat"))
     );
 
-    const [catsRes, prodsRes] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/megasafety_categories?select=id,label&order=sort_order.asc`, { headers }),
-      fetch(`${SUPABASE_URL}/rest/v1/megasafety_products?select=category_id,subcategory&active=eq.true`, { headers }),
+    const [catsRes, subsRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/megasafety_categories?select=id,label,show_in_menu&order=sort_order.asc`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/megasafety_subcategories?select=category_id,label&order=sort_order.asc`, { headers }),
     ]);
-    if (!catsRes.ok || !prodsRes.ok) return;
+    if (!catsRes.ok || !subsRes.ok) return;
     const categories = await catsRes.json();
-    const products = await prodsRes.json();
+    const subcategories = await subsRes.json();
 
-    const extra = categories.filter((c) => !knownIds.has(c.id));
+    // Only categories the owner explicitly opted in to (show_in_menu) show
+    // up here — a brand-new category otherwise only appears in the
+    // catalog's own filter chips, never automatically in this header menu.
+    const extra = categories.filter((c) => !knownIds.has(c.id) && c.show_in_menu);
 
     list.querySelectorAll(".cat-menu-item--dynamic").forEach((el) => el.remove());
     if (!extra.length) return;
@@ -264,7 +267,7 @@ document.addEventListener("keydown", (e) => {
     const frag = document.createDocumentFragment();
     extra.forEach((cat) => {
       const subs = Array.from(
-        new Set(products.filter((p) => p.category_id === cat.id && p.subcategory).map((p) => p.subcategory))
+        new Set(subcategories.filter((s) => s.category_id === cat.id).map((s) => s.label))
       ).sort((a, b) => a.localeCompare(b, "es"));
 
       const li = document.createElement("li");
@@ -289,5 +292,6 @@ document.addEventListener("keydown", (e) => {
   rtClient
     ?.channel("menu-categories-live")
     .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_categories" }, refreshExtraCategories)
+    .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_subcategories" }, refreshExtraCategories)
     .subscribe();
 })();

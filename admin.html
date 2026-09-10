@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=10">
-<link rel="stylesheet" href="compra-empresa.css?v=10">
-<link rel="stylesheet" href="admin.css?v=10">
+<link rel="stylesheet" href="styles.css?v=11">
+<link rel="stylesheet" href="compra-empresa.css?v=11">
+<link rel="stylesheet" href="admin.css?v=11">
 </head>
 <body>
 
@@ -58,7 +58,10 @@
           <h1>Productos</h1>
           <p class="admin-subtitle">Catálogo completo de Mega Safety Chile</p>
         </div>
-        <button class="btn btn--primary" id="new-product-btn">+ Nuevo producto</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn--outline" id="manage-categories-btn">Gestionar categorías</button>
+          <button class="btn btn--primary" id="new-product-btn">+ Nuevo producto</button>
+        </div>
       </div>
 
       <div class="admin-stats" id="admin-stats">
@@ -277,7 +280,7 @@
           <option value="cat-ropa">Ropa de trabajo y corporativa</option>
           <option value="cat-izaje">Izaje de carga</option>
         </select>
-        <button type="button" class="btn btn--outline" id="new-category-btn" style="flex-shrink:0; padding:8px 12px; font-size:0.82rem; white-space:nowrap;">+ Nueva</button>
+        <button type="button" class="btn btn--outline" id="new-category-btn" style="flex-shrink:0; padding:8px 12px; font-size:0.82rem; white-space:nowrap;">Gestionar</button>
       </div>
     </label>
     <label>Subcategoría
@@ -382,7 +385,25 @@
   </div>
 </aside>
 
+<!-- Manage categories & subcategories -->
+<div class="cat-menu-overlay" id="manage-categories-overlay" style="z-index:96;"></div>
+<aside class="modal-panel" id="manage-categories-panel" aria-hidden="true" style="z-index:97;">
+  <div class="cat-menu-head">
+    <h3>Gestionar categorías</h3>
+    <button class="cat-menu-close" id="manage-categories-close-btn" aria-label="Cerrar">&times;</button>
+  </div>
+  <div style="padding:0 24px 24px;">
+    <form id="new-category-form" style="display:flex; flex-direction:column; gap:10px; padding:14px; background:var(--bg-alt); border-radius:10px; margin-bottom:18px;">
+      <p style="margin:0; font-weight:700; font-size:0.9rem;">Nueva categoría</p>
+      <input type="text" id="new-category-label" placeholder="Nombre de la categoría (ej. Equipos de rescate)" required style="padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+      <label class="checkbox-row"><input type="checkbox" id="new-category-show-in-menu"> Mostrar en el menú "Menú de compra" del sitio</label>
+      <button type="submit" class="btn btn--primary" style="align-self:flex-start;">+ Crear categoría</button>
+    </form>
+    <div id="categories-manage-list" style="display:flex; flex-direction:column; gap:14px;"></div>
+  </div>
+</aside>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=10"></script>
+<script src="admin.js?v=11"></script>
 </body>
 </html>

@@ -84,7 +84,8 @@ let CATEGORY_LABELS = {
   "cat-ropa": "Ropa de trabajo y corporativa",
   "cat-izaje": "Izaje de carga",
 };
-let allCategories = Object.entries(CATEGORY_LABELS).map(([id, label]) => ({ id, label }));
+let allCategories = Object.entries(CATEGORY_LABELS).map(([id, label], i) => ({ id, label, show_in_menu: true, sort_order: i + 1 }));
+let allSubcategories = []; // { id, category_id, label, sort_order }
 
 function renderCategoryOptions() {
   const selects = [document.getElementById("category-select"), document.getElementById("admin-cat-filter")];
@@ -100,27 +101,93 @@ function renderCategoryOptions() {
 }
 
 async function loadCategories() {
-  const { data, error } = await sbClient
-    .from("megasafety_categories")
-    .select("id, label")
-    .order("sort_order", { ascending: true });
-  if (!error && data && data.length) {
-    allCategories = data;
-    CATEGORY_LABELS = Object.fromEntries(data.map((c) => [c.id, c.label]));
+  const [catsRes, subsRes] = await Promise.all([
+    sbClient.from("megasafety_categories").select("id, label, show_in_menu").order("sort_order", { ascending: true }),
+    sbClient.from("megasafety_subcategories").select("id, category_id, label").order("sort_order", { ascending: true }),
+  ]);
+  if (!catsRes.error && catsRes.data && catsRes.data.length) {
+    allCategories = catsRes.data;
+    CATEGORY_LABELS = Object.fromEntries(catsRes.data.map((c) => [c.id, c.label]));
+  }
+  if (!subsRes.error && subsRes.data) {
+    allSubcategories = subsRes.data;
   }
   renderCategoryOptions();
+  renderManageCategoriesList();
 }
 
-document.getElementById("new-category-btn")?.addEventListener("click", async () => {
-  const label = prompt("Nombre de la nueva categoría (ej. \"Equipos de rescate\"):");
-  if (!label || !label.trim()) return;
-  const slug = label
+function slugify(label) {
+  return label
     .trim()
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+// ---------- Manage categories & subcategories modal ----------
+const manageCategoriesPanel = document.getElementById("manage-categories-panel");
+const manageCategoriesOverlay = document.getElementById("manage-categories-overlay");
+
+function openManageCategories() {
+  renderManageCategoriesList();
+  manageCategoriesPanel.classList.add("is-open");
+  manageCategoriesOverlay.classList.add("is-open");
+  manageCategoriesPanel.setAttribute("aria-hidden", "false");
+}
+function closeManageCategories() {
+  manageCategoriesPanel.classList.remove("is-open");
+  manageCategoriesOverlay.classList.remove("is-open");
+  manageCategoriesPanel.setAttribute("aria-hidden", "true");
+}
+document.getElementById("new-category-btn")?.addEventListener("click", openManageCategories);
+document.getElementById("manage-categories-btn")?.addEventListener("click", openManageCategories);
+document.getElementById("manage-categories-close-btn")?.addEventListener("click", closeManageCategories);
+manageCategoriesOverlay?.addEventListener("click", closeManageCategories);
+
+function renderManageCategoriesList() {
+  const list = document.getElementById("categories-manage-list");
+  if (!list) return;
+  list.innerHTML = allCategories
+    .map((cat) => {
+      const subs = allSubcategories.filter((s) => s.category_id === cat.id);
+      return `
+      <div class="category-manage-card" data-cat="${cat.id}" style="border:1px solid var(--border); border-radius:10px; padding:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <p style="margin:0; font-weight:700;">${cat.label}</p>
+          <label class="checkbox-row" style="margin:0; font-size:0.8rem; white-space:nowrap;">
+            <input type="checkbox" class="cat-menu-toggle-input" data-cat="${cat.id}" ${cat.show_in_menu ? "checked" : ""}>
+            Mostrar en menú
+          </label>
+        </div>
+        <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+          ${subs
+            .map(
+              (s) => `
+            <span class="chip" style="display:inline-flex; align-items:center; gap:6px;">
+              ${s.label}
+              <button type="button" class="sub-remove-btn" data-id="${s.id}" aria-label="Quitar" style="background:none; border:none; cursor:pointer; color:var(--ink-soft); font-size:0.9rem; line-height:1; padding:0;">&times;</button>
+            </span>`
+            )
+            .join("")}
+        </div>
+        <form class="add-subcategory-form" data-cat="${cat.id}" style="display:flex; gap:6px; margin-top:10px;">
+          <input type="text" class="add-subcategory-input" placeholder="Nueva subcategoría..." style="flex:1; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:0.85rem;">
+          <button type="submit" class="btn btn--outline" style="padding:6px 10px; font-size:0.8rem;">+ Agregar</button>
+        </form>
+      </div>`;
+    })
+    .join("");
+}
+
+document.getElementById("new-category-form")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = document.getElementById("new-category-label");
+  const label = input.value.trim();
+  if (!label) return;
+  const showInMenu = document.getElementById("new-category-show-in-menu").checked;
+  const slug = slugify(label);
   const id = `cat-${slug}`;
   if (allCategories.some((c) => c.id === id)) {
     alert("Ya existe una categoría con ese nombre.");
@@ -128,14 +195,59 @@ document.getElementById("new-category-btn")?.addEventListener("click", async () 
   }
   const { error } = await sbClient
     .from("megasafety_categories")
-    .insert({ id, label: label.trim(), sort_order: allCategories.length + 1 });
+    .insert({ id, label, sort_order: allCategories.length + 1, show_in_menu: showInMenu });
   if (error) {
     alert("No se pudo crear la categoría: " + error.message);
     return;
   }
+  input.value = "";
+  document.getElementById("new-category-show-in-menu").checked = false;
   await loadCategories();
   const sel = document.getElementById("category-select");
   if (sel) sel.value = id;
+});
+
+document.getElementById("categories-manage-list")?.addEventListener("change", async (e) => {
+  const toggle = e.target.closest(".cat-menu-toggle-input");
+  if (!toggle) return;
+  const { error } = await sbClient
+    .from("megasafety_categories")
+    .update({ show_in_menu: toggle.checked })
+    .eq("id", toggle.dataset.cat);
+  if (error) {
+    alert("No se pudo actualizar: " + error.message);
+    toggle.checked = !toggle.checked;
+    return;
+  }
+  await loadCategories();
+});
+
+document.getElementById("categories-manage-list")?.addEventListener("submit", async (e) => {
+  const form = e.target.closest(".add-subcategory-form");
+  if (!form) return;
+  e.preventDefault();
+  const input = form.querySelector(".add-subcategory-input");
+  const label = input.value.trim();
+  if (!label) return;
+  const { error } = await sbClient
+    .from("megasafety_subcategories")
+    .insert({ category_id: form.dataset.cat, label, sort_order: allSubcategories.length + 1 });
+  if (error) {
+    alert("No se pudo agregar la subcategoría: " + error.message);
+    return;
+  }
+  await loadCategories();
+});
+
+document.getElementById("categories-manage-list")?.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".sub-remove-btn");
+  if (!btn) return;
+  const { error } = await sbClient.from("megasafety_subcategories").delete().eq("id", btn.dataset.id);
+  if (error) {
+    alert("No se pudo quitar la subcategoría: " + error.message);
+    return;
+  }
+  await loadCategories();
 });
 
 const loginView = document.getElementById("login-view");
@@ -205,6 +317,7 @@ document.getElementById("refresh-quotes-btn")?.addEventListener("click", () => l
 sbClient
   .channel("admin-categories-live")
   .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_categories" }, () => loadCategories())
+  .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_subcategories" }, () => loadCategories())
   .subscribe();
 
 function setupTabs() {
@@ -420,8 +533,9 @@ const subcategoryInput = document.getElementById("subcategory-input");
 const subcategoryDatalist = document.getElementById("subcategory-datalist");
 function populateSubcategoryOptions(categoryId, selected) {
   const curated = SUBCATS_BY_CATEGORY[categoryId] || [];
+  const canonical = allSubcategories.filter((s) => s.category_id === categoryId).map((s) => s.label);
   const inUse = allProducts.filter((p) => p.category_id === categoryId && p.subcategory).map((p) => p.subcategory);
-  const subs = Array.from(new Set([...curated, ...inUse])).sort((a, b) => a.localeCompare(b, "es"));
+  const subs = Array.from(new Set([...curated, ...canonical, ...inUse])).sort((a, b) => a.localeCompare(b, "es"));
   subcategoryDatalist.innerHTML = subs.map((s) => `<option value="${s}">`).join("");
   subcategoryInput.value = selected || "";
 }
@@ -799,6 +913,15 @@ productForm.addEventListener("submit", async (e) => {
     productNote.textContent = "Error: " + error.message;
     productNote.className = "form-note is-error";
     return;
+  }
+  // Keep the canonical subcategory list (used by the admin manager and the
+  // storefront menu) in sync when staff types a brand-new subcategory here
+  // instead of picking an existing one from the datalist.
+  if (payload.subcategory && !allSubcategories.some((s) => s.category_id === payload.category_id && s.label === payload.subcategory)) {
+    sbClient
+      .from("megasafety_subcategories")
+      .insert({ category_id: payload.category_id, label: payload.subcategory, sort_order: allSubcategories.length + 1 })
+      .then(() => loadCategories());
   }
   if (!id) {
     // Brand-new product: reopen it (now with an id) so colors/tallas can be
