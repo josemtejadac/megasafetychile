@@ -37,6 +37,19 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({ ok: false, error: "Falta file, product_id o doc_type inválido" }), { status: 400 });
   }
 
+  // Fetch the currently-stored file (if any) so it can be deleted from
+  // storage once the new one is safely uploaded — otherwise every re-upload
+  // (replacing a ficha técnica or ISP doc) leaves the old PDF as orphaned
+  // junk in the bucket forever.
+  const sbHeaders = {
+    apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+    "Content-Type": "application/json",
+  };
+  const existingRes = await fetch(`${env.SUPABASE_URL}/rest/v1/megasafety_products?id=eq.${productId}&select=${field}`, { headers: sbHeaders });
+  const [existingProduct] = await existingRes.json();
+  const oldUrl = existingProduct?.[field];
+
   const path = `docs/${productId}-${docType}-${Date.now()}.pdf`;
 
   const uploadRes = await fetch(`${env.SUPABASE_URL}/storage/v1/object/megasafety-products/${path}`, {
@@ -56,15 +69,27 @@ export async function onRequestPost({ request, env }) {
 
   const updateRes = await fetch(`${env.SUPABASE_URL}/rest/v1/megasafety_products?id=eq.${productId}`, {
     method: "PATCH",
-    headers: {
-      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: sbHeaders,
     body: JSON.stringify({ [field]: docUrl }),
   });
   if (!updateRes.ok) {
     return new Response(JSON.stringify({ ok: false, error: `DB update error: ${await updateRes.text()}` }), { status: 500 });
+  }
+
+  // Best-effort: now that the product points at the new file, remove the
+  // old one from storage. Non-fatal if it fails.
+  if (oldUrl) {
+    try {
+      const oldPath = decodeURIComponent(oldUrl.split("/megasafety-products/")[1] || "");
+      if (oldPath) {
+        await fetch(`${env.SUPABASE_URL}/storage/v1/object/megasafety-products/${oldPath}`, {
+          method: "DELETE",
+          headers: sbHeaders,
+        });
+      }
+    } catch {
+      // ignore
+    }
   }
 
   return new Response(JSON.stringify({ ok: true, url: docUrl }), {

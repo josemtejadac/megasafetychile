@@ -575,6 +575,35 @@ function closeProductPanel() {
 document.getElementById("product-close-btn").addEventListener("click", closeProductPanel);
 productOverlay.addEventListener("click", closeProductPanel);
 
+// Resizes/re-encodes a photo client-side before it ever leaves the browser,
+// so storage isn't spent on multi-megabyte phone photos no product page
+// needs at full size. Falls back to the original file on any failure (odd
+// format, browser without canvas/createImageBitmap support, or compression
+// that somehow came out bigger than the original).
+async function compressImage(file, maxDim = 1600, quality = 0.82) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    let { width, height } = bitmap;
+    if (width > maxDim || height > maxDim) {
+      const scale = maxDim / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
+    const outType = file.type === "image/png" ? "image/png" : "image/jpeg";
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, outType, quality));
+    if (!blob || blob.size >= file.size) return file;
+    const ext = outType === "image/png" ? "png" : "jpg";
+    const name = file.name.replace(/\.[^.]+$/, "") + "." + ext;
+    return new File([blob], name, { type: outType });
+  } catch {
+    return file;
+  }
+}
+
 // ---------- Photo gallery (up to 5 per product) ----------
 const MAX_PRODUCT_IMAGES = 5;
 const photoGallery = document.getElementById("photo-gallery");
@@ -657,9 +686,11 @@ photoInput.addEventListener("change", async (e) => {
   try {
     const { data: { session } } = await sbClient.auth.getSession();
     for (let i = 0; i < toUpload.length; i++) {
+      photoHint.textContent = `Comprimiendo foto ${i + 1} de ${toUpload.length}...`;
+      const compressed = await compressImage(toUpload[i]);
       photoHint.textContent = `Subiendo foto ${i + 1} de ${toUpload.length}...`;
       const fd = new FormData();
-      fd.append("file", toUpload[i]);
+      fd.append("file", compressed);
       fd.append("product_id", productId);
       const res = await fetch("/api/admin/upload-image", {
         method: "POST",
@@ -699,22 +730,29 @@ function setDocLink(link, removeBtn, url) {
   }
 }
 
-async function removeDocument(field, link, removeBtn) {
+async function removeDocument(docType, link, removeBtn) {
   const productId = productForm.elements.id.value;
   if (!productId) return;
   if (!confirm("¿Quitar este documento del producto?")) return;
-  const { error } = await sbClient.from("megasafety_products").update({ [field]: null }).eq("id", productId);
-  if (error) {
-    docHint.textContent = "No se pudo quitar: " + error.message;
-    return;
+  try {
+    const { data: { session } } = await sbClient.auth.getSession();
+    const res = await fetch("/api/admin/delete-document", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ product_id: productId, doc_type: docType }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "No se pudo quitar el documento");
+    setDocLink(link, removeBtn, null);
+    docHint.textContent = "Documento quitado.";
+    loadProducts();
+  } catch (err) {
+    docHint.textContent = err.message || "No se pudo quitar el documento.";
   }
-  setDocLink(link, removeBtn, null);
-  docHint.textContent = "Documento quitado.";
-  loadProducts();
 }
 
-fichaRemoveBtn.addEventListener("click", () => removeDocument("ficha_tecnica_url", fichaLink, fichaRemoveBtn));
-ispRemoveBtn.addEventListener("click", () => removeDocument("registro_isp_url", ispLink, ispRemoveBtn));
+fichaRemoveBtn.addEventListener("click", () => removeDocument("ficha_tecnica", fichaLink, fichaRemoveBtn));
+ispRemoveBtn.addEventListener("click", () => removeDocument("registro_isp", ispLink, ispRemoveBtn));
 
 async function uploadDocument(file, docType) {
   const productId = productForm.elements.id.value;

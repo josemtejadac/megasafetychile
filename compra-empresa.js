@@ -195,6 +195,20 @@ function renderSubcategoryChips() {
   });
 }
 
+// The price actually charged (after any discount), or null when the
+// product has no set price yet ("Precio empresa según volumen").
+function effectivePrice(p) {
+  if (p.price == null) return null;
+  return p.discount_percent > 0 ? Math.round(p.price * (1 - p.discount_percent / 100)) : p.price;
+}
+
+// A product with a real price can be bought straight away (skips the
+// cotización/RFQ back-and-forth) — one with no price still needs staff to
+// quote it manually, so it stays "Agregar a cotización".
+function addBtnLabel(p) {
+  return p.price != null ? "Agregar al carrito" : "Agregar a cotización";
+}
+
 // Shared price markup for both the catalog card and the detail panel —
 // shows the crossed-out real price + discounted price + "-X%" badge when
 // a product has an active discount, otherwise the plain price (or the
@@ -204,7 +218,7 @@ function priceHtml(p, cls) {
     return `<p class="${cls}">Precio empresa según volumen</p>`;
   }
   if (p.discount_percent > 0) {
-    const discounted = Math.round(p.price * (1 - p.discount_percent / 100));
+    const discounted = effectivePrice(p);
     return `<p class="${cls} has-price has-discount">
       <span class="price-discount-badge">-${p.discount_percent}%</span>
       <span class="price-original">$${Number(p.price).toLocaleString("es-CL")}</span>
@@ -263,7 +277,7 @@ function renderGrid() {
           <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad" style="width:44px; height:36px; border:none; text-align:center; -moz-appearance:textfield;">
           <button type="button" class="qty-plus" aria-label="Sumar" style="width:32px; height:36px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.1rem; cursor:pointer;">+</button>
         </div>
-        <button class="add-btn" type="button">Agregar a cotización</button>
+        <button class="add-btn" type="button">${addBtnLabel(p)}</button>
       </div>
     `;
     const qtyInput = card.querySelector(".qty-input");
@@ -280,7 +294,7 @@ function renderGrid() {
       addBtn.textContent = "Agregado ✓";
       addBtn.classList.add("is-added");
       setTimeout(() => {
-        addBtn.textContent = "Agregar a cotización";
+        addBtn.textContent = addBtnLabel(p);
         addBtn.classList.remove("is-added");
       }, 1200);
     });
@@ -374,52 +388,58 @@ async function openProductDetail(p) {
 
   const photos = p.image_urls && p.image_urls.length ? p.image_urls : [];
   detailBody.innerHTML = `
-    <div class="detail-photo" id="detail-photo">
-      ${
-        photos.length
-          ? `<img src="${photos[0]}" alt="" id="detail-photo-img">`
-          : `<svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`
-      }
-      ${
-        photos.length > 1
-          ? `<button type="button" class="detail-photo-arrow detail-photo-arrow--prev" id="detail-photo-prev" aria-label="Foto anterior">‹</button>
-             <button type="button" class="detail-photo-arrow detail-photo-arrow--next" id="detail-photo-next" aria-label="Foto siguiente">›</button>`
-          : ""
-      }
-    </div>
-    ${
-      photos.length > 1
-        ? `<div class="detail-photo-dots" id="detail-photo-dots">${photos
-            .map((_, i) => `<button type="button" class="detail-photo-dot${i === 0 ? " is-active" : ""}" data-idx="${i}" aria-label="Ver foto ${i + 1}"></button>`)
-            .join("")}</div>`
-        : ""
-    }
-    <p class="detail-brand">${p.brand || CAT_LABEL[p.category_id] || ""}</p>
-    <h2 class="detail-name">${p.name}</h2>
-    ${p.sku ? `<p class="detail-sku">SKU: ${p.sku}</p>` : ""}
-    <p class="detail-desc">${p.description || "Sin descripción disponible."}</p>
-    ${
-      p.certifications && p.certifications.length
-        ? `<div class="detail-certs">${p.certifications.map((c) => `<span class="cert-badge">${c}</span>`).join("")}</div>`
-        : ""
-    }
-    ${
-      p.ficha_tecnica_url || p.registro_isp_url
-        ? `<div class="detail-doc-buttons">
-             ${p.ficha_tecnica_url ? `<a class="btn btn--primary" href="${p.ficha_tecnica_url}" target="_blank" rel="noopener">Ver Ficha Técnica</a>` : ""}
-             ${p.registro_isp_url ? `<a class="btn btn--outline" href="${p.registro_isp_url}" target="_blank" rel="noopener">Ver Registro ISP</a>` : ""}
-           </div>`
-        : ""
-    }
-    ${variantsHtml}
-    ${priceHtml(p, "detail-price")}
-    <div class="detail-actions">
-      <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
-        <button type="button" class="qty-minus" aria-label="Restar" style="width:36px; height:40px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.2rem; cursor:pointer;">−</button>
-        <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad" style="width:48px; height:40px; border:none; text-align:center;">
-        <button type="button" class="qty-plus" aria-label="Sumar" style="width:36px; height:40px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.2rem; cursor:pointer;">+</button>
+    <div class="detail-grid">
+      <div class="detail-media">
+        <div class="detail-photo" id="detail-photo">
+          ${
+            photos.length
+              ? `<img src="${photos[0]}" alt="" id="detail-photo-img">`
+              : `<svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`
+          }
+          ${
+            photos.length > 1
+              ? `<button type="button" class="detail-photo-arrow detail-photo-arrow--prev" id="detail-photo-prev" aria-label="Foto anterior">‹</button>
+                 <button type="button" class="detail-photo-arrow detail-photo-arrow--next" id="detail-photo-next" aria-label="Foto siguiente">›</button>`
+              : ""
+          }
+        </div>
+        ${
+          photos.length > 1
+            ? `<div class="detail-photo-dots" id="detail-photo-dots">${photos
+                .map((_, i) => `<button type="button" class="detail-photo-dot${i === 0 ? " is-active" : ""}" data-idx="${i}" aria-label="Ver foto ${i + 1}"></button>`)
+                .join("")}</div>`
+            : ""
+        }
       </div>
-      <button class="add-btn" type="button">Agregar a cotización</button>
+      <div class="detail-info">
+        <p class="detail-brand">${p.brand || CAT_LABEL[p.category_id] || ""}</p>
+        <h2 class="detail-name">${p.name}</h2>
+        ${p.sku ? `<p class="detail-sku">SKU: ${p.sku}</p>` : ""}
+        <p class="detail-desc">${p.description || "Sin descripción disponible."}</p>
+        ${
+          p.certifications && p.certifications.length
+            ? `<div class="detail-certs">${p.certifications.map((c) => `<span class="cert-badge">${c}</span>`).join("")}</div>`
+            : ""
+        }
+        ${
+          p.ficha_tecnica_url || p.registro_isp_url
+            ? `<div class="detail-doc-buttons">
+                 ${p.ficha_tecnica_url ? `<a class="btn btn--primary" href="${p.ficha_tecnica_url}" target="_blank" rel="noopener">Ver Ficha Técnica</a>` : ""}
+                 ${p.registro_isp_url ? `<a class="btn btn--outline" href="${p.registro_isp_url}" target="_blank" rel="noopener">Ver Registro ISP</a>` : ""}
+               </div>`
+            : ""
+        }
+        ${variantsHtml}
+        ${priceHtml(p, "detail-price")}
+        <div class="detail-actions">
+          <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+            <button type="button" class="qty-minus" aria-label="Restar" style="width:36px; height:40px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.2rem; cursor:pointer;">−</button>
+            <input type="number" class="qty-input" min="1" value="1" aria-label="Cantidad" style="width:48px; height:40px; border:none; text-align:center;">
+            <button type="button" class="qty-plus" aria-label="Sumar" style="width:36px; height:40px; border:none; background:var(--bg-alt); color:var(--navy); font-size:1.2rem; cursor:pointer;">+</button>
+          </div>
+          <button class="add-btn" type="button">${addBtnLabel(p)}</button>
+        </div>
+      </div>
     </div>
   `;
 
@@ -496,7 +516,7 @@ async function openProductDetail(p) {
     addBtn.textContent = "Agregado ✓";
     addBtn.classList.add("is-added");
     setTimeout(() => {
-      addBtn.textContent = "Agregar a cotización";
+      addBtn.textContent = addBtnLabel(p);
       addBtn.classList.remove("is-added");
     }, 1200);
   });
@@ -551,6 +571,7 @@ function addToCart(product, qty, variant) {
       brand: product.brand,
       variant: variant || null,
       quantity: qty,
+      unit_price: effectivePrice(product),
     });
   }
   saveCart(cart);
@@ -570,16 +591,35 @@ function changeQty(lineId, qty) {
   renderCart();
 }
 
+// True once every line in the cart has a real catalog price — only then can
+// checkout skip straight to payment instead of going through a cotización.
+function cartAllPriced() {
+  return cart.length > 0 && cart.every((i) => i.unit_price != null);
+}
+
 function renderCart() {
   const cartItemsEl = document.getElementById("cart-items");
   const cartEmptyEl = document.getElementById("cart-empty");
   const cartCountEl = document.getElementById("cart-count");
   const requestBtn = document.getElementById("cart-request-btn");
+  const cartTotalEl = document.getElementById("cart-total");
 
   const totalQty = cart.reduce((sum, i) => sum + i.quantity, 0);
   cartCountEl.textContent = totalQty;
   requestBtn.disabled = cart.length === 0;
   cartEmptyEl.hidden = cart.length > 0;
+
+  const allPriced = cartAllPriced();
+  requestBtn.textContent = allPriced ? "Ir a pagar" : "Solicitar cotización";
+  if (cartTotalEl) {
+    if (allPriced) {
+      const total = cart.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
+      cartTotalEl.textContent = `Subtotal (sin IVA): $${total.toLocaleString("es-CL")}`;
+      cartTotalEl.hidden = false;
+    } else {
+      cartTotalEl.hidden = true;
+    }
+  }
 
   cartItemsEl.innerHTML = "";
   cart.forEach((item) => {
@@ -631,6 +671,9 @@ const confirmPanelCtl = setupPanel("confirm-panel", "confirm-overlay", [], "conf
 document.getElementById("cart-continue-btn").addEventListener("click", () => cartPanelCtl.close());
 document.getElementById("cart-request-btn").addEventListener("click", () => {
   cartPanelCtl.close();
+  const checkingOut = cartAllPriced() && !attachment;
+  document.getElementById("form-panel-title").textContent = checkingOut ? "Confirma tu pedido" : "Datos de tu empresa";
+  document.getElementById("form-submit-btn").textContent = checkingOut ? "Continuar al pago" : "Enviar solicitud de cotización";
   formPanelCtl.open();
 });
 
@@ -828,8 +871,13 @@ form.addEventListener("submit", async (e) => {
     observaciones: fd.get("observaciones"),
   };
 
+  // A cart where every line already has a catalog price (and no manual
+  // attachment, which always needs a human to read/quote it) skips the
+  // cotización step entirely — buy now, straight to Flow.
+  const isDirectCheckout = cartAllPriced() && !attachment;
+
   submitBtn.disabled = true;
-  formNote.textContent = "Enviando solicitud...";
+  formNote.textContent = isDirectCheckout ? "Confirmando pedido..." : "Enviando solicitud...";
   formNote.className = "form-note is-loading";
 
   try {
@@ -837,13 +885,20 @@ form.addEventListener("submit", async (e) => {
     const { data: { session } } = await sbClient.auth.getSession();
     if (session) headers.Authorization = `Bearer ${session.access_token}`;
 
-    const res = await fetch("/api/quote/submit", {
+    const res = await fetch(isDirectCheckout ? "/api/quote/checkout" : "/api/quote/submit", {
       method: "POST",
       headers,
-      body: JSON.stringify({ empresa, items: cart, attachment }),
+      body: JSON.stringify(isDirectCheckout ? { empresa, items: cart } : { empresa, items: cart, attachment }),
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "Error al enviar la solicitud");
+
+    if (isDirectCheckout) {
+      cart = [];
+      saveCart(cart);
+      window.location.href = `pagar.html?id=${data.quote_id}`;
+      return;
+    }
 
     document.getElementById("confirm-code").textContent = `Solicitud ${data.correlative_code}`;
     formPanelCtl.close();

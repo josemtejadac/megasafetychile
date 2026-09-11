@@ -185,7 +185,17 @@
 .product-thumb:hover { opacity: 0.85; }
 .product-name:hover { color: var(--gold-dark); }
 
-.detail-body { padding: 24px; }
+/* Product detail opens as a large centered modal (not a small side drawer)
+   so photos and info are actually readable, instead of the cramped
+   right-hand cart-panel width used by the cart/form/confirm panels. */
+.detail-panel { width: min(960px, 94vw); max-height: 90vh; }
+.detail-body { padding: 28px; }
+.detail-grid { display: flex; flex-direction: column; gap: 22px; }
+@media (min-width: 760px) {
+  .detail-grid { flex-direction: row; align-items: flex-start; }
+  .detail-media { flex: 0 0 46%; position: sticky; top: 0; }
+  .detail-info { flex: 1 1 auto; min-width: 0; }
+}
 .detail-photo {
   position: relative;
   width: 100%;

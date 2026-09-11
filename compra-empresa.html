@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=11">
-<link rel="stylesheet" href="account.css?v=11">
-<link rel="stylesheet" href="compra-empresa.css?v=11">
+<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="account.css?v=12">
+<link rel="stylesheet" href="compra-empresa.css?v=12">
 </head>
 <body>
 
@@ -111,6 +111,7 @@
   <div class="cart-items" id="cart-items"></div>
   <p class="cart-empty" id="cart-empty">Aún no has agregado productos.</p>
   <div class="cart-footer">
+    <p class="form-note" id="cart-total" hidden></p>
     <button class="btn btn--outline" id="cart-continue-btn">Seguir agregando productos</button>
     <button class="btn btn--primary" id="cart-request-btn" disabled>Solicitar cotización</button>
   </div>
@@ -120,7 +121,7 @@
 <div class="cat-menu-overlay" id="form-overlay"></div>
 <aside class="cart-panel form-panel" id="form-panel" aria-hidden="true">
   <div class="cat-menu-head">
-    <h3>Datos de tu empresa</h3>
+    <h3 id="form-panel-title">Datos de tu empresa</h3>
     <button class="cat-menu-close" id="form-close-btn" aria-label="Cerrar">&times;</button>
   </div>
   <form id="quote-form" class="quote-form">
@@ -157,8 +158,8 @@
 </aside>
 
 <!-- Panel: Detalle de producto -->
-<div class="cat-menu-overlay" id="detail-overlay"></div>
-<aside class="cart-panel detail-panel" id="detail-panel" aria-hidden="true">
+<div class="cat-menu-overlay" id="detail-overlay" style="z-index:90;"></div>
+<aside class="modal-panel detail-panel" id="detail-panel" aria-hidden="true" style="z-index:91;">
   <div class="cat-menu-head">
     <h3>Detalle del producto</h3>
     <button class="cat-menu-close" id="detail-close-btn" aria-label="Cerrar">&times;</button>
@@ -168,9 +169,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="script.js?v=11"></script>
-<script src="account.js?v=11"></script>
-<script src="compra-empresa.js?v=11"></script>
+<script src="script.js?v=12"></script>
+<script src="account.js?v=12"></script>
+<script src="compra-empresa.js?v=12"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
