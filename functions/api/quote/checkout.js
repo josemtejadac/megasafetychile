@@ -85,6 +85,11 @@ export async function onRequestPost({ request, env }) {
       unit_price: unitPrice,
     });
   }
+  const MIN_PURCHASE = 15000;
+  if (subtotal < MIN_PURCHASE) {
+    return badRequest(`La compra mínima es de $${MIN_PURCHASE.toLocaleString("es-CL")}`);
+  }
+
   const iva = Math.round(subtotal * 0.19);
   const total = subtotal + iva;
 

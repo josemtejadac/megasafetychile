@@ -620,6 +620,17 @@ function cartAllPriced() {
   return cart.length > 0 && cart.every((i) => i.unit_price != null);
 }
 
+// Only enforced on the direct-checkout path, where the total is known
+// up front — an unpriced cotización still goes to staff regardless of
+// size, same as before.
+const MIN_PURCHASE = 15000;
+function cartSubtotal() {
+  return cart.reduce((sum, i) => sum + (i.unit_price || 0) * i.quantity, 0);
+}
+function cartMeetsMinimum() {
+  return !cartAllPriced() || cartSubtotal() >= MIN_PURCHASE;
+}
+
 function renderCart() {
   const cartItemsEl = document.getElementById("cart-items");
   const cartEmptyEl = document.getElementById("cart-empty");
@@ -629,15 +640,21 @@ function renderCart() {
 
   const totalQty = cart.reduce((sum, i) => sum + i.quantity, 0);
   cartCountEl.textContent = totalQty;
-  requestBtn.disabled = cart.length === 0;
   cartEmptyEl.hidden = cart.length > 0;
 
   const allPriced = cartAllPriced();
+  const belowMinimum = allPriced && cartSubtotal() < MIN_PURCHASE;
+  requestBtn.disabled = cart.length === 0 || belowMinimum;
   requestBtn.textContent = allPriced ? "Ir a pagar" : "Solicitar cotización";
   if (cartTotalEl) {
-    if (allPriced) {
-      const total = cart.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
-      cartTotalEl.textContent = `Subtotal (sin IVA): $${total.toLocaleString("es-CL")}`;
+    if (belowMinimum) {
+      const missing = MIN_PURCHASE - cartSubtotal();
+      cartTotalEl.textContent = `Compra mínima $${MIN_PURCHASE.toLocaleString("es-CL")} — te faltan $${missing.toLocaleString("es-CL")}`;
+      cartTotalEl.className = "form-note is-error";
+      cartTotalEl.hidden = false;
+    } else if (allPriced) {
+      cartTotalEl.textContent = `Subtotal (sin IVA): $${cartSubtotal().toLocaleString("es-CL")}`;
+      cartTotalEl.className = "form-note";
       cartTotalEl.hidden = false;
     } else {
       cartTotalEl.hidden = true;
@@ -898,6 +915,13 @@ form.addEventListener("submit", async (e) => {
   // attachment, which always needs a human to read/quote it) skips the
   // cotización step entirely — buy now, straight to Flow.
   const isDirectCheckout = cartAllPriced() && !attachment;
+
+  if (isDirectCheckout && !cartMeetsMinimum()) {
+    const missing = MIN_PURCHASE - cartSubtotal();
+    formNote.textContent = `La compra mínima es de $${MIN_PURCHASE.toLocaleString("es-CL")} — te faltan $${missing.toLocaleString("es-CL")} en productos.`;
+    formNote.className = "form-note is-error";
+    return;
+  }
 
   submitBtn.disabled = true;
   formNote.textContent = isDirectCheckout ? "Confirmando pedido..." : "Enviando solicitud...";
