@@ -74,7 +74,7 @@
         return `
         <div class="featured-card" style="scroll-snap-align:start; flex:0 0 200px; width:200px; height:330px; background:#fff; border:1px solid #e3e7ee; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px; box-shadow:0 6px 18px -8px rgba(11,31,58,0.18); position:relative;">
           ${hasDiscount ? `<span style="position:absolute; top:10px; left:10px; z-index:1; background:var(--red); color:#fff; font-size:0.72rem; font-weight:800; padding:3px 8px; border-radius:999px;">-${p.discount_percent}%</span>` : ""}
-          <a href="compra-empresa.html?cat=${p.category_id}" aria-label="${p.name}" style="display:block; width:100%; height:130px; background:#f4f6fa; border-radius:10px; overflow:hidden; flex-shrink:0;">
+          <a href="compra-empresa.html?product=${p.id}" aria-label="${p.name}" style="display:block; width:100%; height:130px; background:#f4f6fa; border-radius:10px; overflow:hidden; flex-shrink:0;">
             <img src="${p.image_url}" alt="${p.name}" loading="lazy" style="width:100%; height:100%; object-fit:contain; display:block;">
           </a>
           ${p.brand ? `<p style="font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#c9a11d; margin:8px 0 0;">${p.brand}</p>` : ""}

@@ -152,6 +152,20 @@ function renderChips() {
       document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
     }, 150);
   }
+
+  // Arriving from a product card elsewhere on the site (e.g. the home
+  // page's "Productos destacados" carousel) — jump straight to that
+  // product's detail instead of just landing on the catalog.
+  const productParam = params.get("product");
+  if (productParam) {
+    const match = products.find((p) => p.id === productParam);
+    if (match) {
+      setTimeout(() => {
+        document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
+        openProductDetail(match);
+      }, 150);
+    }
+  }
 }
 
 // Same subcategories offered in the header's "Menú de compra" mega-menu,
@@ -300,6 +314,7 @@ function renderGrid() {
     });
     card.querySelector(".product-thumb").addEventListener("click", () => openProductDetail(p));
     card.querySelector(".product-name").addEventListener("click", () => openProductDetail(p));
+    card.querySelector(".product-desc").addEventListener("click", () => openProductDetail(p));
     grid.appendChild(card);
   });
 }

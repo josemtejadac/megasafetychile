@@ -181,7 +181,7 @@
   flex-direction: column;
   gap: 10px;
 }
-.product-thumb, .product-name { cursor: pointer; }
+.product-thumb, .product-name, .product-desc { cursor: pointer; }
 .product-thumb:hover { opacity: 0.85; }
 .product-name:hover { color: var(--gold-dark); }
 
@@ -291,7 +291,19 @@
 }
 .product-brand { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold-dark); }
 .product-name { font-size: 1rem; font-weight: 700; color: var(--navy); margin: 0; }
-.product-desc { font-size: 0.85rem; color: var(--ink-soft); margin: 0; flex: 1; }
+/* Always the same visual size on the card no matter how long the real
+   description is — the full text only shows once the product is opened
+   (detail panel), never truncated there. */
+.product-desc {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .product-certs { display: flex; flex-wrap: wrap; gap: 6px; }
 .cert-badge {
   font-size: 0.7rem;
