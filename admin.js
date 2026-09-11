@@ -835,6 +835,72 @@ function renderVariants(productId, variants) {
   });
 }
 
+// ---------- Color picker (replaces free-typed colors — avoids typos like
+// "azul" vs "Azul" vs a color a photo shows but nobody actually added) ----
+// Same names/hex as the storefront's own COLOR_HEX (compra-empresa.js) so a
+// color picked here always renders as a real swatch for the customer.
+const COLOR_HEX = {
+  rojo: "#d62828", azul: "#1d4ed8", amarillo: "#f5b400", naranjo: "#f97316",
+  verde: "#16a34a", negro: "#111111", blanco: "#ffffff", gris: "#9ca3af",
+  "café": "#7c4a2d", beige: "#e5d3b3", "ámbar": "#f59e0b", celeste: "#7dd3fc",
+  morado: "#7c3aed", rosado: "#f9a8d4", plomo: "#6b7280",
+  "azul marino": "#1e3a5f", "azul piedra": "#5b7a9d", "azul rey": "#2563eb", "verde botella": "#0f4c3a",
+};
+const COLOR_PALETTE = Object.keys(COLOR_HEX);
+let selectedColors = [];
+function colorHex(name) {
+  return COLOR_HEX[(name || "").toLowerCase()] || COLOR_HEX[name] || "#ccc";
+}
+
+function syncColorsInput() {
+  document.getElementById("colors-input").value = selectedColors.join(", ");
+}
+
+function renderColorPicker() {
+  const picker = document.getElementById("color-picker");
+  // Palette colors first (in a stable order), then any already-selected
+  // color that isn't in the palette (typed via "+ Agregar" or saved before
+  // this picker existed) so nothing the product already has just vanishes.
+  const extra = selectedColors.filter((c) => !COLOR_PALETTE.includes(c));
+  const all = [...COLOR_PALETTE, ...extra];
+  picker.innerHTML = all
+    .map((c) => {
+      const isSelected = selectedColors.includes(c);
+      const hex = colorHex(c);
+      return `<button type="button" class="color-swatch-btn" data-color="${c}" title="${c}" style="display:flex; align-items:center; gap:6px; padding:5px 10px 5px 5px; border-radius:999px; border:2px solid ${isSelected ? "var(--navy)" : "var(--border)"}; background:${isSelected ? "var(--bg-alt)" : "#fff"}; cursor:pointer; font-size:0.8rem;">
+        <span style="width:18px; height:18px; border-radius:50%; background:${hex}; ${hex === "#ffffff" ? "border:1px solid var(--border);" : ""} flex-shrink:0;"></span>
+        ${c}
+      </button>`;
+    })
+    .join("");
+  picker.querySelectorAll(".color-swatch-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const c = btn.dataset.color;
+      selectedColors = selectedColors.includes(c) ? selectedColors.filter((x) => x !== c) : [...selectedColors, c];
+      syncColorsInput();
+      renderColorPicker();
+    });
+  });
+}
+
+function setSelectedColors(colors) {
+  selectedColors = (colors || []).map((c) => c.trim().toLowerCase()).filter(Boolean);
+  syncColorsInput();
+  renderColorPicker();
+}
+
+document.getElementById("add-custom-color-btn").addEventListener("click", () => {
+  const input = document.getElementById("custom-color-input");
+  const c = input.value.trim().toLowerCase();
+  if (!c || selectedColors.includes(c)) return;
+  selectedColors = [...selectedColors, c];
+  input.value = "";
+  syncColorsInput();
+  renderColorPicker();
+});
+
+renderColorPicker();
+
 document.getElementById("generate-variants-btn").addEventListener("click", async () => {
   const productId = productForm.elements.id.value;
   if (!productId) return;
@@ -869,6 +935,7 @@ document.getElementById("new-product-btn").addEventListener("click", () => {
   productForm.reset();
   productForm.elements.id.value = "";
   productForm.elements.active.checked = true;
+  setSelectedColors([]);
   productPanelTitle.textContent = "Nuevo producto";
   deleteBtn.hidden = true;
   productNote.textContent = "";
@@ -904,7 +971,7 @@ function openProductForm(p) {
   setDocLink(fichaLink, fichaRemoveBtn, p.ficha_tecnica_url);
   setDocLink(ispLink, ispRemoveBtn, p.registro_isp_url);
   docHint.textContent = "";
-  productForm.elements.colors.value = (p.colors || []).join(", ");
+  setSelectedColors(p.colors || []);
   productForm.elements.sizes.value = (p.sizes || []).join(", ");
   document.getElementById("variants-section").hidden = false;
   loadVariants(p.id);

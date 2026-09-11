@@ -329,7 +329,14 @@ const COLOR_HEX = {
   naranjo: "#f97316", naranja: "#f97316", verde: "#16a34a", negro: "#111111", negra: "#111111",
   blanco: "#ffffff", blanca: "#ffffff", gris: "#9ca3af", "café": "#7c4a2d", beige: "#e5d3b3",
   "ámbar": "#f59e0b", celeste: "#7dd3fc", morado: "#7c3aed", rosado: "#f9a8d4", plomo: "#6b7280",
+  "azul marino": "#1e3a5f", "azul piedra": "#5b7a9d", "azul rey": "#2563eb", "verde botella": "#0f4c3a",
 };
+// Color names come from free-typed catalog data (mixed casing/accents over
+// time) — look up case-insensitively so e.g. "Naranjo" still finds the
+// "naranjo" swatch instead of silently falling back to a plain gray dot.
+function colorHex(name) {
+  return COLOR_HEX[(name || "").toLowerCase()] || COLOR_HEX[name] || "#ccc";
+}
 
 async function openProductDetail(p) {
   const hasColors = p.colors && p.colors.length;
@@ -374,8 +381,9 @@ async function openProductDetail(p) {
                ${p.colors
                  .map((c) => {
                    const disabled = !colorHasStock(c);
-                   return `<button type="button" class="swatch${c === selectedColor ? " is-selected" : ""}" data-color="${c}" ${disabled ? "disabled" : ""} style="background:${COLOR_HEX[c] || "#ccc"}; ${
-                     COLOR_HEX[c] === "#ffffff" ? "border:1px solid var(--border);" : ""
+                   const hex = colorHex(c);
+                   return `<button type="button" class="swatch${c === selectedColor ? " is-selected" : ""}" data-color="${c}" ${disabled ? "disabled" : ""} style="background:${hex}; ${
+                     hex === "#ffffff" ? "border:1px solid var(--border);" : ""
                    } ${disabled ? "opacity:0.3; cursor:not-allowed;" : "cursor:pointer;"}" title="${c}${disabled ? " (agotado)" : ""}"></button>`;
                  })
                  .join("")}

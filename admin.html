@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=13">
-<link rel="stylesheet" href="compra-empresa.css?v=13">
-<link rel="stylesheet" href="admin.css?v=13">
+<link rel="stylesheet" href="styles.css?v=14">
+<link rel="stylesheet" href="compra-empresa.css?v=14">
+<link rel="stylesheet" href="admin.css?v=14">
 </head>
 <body>
 
@@ -296,7 +296,14 @@
     <label class="checkbox-row"><input type="checkbox" name="active" checked> Activo (visible en el sitio)</label>
     <label class="checkbox-row"><input type="checkbox" name="is_featured"> Destacar en portada (carrusel "Productos destacados" — también aparece ahí si tiene descuento)</label>
 
-    <label>Colores disponibles (separados por coma)<input type="text" name="colors" id="colors-input" placeholder="rojo, azul, amarillo"></label>
+    <label>Colores disponibles
+      <div id="color-picker" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;"></div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <input type="text" id="custom-color-input" placeholder="Otro color (ej. turquesa)..." style="flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem;">
+        <button type="button" class="btn btn--outline" id="add-custom-color-btn" style="padding:8px 12px; font-size:0.8rem; white-space:nowrap;">+ Agregar</button>
+      </div>
+      <input type="hidden" name="colors" id="colors-input">
+    </label>
     <label>Tallas disponibles (separadas por coma)<input type="text" name="sizes" id="sizes-input" placeholder="S, M, L, XL"></label>
     <div id="variants-section" hidden>
       <p class="admin-help" style="margin:6px 0;">Variantes y stock — deja en 0 el stock de una variante para que el cliente no pueda seleccionarla.</p>
@@ -404,6 +411,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=13"></script>
+<script src="admin.js?v=14"></script>
 </body>
 </html>
