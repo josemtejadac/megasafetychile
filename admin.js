@@ -1081,7 +1081,18 @@ function renderQuoteStats() {
   document.getElementById("qstat-total").textContent = allQuotes.length;
   document.getElementById("qstat-pendientes").textContent = allQuotes.filter((q) => q.status === "pendiente").length;
   document.getElementById("qstat-proceso").textContent = allQuotes.filter((q) => q.status === "en_proceso").length;
-  document.getElementById("qstat-vendidas").textContent = allQuotes.filter((q) => q.status === "vendida").length;
+
+  // A vendedor sees only their own sold count here (otherwise it reads as
+  // "you sold 3" when it's really the whole team's total, which confused
+  // at least one worker) — an admin still gets the team-wide figure since
+  // they're the one who needs to see overall performance.
+  const isAdmin = currentStaff?.role === "admin";
+  const vendidas = isAdmin
+    ? allQuotes.filter((q) => q.status === "vendida")
+    : allQuotes.filter((q) => q.status === "vendida" && q.claimed_by === currentStaff?.user_id);
+  document.getElementById("qstat-vendidas").textContent = vendidas.length;
+  document.getElementById("qstat-vendidas-label").textContent = isAdmin ? "Vendidas" : "Mis vendidas";
+
   const myCommission = allQuotes
     .filter((q) => q.status === "vendida" && q.claimed_by === currentStaff?.user_id)
     .reduce((sum, q) => sum + (q.commission_amount || 0), 0);
