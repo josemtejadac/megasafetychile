@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=16">
-<link rel="stylesheet" href="account.css?v=16">
-<link rel="stylesheet" href="compra-empresa.css?v=16">
+<link rel="stylesheet" href="styles.css?v=17">
+<link rel="stylesheet" href="account.css?v=17">
+<link rel="stylesheet" href="compra-empresa.css?v=17">
 </head>
 <body>
 
@@ -41,7 +41,7 @@
   <section id="step-inicio" class="b2b-step b2b-hero-img-section">
     <div class="container">
       <div class="b2b-hero-img-wrap">
-        <img src="assets/img/compra-hero.jpg" alt="Solicita tu cotización — selecciona una opción y recibe una cotización personalizada de Mega Safety Chile." style="width:100%; display:block;">
+        <img src="assets/img/compra-hero.jpg" id="site-img-compra-hero" alt="Solicita tu cotización — selecciona una opción y recibe una cotización personalizada de Mega Safety Chile." style="width:100%; display:block;">
 
         <button type="button" data-scroll="#catalogo" class="b2b-hero-hotspot" style="left:3.2%; top:41.7%; width:30.4%; height:15.7%;" aria-label="Buscar productos"></button>
         <button type="button" data-scroll="#catalogo" class="b2b-hero-hotspot" style="left:34.7%; top:41.7%; width:30.4%; height:15.7%;" aria-label="Explorar categorías"></button>
@@ -169,9 +169,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="script.js?v=16"></script>
-<script src="account.js?v=16"></script>
-<script src="compra-empresa.js?v=16"></script>
+<script src="script.js?v=17"></script>
+<script src="account.js?v=17"></script>
+<script src="compra-empresa.js?v=17"></script>
+<script src="site-images.js?v=17"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

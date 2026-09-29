@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=16">
-<link rel="stylesheet" href="compra-empresa.css?v=16">
-<link rel="stylesheet" href="admin.css?v=16">
+<link rel="stylesheet" href="styles.css?v=17">
+<link rel="stylesheet" href="compra-empresa.css?v=17">
+<link rel="stylesheet" href="admin.css?v=17">
 </head>
 <body>
 
@@ -50,6 +50,7 @@
         <button class="admin-tab is-active" data-section="cotizaciones" type="button">Cotizaciones</button>
         <button class="admin-tab" data-section="productos" type="button">Productos</button>
         <button class="admin-tab" data-section="equipo" type="button" id="tab-equipo" hidden>Equipo</button>
+        <button class="admin-tab" data-section="fotos" type="button" id="tab-fotos" hidden>Fotos del sitio</button>
       </nav>
 
     <section id="section-productos" class="admin-section" hidden>
@@ -224,6 +225,16 @@
           <tbody id="staff-tbody"></tbody>
         </table>
       </div>
+    </section>
+
+    <section id="section-fotos" class="admin-section" hidden>
+      <div class="admin-panel-head">
+        <div>
+          <h1>Fotos del sitio</h1>
+          <p class="admin-subtitle">Reemplaza las imágenes principales de la página (no las fotos de productos, esas están en la pestaña Productos)</p>
+        </div>
+      </div>
+      <div id="site-images-list" style="display:flex; flex-direction:column; gap:16px;"></div>
     </section>
 
   </div>
@@ -411,6 +422,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=16"></script>
+<script src="admin.js?v=17"></script>
 </body>
 </html>

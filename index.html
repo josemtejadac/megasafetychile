@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=16">
-<link rel="stylesheet" href="account.css?v=16">
+<link rel="stylesheet" href="styles.css?v=17">
+<link rel="stylesheet" href="account.css?v=17">
 </head>
 <body>
 
@@ -65,7 +65,7 @@
 
   <section id="productos" style="background:#0b1f3a;">
     <div class="hero-mobile-pick" style="position:relative; max-width:640px; margin:0 auto;">
-      <img src="assets/img/hero-full.jpg" alt="Tu operación más segura, siempre — Mega Safety Chile. Elementos de protección personal, herramientas y abrasivos, soldadura y consumibles, ropa de trabajo, seguridad vial, bloqueo LOTO, iluminación industrial, insumos generales" style="width:100%; display:block;">
+      <img src="assets/img/hero-full.jpg" id="site-img-hero-mobile" alt="Tu operación más segura, siempre — Mega Safety Chile. Elementos de protección personal, herramientas y abrasivos, soldadura y consumibles, ropa de trabajo, seguridad vial, bloqueo LOTO, iluminación industrial, insumos generales" style="width:100%; display:block;">
       <a href="compra-empresa.html?cat=cat-seguridad-industrial" aria-label="Elementos de protección personal" style="position:absolute; left:0%; top:44%; width:24%; height:18%;"></a>
       <a href="compra-empresa.html?cat=cat-herramientas" aria-label="Herramientas y abrasivos" style="position:absolute; left:25%; top:44%; width:24%; height:18%;"></a>
       <a href="compra-empresa.html?cat=cat-soldadura" aria-label="Soldadura y consumibles" style="position:absolute; left:50%; top:44%; width:24%; height:18%;"></a>
@@ -77,7 +77,7 @@
       <a href="compra-empresa.html" aria-label="Ver todos los productos" style="position:absolute; left:2%; top:90%; width:96%; height:6.5%;"></a>
     </div>
     <div class="hero-desktop-pick" style="position:relative; max-width:1600px; margin:0 auto;">
-      <img src="assets/img/hero-full-desktop.jpg" alt="Tu operación más segura, siempre — Mega Safety Chile. Elementos de protección personal, herramientas y abrasivos, soldadura y consumibles, ropa de trabajo, seguridad vial, bloqueo LOTO, iluminación industrial, insumos generales" style="width:100%; display:block;">
+      <img src="assets/img/hero-full-desktop.jpg" id="site-img-hero-desktop" alt="Tu operación más segura, siempre — Mega Safety Chile. Elementos de protección personal, herramientas y abrasivos, soldadura y consumibles, ropa de trabajo, seguridad vial, bloqueo LOTO, iluminación industrial, insumos generales" style="width:100%; display:block;">
       <a href="compra-empresa.html?cat=cat-seguridad-industrial" aria-label="Elementos de protección personal" style="position:absolute; left:0.9%; top:44.5%; width:26.5%; height:20%;"></a>
       <a href="compra-empresa.html?cat=cat-herramientas" aria-label="Herramientas y abrasivos" style="position:absolute; left:28%; top:44.5%; width:21.5%; height:20%;"></a>
       <a href="compra-empresa.html?cat=cat-soldadura" aria-label="Soldadura y consumibles" style="position:absolute; left:50.2%; top:44.5%; width:21.5%; height:20%;"></a>
@@ -99,7 +99,7 @@
 
   <section class="upload-banner-img">
     <div class="container upload-banner-img-inner">
-      <img src="assets/img/upload-banner.jpg" alt="Cotiza en 1 paso — ¿Ya tienes tu listado armado? Súbelo aquí y te cotizamos rápidamente." style="width:100%; display:block; border-radius:10px;">
+      <img src="assets/img/upload-banner.jpg" id="site-img-upload-banner" alt="Cotiza en 1 paso — ¿Ya tienes tu listado armado? Súbelo aquí y te cotizamos rápidamente." style="width:100%; display:block; border-radius:10px;">
       <div id="home-dropzone" class="upload-banner-hotspot" role="button" tabindex="0" aria-label="Subir listado de productos: arrastra tu archivo o haz clic para seleccionar">
         <input type="file" id="home-upload-input" accept=".xlsx,.xls,.csv,.pdf,image/*" hidden>
         <span class="upload-banner-status" id="home-upload-status"></span>
@@ -189,10 +189,10 @@
 
   <section id="beneficios" class="section section--alt">
     <div class="container hero-mobile-pick" style="max-width:640px;">
-      <img src="assets/img/seguridad-respaldar.jpg" alt="Seguridad que puedes respaldar: productos certificados, atención empresas, asesoría experta y respuesta rápida" style="width:100%; border-radius:var(--radius); box-shadow:var(--shadow); display:block;">
+      <img src="assets/img/seguridad-respaldar.jpg" id="site-img-seguridad-mobile" alt="Seguridad que puedes respaldar: productos certificados, atención empresas, asesoría experta y respuesta rápida" style="width:100%; border-radius:var(--radius); box-shadow:var(--shadow); display:block;">
     </div>
     <div class="container hero-desktop-pick" style="max-width:1200px;">
-      <img src="assets/img/seguridad-respaldar-desktop.jpg" alt="Seguridad que puedes respaldar: productos certificados, atención empresas, asesoría experta y respuesta rápida" style="width:100%; border-radius:var(--radius); box-shadow:var(--shadow); display:block;">
+      <img src="assets/img/seguridad-respaldar-desktop.jpg" id="site-img-seguridad-desktop" alt="Seguridad que puedes respaldar: productos certificados, atención empresas, asesoría experta y respuesta rápida" style="width:100%; border-radius:var(--radius); box-shadow:var(--shadow); display:block;">
     </div>
   </section>
 
@@ -412,11 +412,12 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="script.js?v=16"></script>
-<script src="account.js?v=16"></script>
-<script src="promo-carousel.js?v=16"></script>
-<script src="featured-products.js?v=16"></script>
-<script src="brands-marquee.js?v=16"></script>
+<script src="script.js?v=17"></script>
+<script src="account.js?v=17"></script>
+<script src="promo-carousel.js?v=17"></script>
+<script src="featured-products.js?v=17"></script>
+<script src="brands-marquee.js?v=17"></script>
+<script src="site-images.js?v=17"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

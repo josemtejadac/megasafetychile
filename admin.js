@@ -291,6 +291,7 @@ async function showAppropriateView() {
   document.getElementById("admin-welcome").textContent =
     `Hola, ${adminRow.name || session.user.email} (${adminRow.role === "admin" ? "Administrador" : "Vendedor"})`;
   document.getElementById("tab-equipo").hidden = adminRow.role !== "admin";
+  document.getElementById("tab-fotos").hidden = adminRow.role !== "admin";
 
   setupTabs();
   loadQuotes();
@@ -333,6 +334,7 @@ function setupTabs() {
       if (tab.dataset.section === "productos" && allProducts.length === 0) loadProducts();
       if (tab.dataset.section === "equipo") loadStaff();
       if (tab.dataset.section === "cotizaciones") loadQuotes();
+      if (tab.dataset.section === "fotos") loadSiteImages();
     });
   });
 }
@@ -1904,6 +1906,115 @@ staffForm.addEventListener("submit", async (e) => {
     staffNote.className = "form-note is-error";
   }
 });
+
+// ---------- Fotos del sitio (solo admin) ----------
+// Site-wide marketing images (hero, banners) — distinct from product
+// photos. Some of these have invisible clickable zones positioned by fixed
+// percentages over the image (the home hero, the Compra Empresa hero), so
+// swapping in a differently-composed photo can misalign those buttons —
+// warn for those specific ones instead of just letting the admin guess.
+const HOTSPOT_KEYS = new Set(["hero-mobile", "hero-desktop", "compra-hero"]);
+const siteImagesList = document.getElementById("site-images-list");
+
+async function loadSiteImages() {
+  if (!siteImagesList) return;
+  const { data, error } = await sbClient.from("megasafety_site_images").select("*").order("key");
+  if (error) {
+    siteImagesList.innerHTML = `<p class="form-note is-error">No se pudieron cargar: ${error.message}</p>`;
+    return;
+  }
+  renderSiteImages(data);
+}
+
+function renderSiteImages(rows) {
+  siteImagesList.innerHTML = rows
+    .map((row) => {
+      const currentUrl = row.url || row.default_url;
+      const isCustom = Boolean(row.url);
+      return `
+      <div class="category-manage-card" data-key="${row.key}" style="border:1px solid var(--border); border-radius:10px; padding:14px; display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;">
+        <img src="${currentUrl}" alt="" style="width:160px; height:100px; object-fit:cover; border-radius:8px; border:1px solid var(--border); flex-shrink:0; background:var(--bg-alt);">
+        <div style="flex:1; min-width:220px;">
+          <p style="margin:0 0 4px; font-weight:700;">${row.label}</p>
+          <p class="admin-help" style="margin:0 0 8px;">${isCustom ? "Imagen personalizada" : "Usando la imagen original del sitio"}</p>
+          ${
+            HOTSPOT_KEYS.has(row.key)
+              ? `<p class="admin-help" style="margin:0 0 8px; color:#b45309;">⚠️ Esta imagen tiene botones invisibles en posiciones fijas (categorías/menú). Si subes una foto con un diseño muy distinto, los botones pueden quedar desalineados — lo ideal es una versión actualizada del mismo diseño.</p>`
+              : ""
+          }
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <label class="btn btn--outline" style="cursor:pointer; padding:8px 12px; font-size:0.82rem;">
+              Subir nueva foto
+              <input type="file" accept="image/*" class="site-image-input" data-key="${row.key}" hidden>
+            </label>
+            ${isCustom ? `<button type="button" class="btn btn--outline site-image-reset-btn" data-key="${row.key}" style="padding:8px 12px; font-size:0.82rem;">Restablecer original</button>` : ""}
+          </div>
+          <p class="form-note" data-status-for="${row.key}"></p>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  siteImagesList.querySelectorAll(".site-image-input").forEach((input) => {
+    input.addEventListener("change", async () => {
+      const file = input.files[0];
+      const key = input.dataset.key;
+      if (!file) return;
+      const statusEl = siteImagesList.querySelector(`[data-status-for="${key}"]`);
+      statusEl.textContent = "Comprimiendo y subiendo...";
+      statusEl.className = "form-note is-loading";
+      try {
+        const compressed = await compressImage(file, 1920, 0.85);
+        const fd = new FormData();
+        fd.append("file", compressed);
+        fd.append("key", key);
+        const token = await getFreshAccessToken();
+        const res = await fetch("/api/admin/upload-site-image", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "Error al subir la imagen");
+        loadSiteImages();
+      } catch (err) {
+        statusEl.textContent = err.message || "No se pudo subir la imagen.";
+        statusEl.className = "form-note is-error";
+      }
+    });
+  });
+
+  siteImagesList.querySelectorAll(".site-image-reset-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const key = btn.dataset.key;
+      if (!confirm("¿Volver a la imagen original de esta sección?")) return;
+      const statusEl = siteImagesList.querySelector(`[data-status-for="${key}"]`);
+      statusEl.textContent = "Restableciendo...";
+      statusEl.className = "form-note is-loading";
+      try {
+        const token = await getFreshAccessToken();
+        const res = await fetch("/api/admin/reset-site-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ key }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "Error al restablecer");
+        loadSiteImages();
+      } catch (err) {
+        statusEl.textContent = err.message || "No se pudo restablecer.";
+        statusEl.className = "form-note is-error";
+      }
+    });
+  });
+}
+
+sbClient
+  .channel("admin-site-images-live")
+  .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_site_images" }, () => {
+    if (document.getElementById("tab-fotos") && !document.getElementById("section-fotos").hidden) loadSiteImages();
+  })
+  .subscribe();
 
 showAppropriateView();
 loadCategories();
