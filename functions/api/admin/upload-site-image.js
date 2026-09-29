@@ -1,10 +1,12 @@
-// Admin-only: replaces one of the site's own marketing images (hero,
-// banners — not product photos, those go through upload-image.js). Order
-// matters for safety, same pattern as replace-image.js: upload the new
-// file and update megasafety_site_images FIRST, only delete the old
-// uploaded file afterward (and only if it was itself an upload, never the
-// static assets/img/... default shipped with the site).
+// Admin-only: adds one photo to a site image slot's gallery (hero,
+// banners — not product photos, those go through upload-image.js). A slot
+// can hold several photos now; the admin decides separately (a checkbox in
+// the panel, written directly via the client since RLS already allows it)
+// whether to just show the first one or auto-rotate them as a carousel.
+// Order matters for safety: the new file is uploaded and appended to
+// megasafety_site_images.urls FIRST — this endpoint never deletes anything.
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
+const MAX_PHOTOS = 6;
 
 async function requireAdmin(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
@@ -45,14 +47,17 @@ export async function onRequestPost({ request, env }) {
   };
 
   const existingRes = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/megasafety_site_images?key=eq.${encodeURIComponent(key)}&select=url`,
+    `${env.SUPABASE_URL}/rest/v1/megasafety_site_images?key=eq.${encodeURIComponent(key)}&select=urls`,
     { headers: sbHeaders }
   );
   const [existing] = await existingRes.json();
   if (!existing) {
     return new Response(JSON.stringify({ ok: false, error: "Esa imagen no existe" }), { status: 404 });
   }
-  const oldUrl = existing.url;
+  const urls = existing.urls || [];
+  if (urls.length >= MAX_PHOTOS) {
+    return new Response(JSON.stringify({ ok: false, error: `Máximo ${MAX_PHOTOS} fotos por sección. Quita alguna antes de subir otra.` }), { status: 400 });
+  }
 
   const ext = (file.name || "photo.jpg").split(".").pop().toLowerCase();
   const path = `site/${key}-${Date.now()}.${ext}`;
@@ -71,34 +76,18 @@ export async function onRequestPost({ request, env }) {
   }
 
   const newUrl = `${env.SUPABASE_URL}/storage/v1/object/public/megasafety-products/${path}`;
+  const newUrls = [...urls, newUrl];
 
   const updateRes = await fetch(`${env.SUPABASE_URL}/rest/v1/megasafety_site_images?key=eq.${encodeURIComponent(key)}`, {
     method: "PATCH",
     headers: sbHeaders,
-    body: JSON.stringify({ url: newUrl, updated_at: new Date().toISOString() }),
+    body: JSON.stringify({ urls: newUrls, updated_at: new Date().toISOString() }),
   });
   if (!updateRes.ok) {
     return new Response(JSON.stringify({ ok: false, error: `DB update error: ${await updateRes.text()}` }), { status: 500 });
   }
 
-  // Best-effort: only clean up the previous file if it was itself an
-  // upload (lives under our own storage bucket) — never touch the static
-  // assets/img/... default, that one ships with the site's own code.
-  if (oldUrl && oldUrl.includes("/megasafety-products/")) {
-    try {
-      const oldPath = decodeURIComponent(oldUrl.split("/megasafety-products/")[1] || "");
-      if (oldPath) {
-        await fetch(`${env.SUPABASE_URL}/storage/v1/object/megasafety-products/${oldPath}`, {
-          method: "DELETE",
-          headers: sbHeaders,
-        });
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  return new Response(JSON.stringify({ ok: true, url: newUrl }), {
+  return new Response(JSON.stringify({ ok: true, urls: newUrls }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

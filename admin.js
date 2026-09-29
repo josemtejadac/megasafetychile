@@ -1914,6 +1914,18 @@ staffForm.addEventListener("submit", async (e) => {
 // swapping in a differently-composed photo can misalign those buttons —
 // warn for those specific ones instead of just letting the admin guess.
 const HOTSPOT_KEYS = new Set(["hero-mobile", "hero-desktop", "compra-hero"]);
+// Pixel size of the image each slot ships with — shown as a guide so the
+// admin uploads something with roughly the same proportions instead of
+// guessing (a very different aspect ratio looks stretched/cropped).
+const SITE_IMAGE_SIZES = {
+  "hero-mobile": "738 x 1000 px (vertical)",
+  "hero-desktop": "1600 x 832 px (horizontal)",
+  "upload-banner": "1600 x 424 px (banner ancho)",
+  "seguridad-mobile": "600 x 900 px (vertical)",
+  "seguridad-desktop": "1600 x 899 px (horizontal)",
+  "compra-hero": "1536 x 798 px (horizontal)",
+};
+const MAX_SITE_PHOTOS = 6;
 const siteImagesList = document.getElementById("site-images-list");
 
 async function loadSiteImages() {
@@ -1929,28 +1941,51 @@ async function loadSiteImages() {
 function renderSiteImages(rows) {
   siteImagesList.innerHTML = rows
     .map((row) => {
-      const currentUrl = row.url || row.default_url;
-      const isCustom = Boolean(row.url);
+      const urls = row.urls || [];
+      const isCustom = urls.length > 0;
+      const gallery = isCustom ? urls : [row.default_url];
+      const sizeHint = SITE_IMAGE_SIZES[row.key];
       return `
-      <div class="category-manage-card" data-key="${row.key}" style="border:1px solid var(--border); border-radius:10px; padding:14px; display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;">
-        <img src="${currentUrl}" alt="" style="width:160px; height:100px; object-fit:cover; border-radius:8px; border:1px solid var(--border); flex-shrink:0; background:var(--bg-alt);">
-        <div style="flex:1; min-width:220px;">
-          <p style="margin:0 0 4px; font-weight:700;">${row.label}</p>
-          <p class="admin-help" style="margin:0 0 8px;">${isCustom ? "Imagen personalizada" : "Usando la imagen original del sitio"}</p>
-          ${
-            HOTSPOT_KEYS.has(row.key)
-              ? `<p class="admin-help" style="margin:0 0 8px; color:#b45309;">⚠️ Esta imagen tiene botones invisibles en posiciones fijas (categorías/menú). Si subes una foto con un diseño muy distinto, los botones pueden quedar desalineados — lo ideal es una versión actualizada del mismo diseño.</p>`
-              : ""
-          }
-          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-            <label class="btn btn--outline" style="cursor:pointer; padding:8px 12px; font-size:0.82rem;">
-              Subir nueva foto
-              <input type="file" accept="image/*" class="site-image-input" data-key="${row.key}" hidden>
-            </label>
-            ${isCustom ? `<button type="button" class="btn btn--outline site-image-reset-btn" data-key="${row.key}" style="padding:8px 12px; font-size:0.82rem;">Restablecer original</button>` : ""}
-          </div>
-          <p class="form-note" data-status-for="${row.key}"></p>
+      <div class="category-manage-card" data-key="${row.key}" style="border:1px solid var(--border); border-radius:10px; padding:14px;">
+        <p style="margin:0 0 4px; font-weight:700;">${row.label}</p>
+        <p class="admin-help" style="margin:0 0 4px;">${isCustom ? `Imagen${urls.length > 1 ? "es" : ""} personalizada${urls.length > 1 ? "s" : ""} (${urls.length})` : "Usando la imagen original del sitio"}</p>
+        ${sizeHint ? `<p class="admin-help" style="margin:0 0 8px;">Tamaño recomendado: ${sizeHint}</p>` : ""}
+        ${
+          HOTSPOT_KEYS.has(row.key)
+            ? `<p class="admin-help" style="margin:0 0 8px; color:#b45309;">⚠️ Esta imagen tiene botones invisibles en posiciones fijas (categorías/menú). Si subes una foto con un diseño muy distinto, los botones pueden quedar desalineados — lo ideal es una versión actualizada del mismo diseño. Con varias fotos rotando, evita activar el carrusel aquí salvo que todas compartan exactamente el mismo diseño.</p>`
+            : ""
+        }
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+          ${gallery
+            .map(
+              (url, idx) => `
+            <div style="position:relative; width:140px; height:90px;">
+              <img src="${url}" alt="" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:1px solid var(--border); background:var(--bg-alt);">
+              ${
+                isCustom
+                  ? `<button type="button" class="site-image-remove-btn" data-key="${row.key}" data-url="${url}" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#b91c1c; color:#fff; border:none; font-size:0.7rem; cursor:pointer; line-height:1;">✕</button>`
+                  : ""
+              }
+            </div>`
+            )
+            .join("")}
         </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:6px;">
+          ${
+            urls.length < MAX_SITE_PHOTOS
+              ? `<label class="btn btn--outline" style="cursor:pointer; padding:8px 12px; font-size:0.82rem;">
+                   ${urls.length ? "Agregar otra foto" : "Subir foto"}
+                   <input type="file" accept="image/*" class="site-image-input" data-key="${row.key}" hidden>
+                 </label>`
+              : `<span class="admin-help">Máximo ${MAX_SITE_PHOTOS} fotos — quita alguna para subir otra.</span>`
+          }
+          ${isCustom ? `<button type="button" class="btn btn--outline site-image-reset-btn" data-key="${row.key}" style="padding:8px 12px; font-size:0.82rem;">Restablecer original</button>` : ""}
+          <label class="checkbox-row" style="margin:0; font-size:0.82rem; ${urls.length > 1 ? "" : "opacity:0.4; pointer-events:none;"}">
+            <input type="checkbox" class="site-image-carousel-toggle" data-key="${row.key}" ${row.carousel_enabled ? "checked" : ""} ${urls.length > 1 ? "" : "disabled"}>
+            Rotar como carrusel
+          </label>
+        </div>
+        <p class="form-note" data-status-for="${row.key}"></p>
       </div>`;
     })
     .join("");
@@ -1984,10 +2019,34 @@ function renderSiteImages(rows) {
     });
   });
 
+  siteImagesList.querySelectorAll(".site-image-remove-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const key = btn.dataset.key;
+      const url = btn.dataset.url;
+      const statusEl = siteImagesList.querySelector(`[data-status-for="${key}"]`);
+      statusEl.textContent = "Quitando...";
+      statusEl.className = "form-note is-loading";
+      try {
+        const token = await getFreshAccessToken();
+        const res = await fetch("/api/admin/remove-site-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ key, url }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "Error al quitar la foto");
+        loadSiteImages();
+      } catch (err) {
+        statusEl.textContent = err.message || "No se pudo quitar la foto.";
+        statusEl.className = "form-note is-error";
+      }
+    });
+  });
+
   siteImagesList.querySelectorAll(".site-image-reset-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const key = btn.dataset.key;
-      if (!confirm("¿Volver a la imagen original de esta sección?")) return;
+      if (!confirm("¿Volver a la imagen original de esta sección? Se quitan todas las fotos que hayas subido.")) return;
       const statusEl = siteImagesList.querySelector(`[data-status-for="${key}"]`);
       statusEl.textContent = "Restableciendo...";
       statusEl.className = "form-note is-loading";
@@ -2004,6 +2063,20 @@ function renderSiteImages(rows) {
       } catch (err) {
         statusEl.textContent = err.message || "No se pudo restablecer.";
         statusEl.className = "form-note is-error";
+      }
+    });
+  });
+
+  siteImagesList.querySelectorAll(".site-image-carousel-toggle").forEach((toggle) => {
+    toggle.addEventListener("change", async () => {
+      const key = toggle.dataset.key;
+      const { error } = await sbClient
+        .from("megasafety_site_images")
+        .update({ carousel_enabled: toggle.checked })
+        .eq("key", key);
+      if (error) {
+        toggle.checked = !toggle.checked;
+        alert("No se pudo actualizar: " + error.message);
       }
     });
   });
