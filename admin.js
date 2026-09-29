@@ -1945,6 +1945,7 @@ function renderSiteImages(rows) {
       const isCustom = urls.length > 0;
       const gallery = isCustom ? urls : [row.default_url];
       const sizeHint = SITE_IMAGE_SIZES[row.key];
+      const photoLimit = HOTSPOT_KEYS.has(row.key) ? 1 : MAX_SITE_PHOTOS;
       return `
       <div class="category-manage-card" data-key="${row.key}" style="border:1px solid var(--border); border-radius:10px; padding:14px;">
         <p style="margin:0 0 4px; font-weight:700;">${row.label}</p>
@@ -1952,7 +1953,7 @@ function renderSiteImages(rows) {
         ${sizeHint ? `<p class="admin-help" style="margin:0 0 8px;">Tamaño recomendado: ${sizeHint}</p>` : ""}
         ${
           HOTSPOT_KEYS.has(row.key)
-            ? `<p class="admin-help" style="margin:0 0 8px; color:#b45309;">⚠️ Esta imagen tiene botones invisibles en posiciones fijas (categorías/menú). Si subes una foto con un diseño muy distinto, los botones pueden quedar desalineados — lo ideal es una versión actualizada del mismo diseño. Con varias fotos rotando, evita activar el carrusel aquí salvo que todas compartan exactamente el mismo diseño.</p>`
+            ? `<p class="admin-help" style="margin:0 0 8px; color:#b45309;">⚠️ Esta imagen tiene botones invisibles en posiciones fijas (categorías/menú), así que aquí no se puede activar el carrusel — solo se muestra la primera foto. Si subes una nueva, que sea una versión actualizada del mismo diseño para no desalinear los botones.</p>`
             : ""
         }
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
@@ -1972,18 +1973,22 @@ function renderSiteImages(rows) {
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:6px;">
           ${
-            urls.length < MAX_SITE_PHOTOS
+            urls.length < photoLimit
               ? `<label class="btn btn--outline" style="cursor:pointer; padding:8px 12px; font-size:0.82rem;">
                    ${urls.length ? "Agregar otra foto" : "Subir foto"}
                    <input type="file" accept="image/*" class="site-image-input" data-key="${row.key}" hidden>
                  </label>`
-              : `<span class="admin-help">Máximo ${MAX_SITE_PHOTOS} fotos — quita alguna para subir otra.</span>`
+              : `<span class="admin-help">Máximo ${photoLimit} foto${photoLimit > 1 ? "s" : ""} — quita la actual para subir otra.</span>`
           }
           ${isCustom ? `<button type="button" class="btn btn--outline site-image-reset-btn" data-key="${row.key}" style="padding:8px 12px; font-size:0.82rem;">Restablecer original</button>` : ""}
-          <label class="checkbox-row" style="margin:0; font-size:0.82rem; ${urls.length > 1 ? "" : "opacity:0.4; pointer-events:none;"}">
-            <input type="checkbox" class="site-image-carousel-toggle" data-key="${row.key}" ${row.carousel_enabled ? "checked" : ""} ${urls.length > 1 ? "" : "disabled"}>
-            Rotar como carrusel
-          </label>
+          ${
+            HOTSPOT_KEYS.has(row.key)
+              ? ""
+              : `<label class="checkbox-row" style="margin:0; font-size:0.82rem; ${urls.length > 1 ? "" : "opacity:0.4; pointer-events:none;"}">
+                   <input type="checkbox" class="site-image-carousel-toggle" data-key="${row.key}" ${row.carousel_enabled ? "checked" : ""} ${urls.length > 1 ? "" : "disabled"}>
+                   Rotar como carrusel
+                 </label>`
+          }
         </div>
         <p class="form-note" data-status-for="${row.key}"></p>
       </div>`;

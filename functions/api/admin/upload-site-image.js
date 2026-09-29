@@ -7,6 +7,7 @@
 // megasafety_site_images.urls FIRST — this endpoint never deletes anything.
 const SUPABASE_ANON_KEY = "sb_publishable_BtphNzcv_YrDNwRul86J0g_DiCGznE1";
 const MAX_PHOTOS = 6;
+const HOTSPOT_KEYS = new Set(["hero-mobile", "hero-desktop", "compra-hero"]);
 
 async function requireAdmin(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
@@ -55,8 +56,12 @@ export async function onRequestPost({ request, env }) {
     return new Response(JSON.stringify({ ok: false, error: "Esa imagen no existe" }), { status: 404 });
   }
   const urls = existing.urls || [];
-  if (urls.length >= MAX_PHOTOS) {
-    return new Response(JSON.stringify({ ok: false, error: `Máximo ${MAX_PHOTOS} fotos por sección. Quita alguna antes de subir otra.` }), { status: 400 });
+  // Images with fixed-position invisible hotspots on top (category/menu
+  // buttons) can never rotate as a carousel — only urls[0] is ever shown —
+  // so more than one photo there would just sit unused, confusingly.
+  const limit = HOTSPOT_KEYS.has(key) ? 1 : MAX_PHOTOS;
+  if (urls.length >= limit) {
+    return new Response(JSON.stringify({ ok: false, error: `Máximo ${limit} foto${limit > 1 ? "s" : ""} por sección. Quita la actual antes de subir otra.` }), { status: 400 });
   }
 
   const ext = (file.name || "photo.jpg").split(".").pop().toLowerCase();
