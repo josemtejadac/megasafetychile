@@ -68,6 +68,11 @@ function buildCustomerDataPageOps(quote) {
 }
 
 // quote: row from megasafety_b2b_quotes; items: rows from megasafety_b2b_quote_items (with unit_price)
+// Items (and, if needed, the totals block) spill onto extra pages instead
+// of just drawing past the bottom of the sheet — a cart with many lines
+// used to push the subtotal/IVA/total rows to a negative Y coordinate,
+// which sits below the page's MediaBox and is invisible to any PDF viewer
+// (reported by the owner: items "missing" and the total "cut off").
 export async function buildQuotePdfBase64(quote, items, origin) {
   const logoRes = await fetch(new URL(LOGO_PDF_PATH, origin));
   const logoBytes = new Uint8Array(await logoRes.arrayBuffer());
@@ -80,81 +85,119 @@ export async function buildQuotePdfBase64(quote, items, origin) {
   const lightGray = [0.95, 0.96, 0.98];
   const white = [1, 1, 1];
 
-  const ops = [];
-
-  // --- Header row: COTIZACIÓN (left) / ID + fecha (right) ---
-  ops.push({ type: "text", text: "COTIZACIÓN", x: marginX, y: 748, size: 22, bold: true, color: navy });
-  const dateStr = new Date(quote.quoted_at || quote.created_at).toLocaleDateString("es-CL");
-  ops.push({ type: "text", text: "ID único", x: 430, y: 758, size: 8, bold: true, color: gray });
-  ops.push({ type: "text", text: quote.correlative_code, x: 430, y: 746, size: 10, bold: true, color: navy });
-  ops.push({ type: "text", text: dateStr, x: 430, y: 734, size: 9, color: gray });
-
-  // --- Logo + company info block ---
-  const logoW = 120;
-  const logoH = 45;
-  ops.push({ type: "image", x: marginX, y: 680, w: logoW, h: logoH });
-
-  const companyLines = [
-    "MEGA SAFETY CHILE SPA",
-    "RUT: 78.463.919-3",
-    "Venta al por menor de elementos de protección personal (EPP)",
-    "San Eduardo 0446, La Cisterna · Los Militares 5620, of. 905, Las Condes",
-    "www.megasafetychile.cl · contacto@megasafetychile.cl",
-  ];
-  let cy = 718;
-  companyLines.forEach((line, idx) => {
-    ops.push({
-      type: "text",
-      text: line,
-      x: 190,
-      y: cy,
-      size: idx === 0 ? 11 : 9,
-      bold: idx === 0,
-      color: idx === 0 ? navy : gray,
-    });
-    cy -= idx === 0 ? 16 : 13;
-  });
-
-  ops.push({ type: "line", x1: marginX, y1: 672, x2: rightX, y2: 672, color: navy, width: 1.5 });
-
-  // --- Customer row ---
-  ops.push({ type: "text", text: "NOMBRE / RAZÓN SOCIAL", x: marginX, y: 650, size: 9, bold: true, color: gold });
-  ops.push({ type: "text", text: quote.razon_social, x: marginX, y: 634, size: 12, bold: true, color: navy });
-  ops.push({ type: "text", text: `RUT: ${quote.rut}`, x: marginX, y: 618, size: 10, color: gray });
-  ops.push({
-    type: "text",
-    text: `${quote.direccion ? quote.direccion + ", " : ""}${quote.comuna || ""}${quote.region ? ", " + quote.region : ""}`,
-    x: marginX,
-    y: 602,
-    size: 10,
-    color: gray,
-  });
-  ops.push({ type: "text", text: `${quote.nombre_contacto} · ${quote.telefono} · ${quote.correo}`, x: marginX, y: 586, size: 10, color: gray });
-  ops.push({
-    type: "text",
-    text: "Condición de pago: Transferencia o pago en línea (Flow)",
-    x: rightX - 250,
-    y: 618,
-    size: 9,
-    color: gray,
-  });
-
-  // --- Items table ---
   const colDesc = marginX + 10;
   const colQty = 350;
   const colUnit = 410;
   const colSubtotal = rightX - 10;
   const rowHeight = 22;
-  let y = 556;
+  const PAGE_BOTTOM = 70; // never draw below this, keeps a margin above the footer line
 
-  ops.push({ type: "rect", x: marginX, y: y - rowHeight + 6, w: rightX - marginX, h: rowHeight, fill: navy });
-  ops.push({ type: "text", text: "DESCRIPCIÓN", x: colDesc, y: y - 10, size: 9, bold: true, color: white });
-  ops.push({ type: "text", text: "CANT.", x: colQty, y: y - 10, size: 9, bold: true, color: white });
-  ops.push({ type: "text", text: "P. UNIT.", x: colUnit, y: y - 10, size: 9, bold: true, color: white });
-  ops.push({ type: "text", text: "SUBTOTAL", x: colSubtotal - 46, y: y - 10, size: 9, bold: true, color: white });
-  y -= rowHeight;
+  const pages = [];
+  let ops;
+  let y;
+
+  function drawItemsHeader() {
+    ops.push({ type: "rect", x: marginX, y: y - rowHeight + 6, w: rightX - marginX, h: rowHeight, fill: navy });
+    ops.push({ type: "text", text: "DESCRIPCIÓN", x: colDesc, y: y - 10, size: 9, bold: true, color: white });
+    ops.push({ type: "text", text: "CANT.", x: colQty, y: y - 10, size: 9, bold: true, color: white });
+    ops.push({ type: "text", text: "P. UNIT.", x: colUnit, y: y - 10, size: 9, bold: true, color: white });
+    ops.push({ type: "text", text: "SUBTOTAL", x: colSubtotal - 46, y: y - 10, size: 9, bold: true, color: white });
+    y -= rowHeight;
+  }
+
+  function addFooter() {
+    ops.push({ type: "line", x1: marginX, y1: 60, x2: rightX, y2: 60, color: [0.85, 0.87, 0.91], width: 1 });
+    ops.push({
+      type: "text",
+      text: "Mega Safety Chile — Artículos de seguridad industrial · +56 9 8306 1338",
+      x: marginX,
+      y: 44,
+      size: 9,
+      color: gray,
+    });
+  }
+
+  function finishPage() {
+    addFooter();
+    pages.push(ops);
+  }
+
+  function startFirstPage() {
+    ops = [];
+    ops.push({ type: "text", text: "COTIZACIÓN", x: marginX, y: 748, size: 22, bold: true, color: navy });
+    const dateStr = new Date(quote.quoted_at || quote.created_at).toLocaleDateString("es-CL");
+    ops.push({ type: "text", text: "ID único", x: 430, y: 758, size: 8, bold: true, color: gray });
+    ops.push({ type: "text", text: quote.correlative_code, x: 430, y: 746, size: 10, bold: true, color: navy });
+    ops.push({ type: "text", text: dateStr, x: 430, y: 734, size: 9, color: gray });
+
+    const logoW = 120;
+    const logoH = 45;
+    ops.push({ type: "image", x: marginX, y: 680, w: logoW, h: logoH });
+
+    const companyLines = [
+      "MEGA SAFETY CHILE SPA",
+      "RUT: 78.463.919-3",
+      "Venta al por menor de elementos de protección personal (EPP)",
+      "San Eduardo 0446, La Cisterna · Los Militares 5620, of. 905, Las Condes",
+      "www.megasafetychile.cl · contacto@megasafetychile.cl",
+    ];
+    let cy = 718;
+    companyLines.forEach((line, idx) => {
+      ops.push({
+        type: "text",
+        text: line,
+        x: 190,
+        y: cy,
+        size: idx === 0 ? 11 : 9,
+        bold: idx === 0,
+        color: idx === 0 ? navy : gray,
+      });
+      cy -= idx === 0 ? 16 : 13;
+    });
+
+    ops.push({ type: "line", x1: marginX, y1: 672, x2: rightX, y2: 672, color: navy, width: 1.5 });
+
+    ops.push({ type: "text", text: "NOMBRE / RAZÓN SOCIAL", x: marginX, y: 650, size: 9, bold: true, color: gold });
+    ops.push({ type: "text", text: quote.razon_social, x: marginX, y: 634, size: 12, bold: true, color: navy });
+    ops.push({ type: "text", text: `RUT: ${quote.rut}`, x: marginX, y: 618, size: 10, color: gray });
+    ops.push({
+      type: "text",
+      text: `${quote.direccion ? quote.direccion + ", " : ""}${quote.comuna || ""}${quote.region ? ", " + quote.region : ""}`,
+      x: marginX,
+      y: 602,
+      size: 10,
+      color: gray,
+    });
+    ops.push({ type: "text", text: `${quote.nombre_contacto} · ${quote.telefono} · ${quote.correo}`, x: marginX, y: 586, size: 10, color: gray });
+    ops.push({
+      type: "text",
+      text: "Condición de pago: Transferencia o pago en línea (Flow)",
+      x: rightX - 250,
+      y: 618,
+      size: 9,
+      color: gray,
+    });
+
+    y = 556;
+    drawItemsHeader();
+  }
+
+  function startContinuationPage() {
+    ops = [];
+    ops.push({ type: "text", text: `COTIZACIÓN ${quote.correlative_code} (continuación)`, x: marginX, y: 748, size: 14, bold: true, color: navy });
+    ops.push({ type: "line", x1: marginX, y1: 736, x2: rightX, y2: 736, color: navy, width: 1 });
+    y = 712;
+    drawItemsHeader();
+  }
+
+  startFirstPage();
 
   items.forEach((item, idx) => {
+    if (y - rowHeight < PAGE_BOTTOM) {
+      ops.push({ type: "line", x1: marginX, y1: y + 6, x2: rightX, y2: y + 6, color: navy, width: 1 });
+      finishPage();
+      startContinuationPage();
+    }
     if (idx % 2 === 1) {
       ops.push({ type: "rect", x: marginX, y: y - rowHeight + 6, w: rightX - marginX, h: rowHeight, fill: lightGray });
     }
@@ -170,6 +213,32 @@ export async function buildQuotePdfBase64(quote, items, origin) {
   });
 
   ops.push({ type: "line", x1: marginX, y1: y + 6, x2: rightX, y2: y + 6, color: navy, width: 1 });
+
+  // --- Totals + bank info + observaciones — needs its own room; if the
+  // items table ran right up to the bottom of the page, give it a fresh
+  // page instead of letting it spill past the MediaBox too.
+  const isPaid = quote.status === "pagada";
+  const bankLines = isPaid
+    ? [
+        `Fecha de pago: ${quote.paid_at ? new Date(quote.paid_at).toLocaleString("es-CL") : "-"}`,
+        `Método: ${quote.payment_method || "Flow"}`,
+        `Orden Flow: ${quote.flow_order || "-"}`,
+      ]
+    : [
+        "Nombre: Mega Safety Chile Spa",
+        "RUT: 78.463.919-3",
+        "Cuenta Vista N° 00-075-97261-94 — Banco de Chile",
+        "Correo: contacto@megasafetychile.cl",
+      ];
+  const obsText = quote.observaciones ? String(quote.observaciones) : "";
+  const obsLineCount = obsText ? Math.ceil(obsText.length / 95) : 0;
+  const neededHeight = 10 + 18 * 2 + 6 + 26 + 50 + 16 + bankLines.length * 14 + (obsText ? 8 + 14 + obsLineCount * 13 : 0);
+
+  if (y - neededHeight < PAGE_BOTTOM) {
+    finishPage();
+    ops = [];
+    y = 748;
+  }
 
   // --- Totals ---
   y -= 10;
@@ -190,8 +259,6 @@ export async function buildQuotePdfBase64(quote, items, origin) {
   const totalTxt = money(quote.total);
   ops.push({ type: "text", text: totalTxt, x: rightX - 12 - totalTxt.length * 7.2, y: y - 18, size: 12, bold: true, color: gold });
 
-  const isPaid = quote.status === "pagada";
-
   // --- Datos bancarios (o confirmación de pago si ya se pagó) ---
   y -= 50;
   ops.push({
@@ -203,18 +270,6 @@ export async function buildQuotePdfBase64(quote, items, origin) {
     bold: true,
     color: isPaid ? [0.09, 0.5, 0.24] : gold,
   });
-  const bankLines = isPaid
-    ? [
-        `Fecha de pago: ${quote.paid_at ? new Date(quote.paid_at).toLocaleString("es-CL") : "-"}`,
-        `Método: ${quote.payment_method || "Flow"}`,
-        `Orden Flow: ${quote.flow_order || "-"}`,
-      ]
-    : [
-        "Nombre: Mega Safety Chile Spa",
-        "RUT: 78.463.919-3",
-        "Cuenta Vista N° 00-075-97261-94 — Banco de Chile",
-        "Correo: contacto@megasafetychile.cl",
-      ];
   y -= 16;
   bankLines.forEach((line) => {
     ops.push({ type: "text", text: line, x: marginX, y, size: 9.5, color: gray });
@@ -224,11 +279,10 @@ export async function buildQuotePdfBase64(quote, items, origin) {
   // Staff notes on the quote (payment terms agreed verbally, delivery
   // conditions, etc.) — shown right on the priced PDF so the customer sees
   // them without having to dig into page 2's full data sheet.
-  if (quote.observaciones) {
+  if (obsText) {
     y -= 8;
     ops.push({ type: "text", text: "OBSERVACIONES", x: marginX, y, size: 9, bold: true, color: gold });
     y -= 14;
-    const obsText = String(quote.observaciones);
     const maxCharsPerLine = 95;
     for (let i = 0; i < obsText.length; i += maxCharsPerLine) {
       ops.push({ type: "text", text: obsText.slice(i, i + maxCharsPerLine), x: marginX, y, size: 9.5, color: navy });
@@ -236,19 +290,11 @@ export async function buildQuotePdfBase64(quote, items, origin) {
     }
   }
 
-  // --- Footer ---
-  ops.push({ type: "line", x1: marginX, y1: 60, x2: rightX, y2: 60, color: [0.85, 0.87, 0.91], width: 1 });
-  ops.push({
-    type: "text",
-    text: "Mega Safety Chile — Artículos de seguridad industrial · +56 9 8306 1338",
-    x: marginX,
-    y: 44,
-    size: 9,
-    color: gray,
-  });
+  finishPage();
+  pages.push(buildCustomerDataPageOps(quote));
 
   const pdfBytes = buildInvoicePdf({
-    pages: [ops, buildCustomerDataPageOps(quote)],
+    pages,
     image: { bytes: logoBytes, width: LOGO_PDF_WIDTH, height: LOGO_PDF_HEIGHT },
   });
   return { base64: bytesToBase64(pdfBytes), bytes: pdfBytes };
@@ -270,7 +316,7 @@ export async function buildRfqPdfBase64(quote, items, origin) {
   const lightGray = [0.95, 0.96, 0.98];
   const white = [1, 1, 1];
 
-  const ops = [];
+  let ops = [];
 
   ops.push({ type: "text", text: "SOLICITUD DE COTIZACIÓN", x: marginX, y: 748, size: 20, bold: true, color: navy });
   const dateStr = new Date(quote.created_at || Date.now()).toLocaleDateString("es-CL");
@@ -314,15 +360,31 @@ export async function buildRfqPdfBase64(quote, items, origin) {
   const colBrand = 340;
   const colQty = rightX - 10;
   const rowHeight = 22;
+  const PAGE_BOTTOM = 90;
   let y = 520;
 
-  ops.push({ type: "rect", x: marginX, y: y - rowHeight + 6, w: rightX - marginX, h: rowHeight, fill: navy });
-  ops.push({ type: "text", text: "PRODUCTO SOLICITADO", x: colDesc, y: y - 10, size: 9, bold: true, color: white });
-  ops.push({ type: "text", text: "MARCA", x: colBrand, y: y - 10, size: 9, bold: true, color: white });
-  ops.push({ type: "text", text: "CANT.", x: colQty - 30, y: y - 10, size: 9, bold: true, color: white });
-  y -= rowHeight;
+  const pages = [];
+
+  function drawItemsHeader() {
+    ops.push({ type: "rect", x: marginX, y: y - rowHeight + 6, w: rightX - marginX, h: rowHeight, fill: navy });
+    ops.push({ type: "text", text: "PRODUCTO SOLICITADO", x: colDesc, y: y - 10, size: 9, bold: true, color: white });
+    ops.push({ type: "text", text: "MARCA", x: colBrand, y: y - 10, size: 9, bold: true, color: white });
+    ops.push({ type: "text", text: "CANT.", x: colQty - 30, y: y - 10, size: 9, bold: true, color: white });
+    y -= rowHeight;
+  }
+
+  drawItemsHeader();
 
   items.forEach((item, idx) => {
+    if (y - rowHeight < PAGE_BOTTOM) {
+      ops.push({ type: "line", x1: marginX, y1: y + 6, x2: rightX, y2: y + 6, color: navy, width: 1 });
+      pages.push(ops);
+      ops = [];
+      ops.push({ type: "text", text: `SOLICITUD ${quote.correlative_code} (continuación)`, x: marginX, y: 748, size: 14, bold: true, color: navy });
+      ops.push({ type: "line", x1: marginX, y1: 736, x2: rightX, y2: 736, color: navy, width: 1 });
+      y = 712;
+      drawItemsHeader();
+    }
     if (idx % 2 === 1) {
       ops.push({ type: "rect", x: marginX, y: y - rowHeight + 6, w: rightX - marginX, h: rowHeight, fill: lightGray });
     }
@@ -330,10 +392,15 @@ export async function buildRfqPdfBase64(quote, items, origin) {
     ops.push({ type: "text", text: truncate(item.brand || "-", 18), x: colBrand, y: y - 10, size: 10, color: gray });
     ops.push({ type: "text", text: String(item.quantity), x: colQty - 20, y: y - 10, size: 10, bold: true, color: navy });
     y -= rowHeight;
-    if (y < 90) return; // safety margin — extremely long carts just get truncated on the PDF, full list is always in the email body too
   });
 
   ops.push({ type: "line", x1: marginX, y1: y + 6, x2: rightX, y2: y + 6, color: navy, width: 1 });
+
+  if (y - 20 < PAGE_BOTTOM) {
+    pages.push(ops);
+    ops = [];
+    y = 748;
+  }
 
   y -= 20;
   ops.push({
@@ -354,9 +421,11 @@ export async function buildRfqPdfBase64(quote, items, origin) {
     size: 9,
     color: gray,
   });
+  pages.push(ops);
+  pages.push(buildCustomerDataPageOps(quote));
 
   const pdfBytes = buildInvoicePdf({
-    pages: [ops, buildCustomerDataPageOps(quote)],
+    pages,
     image: { bytes: logoBytes, width: LOGO_PDF_WIDTH, height: LOGO_PDF_HEIGHT },
   });
   return { base64: bytesToBase64(pdfBytes), bytes: pdfBytes };
