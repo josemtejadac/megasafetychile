@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=19">
-<link rel="stylesheet" href="compra-empresa.css?v=19">
-<link rel="stylesheet" href="admin.css?v=19">
+<link rel="stylesheet" href="styles.css?v=20">
+<link rel="stylesheet" href="compra-empresa.css?v=20">
+<link rel="stylesheet" href="admin.css?v=20">
 </head>
 <body>
 
@@ -160,7 +160,7 @@
         </div>
         <div class="stat-card">
           <span class="stat-value" id="qstat-comision">$0</span>
-          <span class="stat-label">Mi comisión total</span>
+          <span class="stat-label">Mi comisión (periodo actual)</span>
         </div>
       </div>
 
@@ -208,6 +208,12 @@
         <p class="form-note" id="staff-note"></p>
         <button type="submit" class="btn btn--primary" style="width:fit-content;">Crear trabajador</button>
       </form>
+      <div class="admin-panel-head" style="margin-top:4px;">
+        <div>
+          <p class="admin-subtitle" id="commission-period-label" style="margin:0;">Periodo actual: —</p>
+        </div>
+        <button class="btn btn--outline" id="close-month-btn" type="button">Cerrar mes</button>
+      </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
@@ -216,13 +222,36 @@
               <th>RUT</th>
               <th>Rol</th>
               <th>Comisión %</th>
-              <th>Vendido</th>
-              <th>Comisión ganada</th>
+              <th>Vendido (periodo actual)</th>
+              <th>Comisión (periodo actual)</th>
               <th>Activo</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="staff-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-panel-head" style="margin-top:28px;">
+        <div>
+          <h1 style="font-size:1.2rem;">Historial de meses cerrados</h1>
+          <p class="admin-subtitle">Revisa las comisiones de cualquier periodo ya cerrado</p>
+        </div>
+        <select id="commission-period-select" style="min-width:220px;">
+          <option value="">Selecciona un periodo...</option>
+        </select>
+      </div>
+      <div class="admin-table-wrap" id="commission-history-wrap" hidden>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Vendido</th>
+              <th>Comisión</th>
+              <th>Cotizaciones</th>
+            </tr>
+          </thead>
+          <tbody id="commission-history-tbody"></tbody>
         </table>
       </div>
     </section>
@@ -422,6 +451,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=19"></script>
+<script src="admin.js?v=20"></script>
 </body>
 </html>

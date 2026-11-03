@@ -332,7 +332,7 @@ function setupTabs() {
       const target = document.getElementById(`section-${tab.dataset.section}`);
       target.hidden = false;
       if (tab.dataset.section === "productos" && allProducts.length === 0) loadProducts();
-      if (tab.dataset.section === "equipo") loadStaff();
+      if (tab.dataset.section === "equipo") { loadStaff(); loadCommissionPeriods(); }
       if (tab.dataset.section === "cotizaciones") loadQuotes();
       if (tab.dataset.section === "fotos") loadSiteImages();
     });
@@ -614,25 +614,75 @@ const photoHint = document.getElementById("photo-hint");
 let currentGalleryImages = [];
 let currentGalleryProductId = null;
 
+// Multi-file pickers don't reliably hand files back in click order (some
+// OS dialogs return them alphabetically instead) — so upload order alone
+// can't be trusted to control what shows first. These arrows let the
+// admin fix the order (and pick the cover photo) explicitly after the
+// fact, regardless of what order they uploaded in.
 function renderPhotoGallery() {
   if (!currentGalleryImages.length) {
     photoGallery.innerHTML = `<p style="margin:0; font-size:0.82rem; color:var(--ink-soft);">Sin fotos todavía.</p>`;
   } else {
+    const last = currentGalleryImages.length - 1;
     photoGallery.innerHTML = currentGalleryImages
       .map(
         (url, idx) => `
-        <div style="position:relative; width:72px; height:72px;">
-          <img src="${url}" alt="" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
-          ${idx === 0 ? `<span style="position:absolute; bottom:2px; left:2px; background:var(--navy); color:#fff; font-size:0.6rem; padding:1px 5px; border-radius:4px;">Portada</span>` : ""}
-          <button type="button" class="gallery-remove-btn" data-url="${url}" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#b91c1c; color:#fff; border:none; font-size:0.7rem; cursor:pointer; line-height:1;">✕</button>
+        <div style="width:84px; display:flex; flex-direction:column; gap:3px;">
+          <div style="position:relative; width:84px; height:84px;">
+            <img src="${url}" alt="" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+            ${idx === 0 ? `<span style="position:absolute; bottom:2px; left:2px; background:var(--navy); color:#fff; font-size:0.6rem; padding:1px 5px; border-radius:4px;">Portada</span>` : ""}
+            <button type="button" class="gallery-remove-btn" data-url="${url}" aria-label="Quitar" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#b91c1c; color:#fff; border:none; font-size:0.7rem; cursor:pointer; line-height:1;">✕</button>
+          </div>
+          <div style="display:flex; gap:2px;">
+            <button type="button" class="gallery-move-btn" data-idx="${idx}" data-dir="-1" aria-label="Mover a la izquierda" ${idx === 0 ? "disabled" : ""} style="flex:1; padding:2px 0; font-size:0.72rem; border:1px solid var(--border); border-radius:5px; background:#fff; cursor:${idx === 0 ? "default" : "pointer"}; opacity:${idx === 0 ? 0.35 : 1};">◀</button>
+            <button type="button" class="gallery-cover-btn" data-idx="${idx}" aria-label="Hacer portada" ${idx === 0 ? "disabled" : ""} style="flex:1; padding:2px 0; font-size:0.72rem; border:1px solid var(--border); border-radius:5px; background:#fff; cursor:${idx === 0 ? "default" : "pointer"}; opacity:${idx === 0 ? 0.35 : 1};" title="Hacer portada">★</button>
+            <button type="button" class="gallery-move-btn" data-idx="${idx}" data-dir="1" aria-label="Mover a la derecha" ${idx === last ? "disabled" : ""} style="flex:1; padding:2px 0; font-size:0.72rem; border:1px solid var(--border); border-radius:5px; background:#fff; cursor:${idx === last ? "default" : "pointer"}; opacity:${idx === last ? 0.35 : 1};">▶</button>
+          </div>
         </div>`
       )
       .join("");
     photoGallery.querySelectorAll(".gallery-remove-btn").forEach((btn) => {
       btn.addEventListener("click", () => removeGalleryImage(btn.dataset.url));
     });
+    photoGallery.querySelectorAll(".gallery-move-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.idx);
+        const dir = Number(btn.dataset.dir);
+        const target = idx + dir;
+        if (target < 0 || target >= currentGalleryImages.length) return;
+        const reordered = [...currentGalleryImages];
+        [reordered[idx], reordered[target]] = [reordered[target], reordered[idx]];
+        saveGalleryOrder(reordered);
+      });
+    });
+    photoGallery.querySelectorAll(".gallery-cover-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.idx);
+        const reordered = [...currentGalleryImages];
+        const [picked] = reordered.splice(idx, 1);
+        reordered.unshift(picked);
+        saveGalleryOrder(reordered);
+      });
+    });
   }
   setPhotoFieldState(currentGalleryProductId);
+}
+
+// Reordering is pure metadata (no files move in storage) — a direct update
+// on the product row, same as any other admin edit, so it's instant and
+// needs no upload endpoint.
+async function saveGalleryOrder(newOrder) {
+  const { error } = await sbClient
+    .from("megasafety_products")
+    .update({ image_urls: newOrder, image_url: newOrder[0] })
+    .eq("id", currentGalleryProductId);
+  if (error) {
+    photoHint.textContent = "No se pudo reordenar: " + error.message;
+    return;
+  }
+  currentGalleryImages = newOrder;
+  renderPhotoGallery();
+  loadProducts();
 }
 
 async function removeGalleryImage(url) {
@@ -1075,6 +1125,7 @@ async function loadQuotes() {
     return;
   }
   allQuotes = data;
+  currentPeriodStart = (await getLastPeriodEnd()) || "2000-01-01T00:00:00.000Z";
   renderQuoteStats();
   renderQuotesList();
 }
@@ -1096,7 +1147,7 @@ function renderQuoteStats() {
   document.getElementById("qstat-vendidas-label").textContent = isAdmin ? "Vendidas" : "Mis vendidas";
 
   const myCommission = allQuotes
-    .filter((q) => q.status === "vendida" && q.claimed_by === currentStaff?.user_id)
+    .filter((q) => q.status === "vendida" && q.claimed_by === currentStaff?.user_id && (!currentPeriodStart || q.sold_at > currentPeriodStart))
     .reduce((sum, q) => sum + (q.commission_amount || 0), 0);
   document.getElementById("qstat-comision").textContent = "$" + myCommission.toLocaleString("es-CL");
 }
@@ -1812,6 +1863,23 @@ const staffTbody = document.getElementById("staff-tbody");
 const staffForm = document.getElementById("staff-form");
 const staffNote = document.getElementById("staff-note");
 
+// Commissions are tracked by period instead of a single lifetime running
+// total: "cerrar mes" snapshots everyone's sold/commission totals since the
+// last close into megasafety_commission_periods (+ ..._period_items), then
+// the "current period" simply starts counting from that close's timestamp.
+// Nothing is ever deleted or reset in place — every closed period stays in
+// the history dropdown below, and the underlying quotes are untouched.
+let currentPeriodStart = null;
+
+async function getLastPeriodEnd() {
+  const { data } = await sbClient
+    .from("megasafety_commission_periods")
+    .select("period_end")
+    .order("period_end", { ascending: false })
+    .limit(1);
+  return data && data.length ? data[0].period_end : null;
+}
+
 async function loadStaff() {
   const { data, error } = await sbClient
     .from("megasafety_admins")
@@ -1819,10 +1887,22 @@ async function loadStaff() {
     .order("role", { ascending: false });
   if (error) return;
 
-  const { data: sold } = await sbClient
+  const lastClose = await getLastPeriodEnd();
+  currentPeriodStart = lastClose || "2000-01-01T00:00:00.000Z";
+  const periodLabel = document.getElementById("commission-period-label");
+  if (periodLabel) {
+    const startStr = new Date(currentPeriodStart).toLocaleDateString("es-CL");
+    periodLabel.textContent = lastClose
+      ? `Periodo actual: desde el ${startStr} (último cierre)`
+      : "Periodo actual: desde el inicio (aún no se ha cerrado ningún mes)";
+  }
+
+  let soldQuery = sbClient
     .from("megasafety_b2b_quotes")
     .select("claimed_by, sale_amount, commission_amount")
-    .eq("status", "vendida");
+    .eq("status", "vendida")
+    .gt("sold_at", currentPeriodStart);
+  const { data: sold } = await soldQuery;
 
   const totalsByUser = {};
   (sold || []).forEach((q) => {
@@ -1876,6 +1956,107 @@ async function loadStaff() {
     staffTbody.appendChild(tr);
   });
 }
+
+document.getElementById("close-month-btn")?.addEventListener("click", async () => {
+  const periodStart = currentPeriodStart;
+  const periodEnd = new Date().toISOString();
+
+  const [{ data: staffList }, { data: sold, error: soldErr }] = await Promise.all([
+    sbClient.from("megasafety_admins").select("user_id, name, rut"),
+    sbClient
+      .from("megasafety_b2b_quotes")
+      .select("claimed_by, sale_amount, commission_amount")
+      .eq("status", "vendida")
+      .gt("sold_at", periodStart),
+  ]);
+  if (soldErr) { alert("No se pudo calcular el periodo: " + soldErr.message); return; }
+
+  const totalsByUser = {};
+  (sold || []).forEach((q) => {
+    if (!q.claimed_by) return;
+    if (!totalsByUser[q.claimed_by]) totalsByUser[q.claimed_by] = { sold: 0, commission: 0, count: 0 };
+    totalsByUser[q.claimed_by].sold += q.sale_amount || 0;
+    totalsByUser[q.claimed_by].commission += q.commission_amount || 0;
+    totalsByUser[q.claimed_by].count += 1;
+  });
+
+  const totalSold = Object.values(totalsByUser).reduce((sum, t) => sum + t.sold, 0);
+  const totalCommission = Object.values(totalsByUser).reduce((sum, t) => sum + t.commission, 0);
+  const startStr = new Date(periodStart).toLocaleDateString("es-CL");
+  const endStr = new Date(periodEnd).toLocaleDateString("es-CL");
+  if (
+    !confirm(
+      `¿Cerrar el periodo del ${startStr} al ${endStr}?\n\nTotal vendido: $${totalSold.toLocaleString("es-CL")}\nTotal comisiones: $${totalCommission.toLocaleString("es-CL")}\n\nQueda guardado en el historial y el conteo de cada vendedor vuelve a partir de $0 para el siguiente periodo.`
+    )
+  ) {
+    return;
+  }
+
+  const label = `${startStr} — ${endStr}`;
+  const { data: periodRow, error: periodErr } = await sbClient
+    .from("megasafety_commission_periods")
+    .insert({ label, period_start: periodStart, period_end: periodEnd, closed_by: currentStaff?.user_id })
+    .select()
+    .single();
+  if (periodErr) { alert("No se pudo cerrar el periodo: " + periodErr.message); return; }
+
+  const items = (staffList || []).map((s) => {
+    const t = totalsByUser[s.user_id] || { sold: 0, commission: 0, count: 0 };
+    return {
+      period_id: periodRow.id,
+      user_id: s.user_id,
+      worker_name: s.name || s.rut || "-",
+      sold_amount: t.sold,
+      commission_amount: t.commission,
+      quote_count: t.count,
+    };
+  });
+  if (items.length) {
+    const { error: itemsErr } = await sbClient.from("megasafety_commission_period_items").insert(items);
+    if (itemsErr) { alert("El periodo se creó pero hubo un error guardando el detalle: " + itemsErr.message); }
+  }
+
+  alert("Mes cerrado y guardado en el historial.");
+  loadStaff();
+  loadCommissionPeriods();
+});
+
+async function loadCommissionPeriods() {
+  const select = document.getElementById("commission-period-select");
+  if (!select) return;
+  const { data } = await sbClient
+    .from("megasafety_commission_periods")
+    .select("id, label")
+    .order("closed_at", { ascending: false });
+  select.innerHTML =
+    `<option value="">Selecciona un periodo...</option>` +
+    (data || []).map((p) => `<option value="${p.id}">${p.label}</option>`).join("");
+}
+
+document.getElementById("commission-period-select")?.addEventListener("change", async (e) => {
+  const periodId = e.target.value;
+  const wrap = document.getElementById("commission-history-wrap");
+  const tbody = document.getElementById("commission-history-tbody");
+  if (!periodId) { wrap.hidden = true; return; }
+  const { data, error } = await sbClient
+    .from("megasafety_commission_period_items")
+    .select("*")
+    .eq("period_id", periodId)
+    .order("commission_amount", { ascending: false });
+  if (error) { alert("No se pudo cargar el periodo: " + error.message); return; }
+  tbody.innerHTML = (data || [])
+    .map(
+      (i) => `
+      <tr>
+        <td>${i.worker_name || "-"}</td>
+        <td>$${(i.sold_amount || 0).toLocaleString("es-CL")}</td>
+        <td>$${(i.commission_amount || 0).toLocaleString("es-CL")}</td>
+        <td>${i.quote_count || 0}</td>
+      </tr>`
+    )
+    .join("");
+  wrap.hidden = false;
+});
 
 staffForm.addEventListener("submit", async (e) => {
   e.preventDefault();
