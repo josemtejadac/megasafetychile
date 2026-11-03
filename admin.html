@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20">
-<link rel="stylesheet" href="compra-empresa.css?v=20">
-<link rel="stylesheet" href="admin.css?v=20">
+<link rel="stylesheet" href="styles.css?v=21">
+<link rel="stylesheet" href="compra-empresa.css?v=21">
+<link rel="stylesheet" href="admin.css?v=21">
 </head>
 <body>
 
@@ -211,8 +211,9 @@
       <div class="admin-panel-head" style="margin-top:4px;">
         <div>
           <p class="admin-subtitle" id="commission-period-label" style="margin:0;">Periodo actual: —</p>
+          <p class="admin-help" style="margin:4px 0 0; max-width:520px;">La tabla de abajo muestra lo vendido y la comisión de cada uno desde el último cierre. Cuando quieras cerrar el mes (o cuando corresponda pagar comisiones), aprieta "Cerrar mes": queda guardado en el historial de abajo para siempre, y la tabla vuelve a partir de $0 para el siguiente periodo. No se borra ninguna cotización.</p>
         </div>
-        <button class="btn btn--outline" id="close-month-btn" type="button">Cerrar mes</button>
+        <button class="btn btn--outline" id="close-month-btn" type="button" style="flex-shrink:0;">Cerrar mes</button>
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
@@ -279,7 +280,8 @@
   <form id="product-form" class="quote-form">
     <input type="hidden" name="id">
     <div class="photo-field">
-      <p style="margin:0 0 8px; font-size:0.85rem; font-weight:600; color:var(--navy);">Fotos del producto (máx. 5)</p>
+      <p style="margin:0 0 4px; font-size:0.85rem; font-weight:600; color:var(--navy);">Fotos del producto (máx. 5)</p>
+      <p class="admin-help" style="margin:0 0 10px;">La primera foto (marcada "Portada") es la que se ve en el catálogo. Usa ◀ ▶ para cambiar el orden, o ★ para elegir esa foto como portada.</p>
       <div id="photo-gallery" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;"></div>
       <div class="photo-field-actions">
         <label class="photo-upload-btn">
@@ -451,6 +453,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=20"></script>
+<script src="admin.js?v=21"></script>
 </body>
 </html>
