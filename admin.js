@@ -1112,6 +1112,12 @@ const quotesEmpty = document.getElementById("quotes-empty");
 const quotesStatusFilter = document.getElementById("quotes-status-filter");
 const quotesMineFilter = document.getElementById("quotes-mine-filter");
 
+// Only the admin can see every staff member's name (RLS restricts a
+// vendedor's view of megasafety_admins to their own row) — a vendedor
+// still sees "otro vendedor" for quotes claimed by someone else, same as
+// before, which is the intended privacy boundary, not a bug.
+let staffNameById = {};
+
 async function loadQuotes() {
   const { data, error } = await sbClient
     .from("megasafety_b2b_quotes")
@@ -1126,6 +1132,10 @@ async function loadQuotes() {
   }
   allQuotes = data;
   currentPeriodStart = (await getLastPeriodEnd()) || "2000-01-01T00:00:00.000Z";
+  if (currentStaff?.role === "admin") {
+    const { data: staff } = await sbClient.from("megasafety_admins").select("user_id, name, rut");
+    staffNameById = Object.fromEntries((staff || []).map((s) => [s.user_id, s.name || s.rut || "Sin nombre"]));
+  }
   renderQuoteStats();
   renderQuotesList();
 }
@@ -1187,7 +1197,17 @@ function renderQuotesList() {
       </div>
       <p class="quote-card-company">${q.razon_social}</p>
       <p class="quote-card-meta">${date} · ${itemCount} unidad(es) · ${q.nombre_contacto}</p>
-      ${q.claimed_by ? `<p class="quote-card-claimed">Tomada por: ${q.claimed_by === currentStaff?.user_id ? "ti" : "otro vendedor"}</p>` : ""}
+      ${
+        q.claimed_by
+          ? `<p class="quote-card-claimed">Tomada por: ${
+              q.claimed_by === currentStaff?.user_id
+                ? "ti"
+                : currentStaff?.role === "admin"
+                  ? staffNameById[q.claimed_by] || "un trabajador"
+                  : "otro vendedor"
+            }</p>`
+          : ""
+      }
     `;
     card.addEventListener("click", () => openQuoteDetail(q));
     quotesList.appendChild(card);
@@ -1262,13 +1282,26 @@ Mega Safety Chile
 Seguridad y abastecimiento industrial`;
 }
 
-function openQuoteDetail(q) {
+async function openQuoteDetail(q) {
   document.getElementById("quote-panel-title").textContent = q.correlative_code;
   const items = q.megasafety_b2b_quote_items || [];
   const canClaim = !q.claimed_by;
   const isMine = q.claimed_by === currentStaff?.user_id;
   const isAdmin = currentStaff?.role === "admin";
   const canPrice = q.status !== "pagada";
+
+  // Who the sale/commission is credited to is whoever "claimed" the quote
+  // first — which isn't necessarily who actually closed the sale (e.g. a
+  // secretary takes the request, the owner is the one who seals the deal).
+  // Only the admin can fix this after the fact.
+  let staffList = [];
+  if (isAdmin) {
+    const { data } = await sbClient.from("megasafety_admins").select("user_id, name, rut, commission_rate").eq("active", true).order("name");
+    staffList = data || [];
+  }
+  const sellerOptionsHtml = staffList
+    .map((s) => `<option value="${s.user_id}" ${s.user_id === q.claimed_by ? "selected" : ""}>${s.name || s.rut || s.user_id}</option>`)
+    .join("");
 
   const priceRowsHtml = items
     .map(
@@ -1345,6 +1378,21 @@ function openQuoteDetail(q) {
       ${
         q.status === "vendida"
           ? `<p class="quote-detail-row" style="margin-top:10px;"><strong>Venta: $${Number(q.sale_amount || 0).toLocaleString("es-CL")}</strong> · Comisión: $${Number(q.commission_amount || 0).toLocaleString("es-CL")} (${q.commission_rate_snapshot || 0}%)</p>`
+          : ""
+      }
+      ${
+        isAdmin
+          ? `<div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
+               <label style="display:block; font-size:0.82rem; font-weight:600; color:var(--navy); margin-bottom:6px;">Vendedor asignado (quién se lleva la comisión)</label>
+               <p class="admin-help" style="margin:0 0 8px;">Útil si alguien tomó la cotización pero otra persona cerró la venta — al cambiarlo, si ya está vendida se recalcula la comisión con la tasa de la persona nueva.</p>
+               <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                 <select id="reassign-seller-select" style="flex:1; min-width:160px; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+                   <option value="">Sin asignar</option>
+                   ${sellerOptionsHtml}
+                 </select>
+                 <button type="button" class="btn btn--outline" id="reassign-seller-btn">Reasignar</button>
+               </div>
+             </div>`
           : ""
       }
     </div>
@@ -1522,7 +1570,16 @@ function openQuoteDetail(q) {
       note.className = "form-note is-error";
       return;
     }
-    const rate = currentStaff?.commission_rate || 0;
+    // The commission rate must belong to whoever ends up credited with the
+    // sale (claimed_by) — not necessarily whoever clicks this button. If an
+    // admin marks sold a quote someone else already claimed, the quote
+    // stays credited to that person, so their rate is what applies.
+    const creditedTo = q.claimed_by || currentStaff.user_id;
+    let rate = currentStaff?.commission_rate || 0;
+    if (creditedTo !== currentStaff.user_id) {
+      const { data: claimerRow } = await sbClient.from("megasafety_admins").select("commission_rate").eq("user_id", creditedTo).single();
+      rate = claimerRow?.commission_rate ?? 0;
+    }
     // Commission is paid on the net amount (excluding IVA) — the customer
     // still pays/sees the full amount with IVA, only the commission base
     // is the amount before tax.
@@ -1539,6 +1596,27 @@ function openQuoteDetail(q) {
     const { error } = await sbClient.from("megasafety_b2b_quotes").update(patch).eq("id", q.id);
     if (error) { note.textContent = "Error: " + error.message; return; }
     await logQuoteEvent(q.id, "sold", { sale_amount: amount, commission_amount: commission });
+    closeQuotePanel();
+    loadQuotes();
+  });
+
+  document.getElementById("reassign-seller-btn")?.addEventListener("click", async () => {
+    const select = document.getElementById("reassign-seller-select");
+    const newUserId = select.value || null;
+    if (newUserId === (q.claimed_by || null)) {
+      note.textContent = "No hubo cambios — ya estaba asignada a esa persona.";
+      return;
+    }
+    const patch = { claimed_by: newUserId, claimed_at: newUserId ? new Date().toISOString() : null };
+    if (q.status === "vendida" || q.status === "pagada") {
+      const newRate = newUserId ? staffList.find((s) => s.user_id === newUserId)?.commission_rate || 0 : 0;
+      const netAmount = (q.sale_amount || 0) / 1.19;
+      patch.commission_rate_snapshot = newRate;
+      patch.commission_amount = Math.round((netAmount * newRate) / 100);
+    }
+    const { error } = await sbClient.from("megasafety_b2b_quotes").update(patch).eq("id", q.id);
+    if (error) { note.textContent = "Error: " + error.message; return; }
+    await logQuoteEvent(q.id, "reassigned", { from: q.claimed_by || null, to: newUserId });
     closeQuotePanel();
     loadQuotes();
   });
