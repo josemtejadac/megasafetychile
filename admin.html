@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=22">
-<link rel="stylesheet" href="compra-empresa.css?v=22">
-<link rel="stylesheet" href="admin.css?v=22">
+<link rel="stylesheet" href="styles.css?v=23">
+<link rel="stylesheet" href="compra-empresa.css?v=23">
+<link rel="stylesheet" href="admin.css?v=23">
 </head>
 <body>
 
@@ -48,10 +48,58 @@
       <p class="admin-welcome" id="admin-welcome"></p>
       <nav class="admin-tabs" id="admin-tabs">
         <button class="admin-tab is-active" data-section="cotizaciones" type="button">Cotizaciones</button>
+        <button class="admin-tab" data-section="clientes" type="button">Clientes</button>
         <button class="admin-tab" data-section="productos" type="button">Productos</button>
         <button class="admin-tab" data-section="equipo" type="button" id="tab-equipo" hidden>Equipo</button>
         <button class="admin-tab" data-section="fotos" type="button" id="tab-fotos" hidden>Fotos del sitio</button>
       </nav>
+
+    <section id="section-clientes" class="admin-section" hidden>
+      <div class="admin-panel-head">
+        <div>
+          <h1>Clientes</h1>
+          <p class="admin-subtitle">Empresas que ya han cotizado — busca por RUT o razón social para ver su historial</p>
+        </div>
+      </div>
+      <div class="admin-stats" id="clientes-stats">
+        <div class="stat-card">
+          <span class="stat-value" id="clstat-total">0</span>
+          <span class="stat-label">Clientes registrados</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="clstat-cotizaciones">0</span>
+          <span class="stat-label">Cotizaciones totales</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="clstat-vendido">$0</span>
+          <span class="stat-label">Total vendido</span>
+        </div>
+      </div>
+      <div class="admin-controls">
+        <input type="search" id="clientes-search" placeholder="Buscar por RUT, razón social o contacto...">
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Razón social</th>
+              <th>RUT</th>
+              <th>Contacto</th>
+              <th>Teléfono / Correo</th>
+              <th>Cotizaciones</th>
+              <th>Vendido</th>
+              <th>Última actividad</th>
+            </tr>
+          </thead>
+          <tbody id="clientes-tbody"></tbody>
+        </table>
+      </div>
+      <p class="empty-state" id="clientes-empty" hidden>No se encontraron clientes.</p>
+      <div id="cliente-detail-wrap" hidden style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+        <h3 id="cliente-detail-title" style="margin:0 0 10px;"></h3>
+        <div id="cliente-detail-list"></div>
+      </div>
+    </section>
 
     <section id="section-productos" class="admin-section" hidden>
       <div class="admin-panel-head">
@@ -382,10 +430,11 @@
     <p class="admin-help" style="margin:0 0 10px;">Para clientes que piden por teléfono o WhatsApp. Queda igual que una solicitud normal: sin precio hasta que la cotices.</p>
     <label style="position:relative;">Razón social *
       <input type="text" name="razon_social" id="manual-razon-social" autocomplete="off" required>
-      <div id="customer-lookup-dropdown" hidden style="position:absolute; top:100%; left:0; right:0; z-index:10; background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 20px -8px rgba(11,31,58,0.3); max-height:220px; overflow-y:auto;"></div>
+      <div class="customer-lookup-dropdown" id="customer-lookup-dropdown-razon_social" hidden style="position:absolute; top:100%; left:0; right:0; z-index:10; background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 20px -8px rgba(11,31,58,0.3); max-height:220px; overflow-y:auto;"></div>
     </label>
-    <label>RUT *
+    <label style="position:relative;">RUT *
       <input type="text" name="rut" id="manual-rut" autocomplete="off" required>
+      <div class="customer-lookup-dropdown" id="customer-lookup-dropdown-rut" hidden style="position:absolute; top:100%; left:0; right:0; z-index:10; background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 20px -8px rgba(11,31,58,0.3); max-height:220px; overflow-y:auto;"></div>
     </label>
     <label>Nombre de contacto *<input type="text" name="nombre_contacto" required></label>
     <div class="form-row">
@@ -453,6 +502,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=22"></script>
+<script src="admin.js?v=23"></script>
 </body>
 </html>

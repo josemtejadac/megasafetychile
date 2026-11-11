@@ -335,6 +335,7 @@ function setupTabs() {
       if (tab.dataset.section === "equipo") { loadStaff(); loadCommissionPeriods(); }
       if (tab.dataset.section === "cotizaciones") loadQuotes();
       if (tab.dataset.section === "fotos") loadSiteImages();
+      if (tab.dataset.section === "clientes") renderClientes();
     });
   });
 }
@@ -1138,6 +1139,7 @@ async function loadQuotes() {
   }
   renderQuoteStats();
   renderQuotesList();
+  if (!document.getElementById("section-clientes")?.hidden) renderClientes();
 }
 
 function renderQuoteStats() {
@@ -1216,6 +1218,130 @@ function renderQuotesList() {
 
 quotesStatusFilter.addEventListener("change", renderQuotesList);
 quotesMineFilter.addEventListener("change", renderQuotesList);
+
+// ---------- Clientes (built from quote history — no separate table needed) ----------
+// Every staff member (admin or vendedor) can already read every quote
+// (RLS: "staff read all quotes"), so this just groups the same allQuotes
+// data already loaded for the Cotizaciones tab by RUT — no extra query.
+function buildClientList() {
+  const byRut = new Map();
+  for (const q of allQuotes) {
+    if (!q.rut) continue;
+    if (!byRut.has(q.rut)) {
+      byRut.set(q.rut, {
+        rut: q.rut,
+        razon_social: q.razon_social,
+        nombre_contacto: q.nombre_contacto,
+        telefono: q.telefono,
+        correo: q.correo,
+        quotes: [],
+      });
+    }
+    const c = byRut.get(q.rut);
+    // Keep the most recent quote's contact details as the client's
+    // "current" info, in case it changed between quotes.
+    if (new Date(q.created_at) > new Date(c._lastCreatedAt || 0)) {
+      c.razon_social = q.razon_social;
+      c.nombre_contacto = q.nombre_contacto;
+      c.telefono = q.telefono;
+      c.correo = q.correo;
+      c._lastCreatedAt = q.created_at;
+    }
+    c.quotes.push(q);
+  }
+  return Array.from(byRut.values()).sort((a, b) => new Date(b._lastCreatedAt) - new Date(a._lastCreatedAt));
+}
+
+function renderClientes() {
+  const tbody = document.getElementById("clientes-tbody");
+  const emptyEl = document.getElementById("clientes-empty");
+  const searchInput = document.getElementById("clientes-search");
+  if (!tbody) return;
+
+  const term = (searchInput.value || "").trim().toLowerCase();
+  const clients = buildClientList().filter((c) => {
+    if (!term) return true;
+    return (
+      (c.razon_social || "").toLowerCase().includes(term) ||
+      (c.rut || "").toLowerCase().includes(term) ||
+      (c.nombre_contacto || "").toLowerCase().includes(term)
+    );
+  });
+
+  document.getElementById("clstat-total").textContent = buildClientList().length;
+  document.getElementById("clstat-cotizaciones").textContent = allQuotes.length;
+  const totalVendido = allQuotes
+    .filter((q) => q.status === "vendida" || q.status === "pagada")
+    .reduce((sum, q) => sum + (q.sale_amount || 0), 0);
+  document.getElementById("clstat-vendido").textContent = "$" + totalVendido.toLocaleString("es-CL");
+
+  emptyEl.hidden = clients.length > 0;
+  tbody.innerHTML = clients
+    .map((c) => {
+      const vendido = c.quotes
+        .filter((q) => q.status === "vendida" || q.status === "pagada")
+        .reduce((sum, q) => sum + (q.sale_amount || 0), 0);
+      const lastDate = new Date(c._lastCreatedAt).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+      return `
+      <tr class="cliente-row" data-rut="${c.rut}" style="cursor:pointer;">
+        <td>${c.razon_social || "-"}</td>
+        <td>${c.rut}</td>
+        <td>${c.nombre_contacto || "-"}</td>
+        <td>${c.telefono || "-"}${c.correo ? `<br><span style="color:var(--ink-soft); font-size:0.8rem;">${c.correo}</span>` : ""}</td>
+        <td>${c.quotes.length}</td>
+        <td>$${vendido.toLocaleString("es-CL")}</td>
+        <td>${lastDate}</td>
+      </tr>`;
+    })
+    .join("");
+
+  tbody.querySelectorAll(".cliente-row").forEach((tr) => {
+    tr.addEventListener("click", () => {
+      const client = clients.find((c) => c.rut === tr.dataset.rut);
+      if (client) showClienteDetail(client);
+    });
+  });
+}
+
+function showClienteDetail(client) {
+  const wrap = document.getElementById("cliente-detail-wrap");
+  const title = document.getElementById("cliente-detail-title");
+  const list = document.getElementById("cliente-detail-list");
+  title.textContent = `Historial de ${client.razon_social} (${client.rut})`;
+  const sorted = [...client.quotes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  list.innerHTML = sorted
+    .map((q) => {
+      const date = new Date(q.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+      const montoHtml =
+        q.status === "vendida" || q.status === "pagada"
+          ? `<strong>$${Number(q.sale_amount || 0).toLocaleString("es-CL")}</strong>`
+          : q.total
+            ? `$${Number(q.total).toLocaleString("es-CL")}`
+            : "-";
+      return `
+      <div class="quote-card" style="cursor:pointer;" data-id="${q.id}">
+        <div class="quote-card-top">
+          <span class="quote-code">${q.correlative_code}</span>
+          <span class="quote-badge st-${q.status}">${STATUS_LABELS[q.status]}</span>
+        </div>
+        <p class="quote-card-meta">${date} · ${montoHtml}</p>
+      </div>`;
+    })
+    .join("");
+  list.querySelectorAll(".quote-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const q = allQuotes.find((x) => x.id === card.dataset.id);
+      if (q) openQuoteDetail(q);
+    });
+  });
+  wrap.hidden = false;
+  wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+document.getElementById("clientes-search")?.addEventListener("input", () => {
+  document.getElementById("cliente-detail-wrap").hidden = true;
+  renderClientes();
+});
 
 // ---------- Quote detail drawer ----------
 const quotePanel = document.getElementById("quote-panel");
@@ -1656,7 +1782,9 @@ document.getElementById("manual-quote-close-btn").addEventListener("click", clos
 manualQuoteOverlay.addEventListener("click", closeManualQuotePanel);
 
 // ---------- Customer lookup (auto-fill from a previous quote by RUT/razón social) ----------
-const customerLookupDropdown = document.getElementById("customer-lookup-dropdown");
+// Each triggering field (razón social, RUT) has its own dropdown directly
+// below it — previously there was only one dropdown anchored under razón
+// social, so typing in RUT showed suggestions in the wrong spot.
 let customerLookupTimer = null;
 
 function fillCustomerFields(c) {
@@ -1668,12 +1796,12 @@ function fillCustomerFields(c) {
   manualQuoteForm.querySelector('[name="direccion"]').value = c.direccion || "";
   manualQuoteForm.querySelector('[name="comuna"]').value = c.comuna || "";
   manualQuoteForm.querySelector('[name="region"]').value = c.region || "";
-  customerLookupDropdown.hidden = true;
+  document.querySelectorAll(".customer-lookup-dropdown").forEach((el) => (el.hidden = true));
 }
 
-async function runCustomerLookup(term) {
+async function runCustomerLookup(term, dropdown) {
   if (term.trim().length < 2) {
-    customerLookupDropdown.hidden = true;
+    dropdown.hidden = true;
     return;
   }
   const token = await getFreshAccessToken();
@@ -1682,10 +1810,10 @@ async function runCustomerLookup(term) {
   });
   const data = await res.json();
   if (!data.ok || !data.customers.length) {
-    customerLookupDropdown.hidden = true;
+    dropdown.hidden = true;
     return;
   }
-  customerLookupDropdown.innerHTML = data.customers
+  dropdown.innerHTML = data.customers
     .map(
       (c, idx) => `
       <button type="button" class="customer-lookup-item" data-idx="${idx}" style="display:block; width:100%; text-align:left; padding:8px 10px; border:none; background:none; border-bottom:1px solid var(--border); cursor:pointer; font-size:0.82rem;">
@@ -1694,22 +1822,24 @@ async function runCustomerLookup(term) {
       </button>`
     )
     .join("");
-  customerLookupDropdown.querySelectorAll(".customer-lookup-item").forEach((btn) => {
+  dropdown.querySelectorAll(".customer-lookup-item").forEach((btn) => {
     btn.addEventListener("click", () => fillCustomerFields(data.customers[Number(btn.dataset.idx)]));
   });
-  customerLookupDropdown.hidden = false;
+  dropdown.hidden = false;
 }
 
-["manual-razon-social", "manual-rut"].forEach((id) => {
-  document.getElementById(id).addEventListener("input", (e) => {
+["razon_social", "rut"].forEach((field) => {
+  const input = document.getElementById(`manual-${field}`);
+  const dropdown = document.getElementById(`customer-lookup-dropdown-${field}`);
+  input.addEventListener("input", (e) => {
     clearTimeout(customerLookupTimer);
     const term = e.target.value;
-    customerLookupTimer = setTimeout(() => runCustomerLookup(term), 300);
+    customerLookupTimer = setTimeout(() => runCustomerLookup(term, dropdown), 300);
   });
 });
 document.addEventListener("click", (e) => {
-  if (!customerLookupDropdown.hidden && !e.target.closest('label[style*="position:relative"]')) {
-    customerLookupDropdown.hidden = true;
+  if (!e.target.closest('label[style*="position:relative"]')) {
+    document.querySelectorAll(".customer-lookup-dropdown").forEach((el) => (el.hidden = true));
   }
 });
 
