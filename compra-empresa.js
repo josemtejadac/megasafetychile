@@ -292,8 +292,37 @@ function renderGrid() {
 
   grid.innerHTML = "";
   emptyState.hidden = filtered.length > 0;
+  currentFiltered = filtered;
+  shownCount = 0;
+  showMoreProducts();
+}
 
-  filtered.forEach((p) => {
+// Only PAGE_SIZE cards (and their photos) are created at a time; "Ver más"
+// appends the next batch without rebuilding the ones already on screen.
+// Search, filters and sorting still run over the whole catalog.
+const PAGE_SIZE = 30;
+let currentFiltered = [];
+let shownCount = 0;
+const loadMoreWrap = document.getElementById("load-more-wrap");
+const loadMoreBtn = document.getElementById("load-more-btn");
+const loadMoreInfo = document.getElementById("load-more-info");
+
+function showMoreProducts() {
+  const batch = currentFiltered.slice(shownCount, shownCount + PAGE_SIZE);
+  const frag = document.createDocumentFragment();
+  batch.forEach((p) => frag.appendChild(createProductCard(p)));
+  grid.appendChild(frag);
+  shownCount += batch.length;
+
+  const remaining = currentFiltered.length - shownCount;
+  loadMoreWrap.hidden = remaining <= 0;
+  loadMoreInfo.textContent = `Mostrando ${shownCount} de ${currentFiltered.length} productos`;
+  loadMoreBtn.textContent = `Ver más productos (${Math.min(PAGE_SIZE, remaining)} más)`;
+}
+
+loadMoreBtn.addEventListener("click", showMoreProducts);
+
+function createProductCard(p) {
     const card = document.createElement("article");
     card.className = "product-card";
     card.innerHTML = `
@@ -344,8 +373,7 @@ function renderGrid() {
     card.querySelector(".product-thumb").addEventListener("click", () => openProductDetail(p));
     card.querySelector(".product-name").addEventListener("click", () => openProductDetail(p));
     card.querySelector(".product-desc").addEventListener("click", () => openProductDetail(p));
-    grid.appendChild(card);
-  });
+    return card;
 }
 
 // ---------- Product detail ----------

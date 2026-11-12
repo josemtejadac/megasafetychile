@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=32">
-<link rel="stylesheet" href="compra-empresa.css?v=32">
-<link rel="stylesheet" href="admin.css?v=32">
+<link rel="stylesheet" href="styles.css?v=33">
+<link rel="stylesheet" href="compra-empresa.css?v=33">
+<link rel="stylesheet" href="admin.css?v=33">
 </head>
 <body>
 
@@ -282,6 +282,10 @@
           </thead>
           <tbody id="products-tbody"></tbody>
         </table>
+      </div>
+      <div class="load-more-wrap" id="admin-load-more-wrap" hidden>
+        <p class="load-more-info" id="admin-load-more-info"></p>
+        <button type="button" class="btn btn--outline load-more-btn" id="admin-load-more-btn">Ver más productos</button>
       </div>
       <p class="empty-state" id="admin-empty" hidden>No hay productos que coincidan con el filtro.</p>
     </section>
@@ -615,6 +619,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=32"></script>
+<script src="admin.js?v=33"></script>
 </body>
 </html>

@@ -458,14 +458,36 @@ function renderTable() {
 
   tbody.innerHTML = "";
   emptyState.hidden = filtered.length > 0;
+  adminFilteredProducts = filtered;
+  adminShownCount = 0;
+  showMoreAdminProducts();
+}
 
-  filtered.forEach((p) => {
+// Same "Ver más" batching as the public catalog: 30 rows (and thumbnails)
+// at a time instead of every product at once.
+const ADMIN_PAGE_SIZE = 30;
+let adminFilteredProducts = [];
+let adminShownCount = 0;
+
+function showMoreAdminProducts() {
+  const batch = adminFilteredProducts.slice(adminShownCount, adminShownCount + ADMIN_PAGE_SIZE);
+  batch.forEach((p) => tbody.appendChild(createProductRow(p)));
+  adminShownCount += batch.length;
+  const remaining = adminFilteredProducts.length - adminShownCount;
+  document.getElementById("admin-load-more-wrap").hidden = remaining <= 0;
+  document.getElementById("admin-load-more-info").textContent = `Mostrando ${adminShownCount} de ${adminFilteredProducts.length} productos`;
+  document.getElementById("admin-load-more-btn").textContent = `Ver más productos (${Math.min(ADMIN_PAGE_SIZE, remaining)} más)`;
+}
+
+document.getElementById("admin-load-more-btn").addEventListener("click", showMoreAdminProducts);
+
+function createProductRow(p) {
     const tr = document.createElement("tr");
     if (!p.active) tr.className = "admin-row-inactive";
     tr.innerHTML = `
       <td class="thumb-cell">${
         p.image_url
-          ? `<img src="${p.image_url}" alt="">`
+          ? `<img src="${p.image_url}" alt="" loading="lazy">`
           : `<div class="thumb-cell-placeholder"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div>`
       }</td>
       <td><span class="status-dot ${p.active ? "" : "is-off"}"></span></td>
@@ -479,8 +501,7 @@ function renderTable() {
       <td><button class="row-edit-btn" type="button">Editar</button></td>
     `;
     tr.querySelector(".row-edit-btn").addEventListener("click", () => openProductForm(p));
-    tbody.appendChild(tr);
-  });
+    return tr;
 }
 
 searchInput.addEventListener("input", renderTable);

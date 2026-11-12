@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=32">
-<link rel="stylesheet" href="account.css?v=32">
-<link rel="stylesheet" href="compra-empresa.css?v=32">
+<link rel="stylesheet" href="styles.css?v=33">
+<link rel="stylesheet" href="account.css?v=33">
+<link rel="stylesheet" href="compra-empresa.css?v=33">
 </head>
 <body>
 
@@ -93,6 +93,10 @@
       </div>
 
       <div class="product-grid" id="product-grid"></div>
+      <div class="load-more-wrap" id="load-more-wrap" hidden>
+        <p class="load-more-info" id="load-more-info"></p>
+        <button type="button" class="btn btn--outline load-more-btn" id="load-more-btn">Ver más productos</button>
+      </div>
       <p class="empty-state" id="empty-state" hidden>No se encontraron productos con ese criterio.</p>
     </div>
   </section>
@@ -169,10 +173,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="script.js?v=32"></script>
-<script src="account.js?v=32"></script>
-<script src="compra-empresa.js?v=32"></script>
-<script src="site-images.js?v=32"></script>
+<script src="script.js?v=33"></script>
+<script src="account.js?v=33"></script>
+<script src="compra-empresa.js?v=33"></script>
+<script src="site-images.js?v=33"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
