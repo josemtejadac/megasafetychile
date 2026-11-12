@@ -70,17 +70,17 @@
              </div>`
           : p.price != null
             ? `<p style="font-size:1.05rem; color:var(--navy); font-weight:800; font-family:var(--font-head); margin:0;">$${Number(p.price).toLocaleString("es-CL")}</p>`
-            : `<p style="font-size:0.78rem; color:var(--ink-soft); font-weight:600; margin:0;">Precio a cotizar</p>`;
+            : `<p style="font-size:0.84rem; color:var(--ink-soft); font-weight:600; margin:0;">Precio a cotizar</p>`;
         return `
-        <div class="featured-card" style="scroll-snap-align:start; flex:0 0 200px; width:200px; height:330px; background:#fff; border:1px solid #e3e7ee; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px; box-shadow:0 6px 18px -8px rgba(11,31,58,0.18); position:relative;">
+        <div class="featured-card" style="scroll-snap-align:start; flex:0 0 232px; width:232px; height:372px; background:#fff; border:1px solid #e3e7ee; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:7px; box-shadow:0 6px 18px -8px rgba(11,31,58,0.18); position:relative;">
           ${hasDiscount ? `<span style="position:absolute; top:10px; left:10px; z-index:1; background:var(--red); color:#fff; font-size:0.72rem; font-weight:800; padding:3px 8px; border-radius:999px;">-${p.discount_percent}%</span>` : ""}
-          <a href="compra-empresa.html?product=${p.id}" aria-label="${p.name}" style="display:block; width:100%; height:130px; background:#fff; border-radius:10px; overflow:hidden; flex-shrink:0;">
+          <a href="compra-empresa.html?product=${p.id}" aria-label="${p.name}" style="display:block; width:100%; height:160px; background:#fff; border-radius:10px; overflow:hidden; flex-shrink:0;">
             <img src="${p.image_url}" alt="${p.name}" loading="lazy" style="width:100%; height:100%; object-fit:contain; display:block;">
           </a>
-          ${p.brand ? `<p style="font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#c9a11d; margin:8px 0 0;">${p.brand}</p>` : ""}
-          <p style="font-size:0.85rem; font-weight:700; color:var(--navy); margin:0; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${p.name}</p>
+          ${p.brand ? `<p style="font-size:0.72rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#c9a11d; margin:8px 0 0;">${p.brand}</p>` : ""}
+          <p style="font-size:0.94rem; font-weight:700; color:var(--navy); margin:0; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${p.name}</p>
           ${priceHtml}
-          <button type="button" class="btn btn--primary featured-quote-btn" data-id="${p.id}" data-name="${p.name.replace(/"/g, "&quot;")}" data-brand="${(p.brand || "").replace(/"/g, "&quot;")}" data-cat="${p.category_id}" style="text-align:center; justify-content:center; margin-top:auto; padding:8px 12px; font-size:0.8rem; border-radius:999px; cursor:pointer; border:none;">Cotizar</button>
+          <button type="button" class="btn btn--primary featured-quote-btn" data-id="${p.id}" data-name="${p.name.replace(/"/g, "&quot;")}" data-brand="${(p.brand || "").replace(/"/g, "&quot;")}" data-cat="${p.category_id}" style="text-align:center; justify-content:center; margin-top:auto; padding:10px 14px; font-size:0.86rem; border-radius:999px; cursor:pointer; border:none;">Cotizar</button>
         </div>`;
       })
       .join("");

@@ -376,6 +376,162 @@ function createProductCard(p) {
     return card;
 }
 
+// ---------- Photo lightbox (foto ampliada + lupa) ----------
+// Opened from the product detail. Click/tap the photo to zoom in where you
+// pointed; moving the mouse/finger then pans like a magnifier. Swipe or the
+// arrows change photo while not zoomed. Zoom is capped by each photo's real
+// resolution (most are ~400px) so it doesn't turn into a blur.
+// Built once; each open only swaps the photo list and resets the state.
+const lightbox = {
+  el: null, img: null, stage: null, hint: null, count: null, prevBtn: null, nextBtn: null,
+  photos: [], idx: 0, zoom: 1, baseRect: null, prevOverflow: "", touch: null,
+};
+const lightboxIsTouch = window.matchMedia("(pointer: coarse)").matches;
+
+function buildLightbox() {
+  const el = document.createElement("div");
+  el.className = "lightbox";
+  el.setAttribute("role", "dialog");
+  el.setAttribute("aria-modal", "true");
+  el.setAttribute("aria-label", "Foto ampliada");
+  el.innerHTML = `
+    <div class="lightbox-top">
+      <span class="lightbox-count"></span>
+      <div class="lightbox-tools">
+        <button type="button" class="lightbox-btn lightbox-zoom-btn" aria-label="Acercar o alejar">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path class="lightbox-zoom-plus" d="M11 8v6"/><path d="M8 11h6"/></svg>
+        </button>
+        <button type="button" class="lightbox-btn lightbox-close" aria-label="Cerrar">✕</button>
+      </div>
+    </div>
+    <div class="lightbox-stage"><img class="lightbox-img" alt=""></div>
+    <button type="button" class="lightbox-arrow lightbox-arrow--prev" aria-label="Foto anterior">‹</button>
+    <button type="button" class="lightbox-arrow lightbox-arrow--next" aria-label="Foto siguiente">›</button>
+    <p class="lightbox-hint"></p>`;
+  document.body.appendChild(el);
+
+  Object.assign(lightbox, {
+    el,
+    img: el.querySelector(".lightbox-img"),
+    stage: el.querySelector(".lightbox-stage"),
+    hint: el.querySelector(".lightbox-hint"),
+    count: el.querySelector(".lightbox-count"),
+    prevBtn: el.querySelector(".lightbox-arrow--prev"),
+    nextBtn: el.querySelector(".lightbox-arrow--next"),
+  });
+
+  el.querySelector(".lightbox-close").addEventListener("click", closePhotoLightbox);
+  el.querySelector(".lightbox-zoom-btn").addEventListener("click", () => (lightbox.zoom > 1 ? lightboxZoomOut() : lightboxZoomIn()));
+  lightbox.prevBtn.addEventListener("click", () => lightboxShow(lightbox.idx - 1));
+  lightbox.nextBtn.addEventListener("click", () => lightboxShow(lightbox.idx + 1));
+
+  lightbox.img.addEventListener("click", (e) => {
+    if (lightboxIsTouch) return; // touch is handled on touchend below
+    if (lightbox.zoom > 1) lightboxZoomOut();
+    else lightboxZoomIn(e.clientX, e.clientY);
+  });
+  lightbox.img.addEventListener("mousemove", (e) => {
+    if (lightbox.zoom > 1) lightboxSetOrigin(e.clientX, e.clientY);
+  });
+  // Clicking the dark backdrop (not the photo) closes.
+  lightbox.stage.addEventListener("click", (e) => {
+    if (e.target === lightbox.stage) closePhotoLightbox();
+  });
+
+  lightbox.stage.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    lightbox.touch = { x: t.clientX, y: t.clientY, moved: false, multi: e.touches.length > 1 };
+  }, { passive: true });
+  lightbox.stage.addEventListener("touchmove", (e) => {
+    const start = lightbox.touch;
+    if (!start) return;
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - start.x) > 8 || Math.abs(t.clientY - start.y) > 8) start.moved = true;
+    if (lightbox.zoom > 1) {
+      e.preventDefault();
+      lightboxSetOrigin(t.clientX, t.clientY);
+    }
+  }, { passive: false });
+  lightbox.stage.addEventListener("touchend", (e) => {
+    const start = lightbox.touch;
+    lightbox.touch = null;
+    if (!start || start.multi) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    if (!start.moved && e.target === lightbox.img) {
+      if (lightbox.zoom > 1) lightboxZoomOut();
+      else lightboxZoomIn(t.clientX, t.clientY);
+    } else if (!start.moved && e.target === lightbox.stage) {
+      closePhotoLightbox();
+    } else if (lightbox.zoom === 1 && Math.abs(dx) > 40 && lightbox.photos.length > 1) {
+      lightboxShow(dx < 0 ? lightbox.idx + 1 : lightbox.idx - 1);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (!lightbox.el.classList.contains("is-open")) return;
+    if (e.key === "Escape") closePhotoLightbox();
+    else if (e.key === "ArrowRight" && lightbox.photos.length > 1) lightboxShow(lightbox.idx + 1);
+    else if (e.key === "ArrowLeft" && lightbox.photos.length > 1) lightboxShow(lightbox.idx - 1);
+  });
+}
+
+function lightboxSetOrigin(clientX, clientY) {
+  const r = lightbox.baseRect;
+  if (!r) return;
+  const x = Math.min(100, Math.max(0, ((clientX - r.left) / r.width) * 100));
+  const y = Math.min(100, Math.max(0, ((clientY - r.top) / r.height) * 100));
+  lightbox.img.style.transformOrigin = `${x}% ${y}%`;
+}
+
+function lightboxZoomIn(clientX, clientY) {
+  const img = lightbox.img;
+  img.style.transform = "none";
+  const r = img.getBoundingClientRect();
+  lightbox.baseRect = r;
+  lightbox.zoom = Math.min(2.5, Math.max(1.8, (img.naturalWidth * 1.5) / Math.max(1, r.width)));
+  lightboxSetOrigin(clientX ?? r.left + r.width / 2, clientY ?? r.top + r.height / 2);
+  img.style.transform = `scale(${lightbox.zoom})`;
+  lightbox.el.classList.add("is-zoomed");
+  lightbox.hint.textContent = lightboxIsTouch
+    ? "Mueve el dedo para recorrer la foto · toca para alejar"
+    : "Mueve el mouse para recorrer la foto · clic para alejar";
+}
+
+function lightboxZoomOut() {
+  lightbox.zoom = 1;
+  lightbox.baseRect = null;
+  lightbox.img.style.transform = "none";
+  lightbox.el.classList.remove("is-zoomed");
+  lightbox.hint.textContent = lightboxIsTouch ? "Toca la foto para acercar" : "Haz clic en la foto para acercar";
+}
+
+function lightboxShow(i) {
+  const n = lightbox.photos.length;
+  lightbox.idx = (i + n) % n;
+  lightboxZoomOut();
+  lightbox.img.src = lightbox.photos[lightbox.idx];
+  lightbox.count.textContent = n > 1 ? `${lightbox.idx + 1} / ${n}` : "";
+}
+
+function openPhotoLightbox(photos, startIdx = 0) {
+  if (!photos || !photos.length) return;
+  if (!lightbox.el) buildLightbox();
+  lightbox.photos = photos;
+  lightbox.prevBtn.hidden = lightbox.nextBtn.hidden = photos.length < 2;
+  lightbox.prevOverflow = document.body.style.overflow;
+  lightbox.el.classList.add("is-open");
+  document.body.style.overflow = "hidden";
+  lightboxShow(startIdx);
+}
+
+function closePhotoLightbox() {
+  if (!lightbox.el) return;
+  lightboxZoomOut();
+  lightbox.el.classList.remove("is-open");
+  document.body.style.overflow = lightbox.prevOverflow;
+}
+
 // ---------- Product detail ----------
 const detailPanel = document.getElementById("detail-panel");
 const detailOverlay = document.getElementById("detail-overlay");
@@ -477,6 +633,13 @@ async function openProductDetail(p) {
               : `<svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`
           }
           ${
+            photos.length
+              ? `<button type="button" class="detail-photo-zoom" id="detail-photo-zoom" aria-label="Ampliar foto" title="Ampliar foto">
+                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>
+                 </button>`
+              : ""
+          }
+          ${
             photos.length > 1
               ? `<button type="button" class="detail-photo-arrow detail-photo-arrow--prev" id="detail-photo-prev" aria-label="Foto anterior">‹</button>
                  <button type="button" class="detail-photo-arrow detail-photo-arrow--next" id="detail-photo-next" aria-label="Foto siguiente">›</button>`
@@ -523,8 +686,14 @@ async function openProductDetail(p) {
     </div>
   `;
 
+  let photoIdx = 0;
+  if (photos.length) {
+    const openZoom = () => openPhotoLightbox(photos, photoIdx);
+    document.getElementById("detail-photo-img").addEventListener("click", openZoom);
+    document.getElementById("detail-photo-zoom").addEventListener("click", openZoom);
+  }
+
   if (photos.length > 1) {
-    let photoIdx = 0;
     const photoImg = document.getElementById("detail-photo-img");
     const dots = Array.from(document.querySelectorAll(".detail-photo-dot"));
     function showPhoto(idx) {
