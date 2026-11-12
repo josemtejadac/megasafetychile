@@ -361,3 +361,69 @@
   font-size: 0.86rem;
 }
 .cliente-info-grid span { display: block; font-size: 0.74rem; color: var(--ink-soft); font-weight: 600; }
+
+/* ---------- Product photo gallery (edit panel) ---------- */
+.gallery-item { width: 104px; display: flex; flex-direction: column; gap: 4px; }
+.gallery-photo { position: relative; width: 104px; height: 104px; }
+.gallery-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+}
+.gallery-item.is-cover .gallery-photo img { border: 2px solid var(--gold); }
+.gallery-num {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(11, 31, 58, 0.8);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-align: center;
+}
+.gallery-remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #b91c1c;
+  color: #fff;
+  border: none;
+  font-size: 0.7rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.gallery-cover-btn, .gallery-cover-label {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 0;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+.gallery-cover-btn { border: 1px solid var(--navy); background: #fff; color: var(--navy); cursor: pointer; }
+.gallery-cover-btn:hover { background: var(--navy); color: #fff; }
+.gallery-cover-label { background: var(--gold); color: var(--navy); border: 1px solid var(--gold); }
+.gallery-move-row { display: flex; gap: 3px; }
+.gallery-move-btn {
+  flex: 1;
+  padding: 3px 0;
+  font-size: 0.72rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+}
+.gallery-move-btn:disabled { opacity: 0.35; cursor: default; }
