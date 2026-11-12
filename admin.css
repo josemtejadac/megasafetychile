@@ -249,3 +249,77 @@
   cursor: pointer;
   padding: 6px 8px;
 }
+
+/* ---------- Ventas ---------- */
+.ventas-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ventas-actions select {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--navy);
+  background: #fff;
+  min-width: 190px;
+}
+.ventas-h2 { font-family: var(--font-head); font-size: 1.25rem; color: var(--navy); margin: 28px 0 10px; }
+.ventas-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 18px 14px;
+  background: #fff;
+}
+.ventas-card .ventas-h2 { margin-top: 14px; margin-bottom: 2px; }
+.ventas-chart-hint { margin: 0 0 6px; font-size: 0.78rem; color: var(--ink-soft); }
+.ventas-chart {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  height: 220px;
+  padding-top: 40px;
+  border-bottom: 1px solid var(--border);
+}
+.vbar-col {
+  flex: 1;
+  min-width: 0;
+  max-width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  border-radius: 6px;
+}
+.vbar-col:hover, .vbar-col:focus-visible { background: var(--bg-alt); outline: none; }
+.vbar-value { height: 18px; font-size: 0.72rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.vbar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.vbar { width: 56%; max-width: 28px; background: #7b8aa5; border-radius: 4px 4px 0 0; }
+.vbar-col.is-selected .vbar { background: var(--navy); }
+.vbar-label { font-size: 0.72rem; color: var(--ink-soft); padding: 6px 0 2px; white-space: nowrap; }
+.vbar-col.is-selected .vbar-label { color: var(--navy); font-weight: 700; }
+.ventas-tooltip {
+  position: absolute;
+  top: 56px;
+  z-index: 2;
+  background: var(--navy);
+  color: #fff;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  padding: 7px 10px;
+  border-radius: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+}
+.ventas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+.ventas-detail-row { cursor: pointer; }
+@media (max-width: 760px) {
+  .ventas-grid { grid-template-columns: 1fr; }
+  .ventas-chart { height: 190px; }
+  .vbar-label { font-size: 0.64rem; }
+  .vbar-value { font-size: 0.64rem; }
+}

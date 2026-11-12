@@ -292,8 +292,14 @@ async function showAppropriateView() {
     `Hola, ${adminRow.name || session.user.email} (${adminRow.role === "admin" ? "Administrador" : "Vendedor"})`;
   document.getElementById("tab-equipo").hidden = adminRow.role !== "admin";
   document.getElementById("tab-fotos").hidden = adminRow.role !== "admin";
+  document.getElementById("tab-ventas").hidden = adminRow.role !== "admin";
 
   setupTabs();
+  // A vendedor logging in right after an admin on the same page must not be
+  // left looking at an admin-only section.
+  if (document.querySelector(".admin-tab.is-active")?.hidden) {
+    document.querySelector('.admin-tab[data-section="cotizaciones"]').click();
+  }
   loadQuotes();
   subscribeToQuoteUpdates();
 }
@@ -321,7 +327,12 @@ sbClient
   .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_subcategories" }, () => loadCategories())
   .subscribe();
 
+let tabsReady = false;
 function setupTabs() {
+  // showAppropriateView runs again on every login — wiring the tabs twice
+  // would fire every load twice per click.
+  if (tabsReady) return;
+  tabsReady = true;
   const tabs = document.querySelectorAll(".admin-tab");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -336,6 +347,7 @@ function setupTabs() {
       if (tab.dataset.section === "cotizaciones") loadQuotes();
       if (tab.dataset.section === "fotos") loadSiteImages();
       if (tab.dataset.section === "clientes") renderClientes();
+      if (tab.dataset.section === "ventas") renderVentas();
     });
   });
 }
@@ -1155,6 +1167,7 @@ async function loadQuotes() {
   renderQuoteStats();
   renderQuotesList();
   if (!document.getElementById("section-clientes")?.hidden) renderClientes();
+  if (!document.getElementById("section-ventas")?.hidden) renderVentas();
 }
 
 function renderQuoteStats() {
@@ -1358,6 +1371,245 @@ function showClienteDetail(client) {
 document.getElementById("clientes-search")?.addEventListener("input", () => {
   document.getElementById("cliente-detail-wrap").hidden = true;
   renderClientes();
+});
+
+// ---------- Ventas (solo admin; agregado en el navegador sobre allQuotes) ----------
+const SOLD_STATUSES = ["vendida", "pagada"];
+let ventasMonth = null;
+let ventasPeriodSales = [];
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+const clp = (n) => "$" + Math.round(n || 0).toLocaleString("es-CL");
+function clpShort(n) {
+  if (n >= 1e6) return "$" + (n / 1e6).toLocaleString("es-CL", { maximumFractionDigits: 1 }) + "M";
+  if (n >= 1e3) return "$" + Math.round(n / 1e3).toLocaleString("es-CL") + "k";
+  return clp(n);
+}
+const saleDate = (q) => q.sold_at || q.paid_at || q.created_at;
+const saleAmount = (q) => q.sale_amount ?? q.total ?? 0;
+function monthKeyOf(date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function monthName(key, opts = { month: "long", year: "numeric" }) {
+  const [y, m] = key.split("-").map(Number);
+  const s = new Date(y, m - 1, 1).toLocaleDateString("es-CL", opts);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function prevMonthKey(key) {
+  const [y, m] = key.split("-").map(Number);
+  return monthKeyOf(new Date(y, m - 2, 1));
+}
+const sellerName = (userId) => (userId ? staffNameById[userId] || "Ex trabajador" : "Sin asignar");
+
+// Every month from the first sale through the current month, newest first,
+// so months with zero sales still show up (as a $0 bar / selectable month).
+function ventasMonths(sales) {
+  const now = new Date();
+  const keys = [];
+  const first = sales.length ? new Date(Math.min(...sales.map((q) => new Date(saleDate(q)).getTime()))) : now;
+  for (let d = new Date(first.getFullYear(), first.getMonth(), 1); d <= now; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+    keys.push(monthKeyOf(d));
+  }
+  return keys.reverse();
+}
+
+function groupSum(list, keyFn, init, add) {
+  const map = new Map();
+  for (const item of list) {
+    const k = keyFn(item);
+    if (!map.has(k)) map.set(k, init(item));
+    add(map.get(k), item);
+  }
+  return [...map.values()];
+}
+
+function renderVentas() {
+  const select = document.getElementById("ventas-month");
+  if (!select) return;
+  const sales = allQuotes.filter((q) => SOLD_STATUSES.includes(q.status));
+  const months = ventasMonths(sales);
+  if (!ventasMonth || (ventasMonth !== "all" && !months.includes(ventasMonth))) ventasMonth = months[0];
+  select.innerHTML =
+    months.map((k) => `<option value="${k}">${monthName(k)}${k === months[0] ? " (mes en curso)" : ""}</option>`).join("") +
+    `<option value="all">Todo el historial</option>`;
+  select.value = ventasMonth;
+
+  const period = ventasMonth === "all" ? sales : sales.filter((q) => monthKeyOf(saleDate(q)) === ventasMonth);
+  period.sort((a, b) => new Date(saleDate(b)) - new Date(saleDate(a)));
+  ventasPeriodSales = period;
+
+  const total = period.reduce((s, q) => s + saleAmount(q), 0);
+  const commission = period.reduce((s, q) => s + (q.commission_amount || 0), 0);
+  document.getElementById("vstat-total").textContent = clp(total);
+  document.getElementById("vstat-neto").textContent = clp(total / 1.19);
+  document.getElementById("vstat-count").textContent = period.length;
+  document.getElementById("vstat-ticket").textContent = clp(period.length ? total / period.length : 0);
+  document.getElementById("vstat-comision").textContent = clp(commission);
+
+  const compare = document.getElementById("ventas-compare");
+  if (ventasMonth === "all") {
+    compare.hidden = true;
+  } else {
+    const prevKey = prevMonthKey(ventasMonth);
+    const prevTotal = sales.filter((q) => monthKeyOf(saleDate(q)) === prevKey).reduce((s, q) => s + saleAmount(q), 0);
+    let text = `Mes anterior (${monthName(prevKey)}): ${clp(prevTotal)}`;
+    if (prevTotal > 0) {
+      const pct = Math.round(((total - prevTotal) / prevTotal) * 100);
+      text += ` — ${pct >= 0 ? "▲ +" : "▼ "}${pct}% este mes`;
+    }
+    if (ventasMonth === months[0]) text += ". Este mes todavía está en curso.";
+    compare.textContent = text;
+    compare.hidden = false;
+  }
+
+  renderVentasChart(sales, months);
+
+  const sellers = groupSum(
+    period,
+    (q) => q.claimed_by || "none",
+    (q) => ({ name: sellerName(q.claimed_by), count: 0, total: 0, commission: 0 }),
+    (acc, q) => { acc.count += 1; acc.total += saleAmount(q); acc.commission += q.commission_amount || 0; }
+  ).sort((a, b) => b.total - a.total);
+  document.getElementById("ventas-sellers-tbody").innerHTML = sellers.length
+    ? sellers.map((s) => `<tr><td>${escapeHtml(s.name)}</td><td>${s.count}</td><td>${clp(s.total)}</td><td>${clp(s.commission)}</td></tr>`).join("")
+    : `<tr><td colspan="4" style="color:var(--ink-soft);">Sin ventas</td></tr>`;
+
+  const clients = groupSum(
+    period,
+    (q) => (q.rut || q.razon_social || "").trim().toLowerCase(),
+    (q) => ({ name: q.razon_social, rut: q.rut, count: 0, total: 0 }),
+    (acc, q) => { acc.count += 1; acc.total += saleAmount(q); }
+  ).sort((a, b) => b.total - a.total).slice(0, 10);
+  document.getElementById("ventas-clients-tbody").innerHTML = clients.length
+    ? clients.map((c) => `<tr><td>${escapeHtml(c.name)}<br><span style="color:var(--ink-soft); font-size:0.8rem;">${escapeHtml(c.rut)}</span></td><td>${c.count}</td><td>${clp(c.total)}</td></tr>`).join("")
+    : `<tr><td colspan="3" style="color:var(--ink-soft);">Sin ventas</td></tr>`;
+
+  const items = period.flatMap((q) => (q.megasafety_b2b_quote_items || []).map((i) => ({ ...i, _quoteId: q.id })));
+  const products = groupSum(
+    items,
+    (i) => `${(i.product_name || "").trim().toLowerCase()}|${(i.brand || "").trim().toLowerCase()}`,
+    (i) => ({ name: i.product_name, brand: i.brand, units: 0, amount: 0, priced: false, quotes: new Set() }),
+    (acc, i) => {
+      acc.units += i.quantity || 0;
+      if (i.unit_price != null) { acc.amount += (i.unit_price || 0) * (i.quantity || 0); acc.priced = true; }
+      acc.quotes.add(i._quoteId);
+    }
+  ).sort((a, b) => b.units - a.units || b.amount - a.amount);
+  document.getElementById("ventas-products-tbody").innerHTML = products.length
+    ? products
+        .map((p) => `<tr><td>${escapeHtml(p.name)}${p.brand ? ` <span style="color:var(--ink-soft);">(${escapeHtml(p.brand)})</span>` : ""}</td><td>${p.units.toLocaleString("es-CL")}</td><td>${p.priced ? clp(p.amount) : "—"}</td><td>${p.quotes.size}</td></tr>`)
+        .join("")
+    : `<tr><td colspan="4" style="color:var(--ink-soft);">Sin productos en este periodo</td></tr>`;
+
+  const detailTbody = document.getElementById("ventas-detail-tbody");
+  detailTbody.innerHTML = period
+    .map(
+      (q) => `
+      <tr class="ventas-detail-row" data-id="${q.id}">
+        <td><strong>${escapeHtml(q.correlative_code)}</strong></td>
+        <td>${new Date(saleDate(q)).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })}</td>
+        <td>${escapeHtml(q.razon_social)}</td>
+        <td>${escapeHtml(sellerName(q.claimed_by))}</td>
+        <td>${clp(saleAmount(q))}</td>
+        <td>${clp(q.commission_amount)}</td>
+      </tr>`
+    )
+    .join("");
+  detailTbody.querySelectorAll(".ventas-detail-row").forEach((tr) => {
+    tr.addEventListener("click", () => {
+      const q = allQuotes.find((x) => x.id === tr.dataset.id);
+      if (q) openQuoteDetail(q);
+    });
+  });
+  document.getElementById("ventas-empty").hidden = period.length > 0;
+}
+
+function renderVentasChart(sales, months) {
+  const chart = document.getElementById("ventas-chart");
+  const tooltip = document.getElementById("ventas-tooltip");
+  const card = chart.parentElement;
+  const chrono = [...months].reverse().slice(-12);
+  const bars = chrono.map((k) => {
+    const monthSales = sales.filter((q) => monthKeyOf(saleDate(q)) === k);
+    return { k, total: monthSales.reduce((s, q) => s + saleAmount(q), 0), count: monthSales.length };
+  });
+  const max = Math.max(...bars.map((b) => b.total), 1);
+  chart.innerHTML = bars
+    .map((b, idx) => {
+      const [y, m] = b.k.split("-");
+      const label = monthName(b.k, { month: "short" }).replace(".", "") + (idx === 0 || m === "01" ? ` ${y.slice(2)}` : "");
+      const selected = b.k === ventasMonth;
+      return `
+      <button type="button" class="vbar-col${selected ? " is-selected" : ""}" data-month="${b.k}" data-total="${b.total}" data-count="${b.count}"
+        aria-label="${monthName(b.k)}: ${clp(b.total)}, ${b.count} venta(s)">
+        <span class="vbar-value">${selected ? clpShort(b.total) : ""}</span>
+        <span class="vbar-track"><span class="vbar" style="height:${b.total ? Math.max(1.5, (b.total / max) * 100) : 0}%"></span></span>
+        <span class="vbar-label">${label}</span>
+      </button>`;
+    })
+    .join("");
+
+  chart.querySelectorAll(".vbar-col").forEach((col) => {
+    const show = () => {
+      tooltip.innerHTML = `<strong>${monthName(col.dataset.month)}</strong><br>${clp(Number(col.dataset.total))} · ${col.dataset.count} venta(s)`;
+      tooltip.hidden = false;
+      const cardRect = card.getBoundingClientRect();
+      const colRect = col.getBoundingClientRect();
+      const tipWidth = tooltip.offsetWidth;
+      const center = colRect.left - cardRect.left + colRect.width / 2;
+      tooltip.style.left = Math.min(Math.max(4, center - tipWidth / 2), cardRect.width - tipWidth - 4) + "px";
+    };
+    const hide = () => (tooltip.hidden = true);
+    col.addEventListener("mouseenter", show);
+    col.addEventListener("focus", show);
+    col.addEventListener("mouseleave", hide);
+    col.addEventListener("blur", hide);
+    col.addEventListener("click", () => {
+      ventasMonth = col.dataset.month;
+      tooltip.hidden = true;
+      renderVentas();
+    });
+  });
+}
+
+document.getElementById("ventas-month")?.addEventListener("change", (e) => {
+  ventasMonth = e.target.value;
+  renderVentas();
+});
+
+document.getElementById("ventas-csv-btn")?.addEventListener("click", () => {
+  // Text starting with = + - @ would run as a formula in Excel (customer-typed
+  // names are untrusted), so prefix it with an apostrophe. Numbers stay raw.
+  const cell = (v) => {
+    if (typeof v === "number") return String(v);
+    let s = String(v ?? "");
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  const header = ["Código", "Fecha", "Cliente", "RUT", "Vendedor", "Vendido con IVA", "Neto sin IVA", "Comisión"];
+  const rows = ventasPeriodSales.map((q) => [
+    q.correlative_code,
+    new Date(saleDate(q)).toLocaleDateString("es-CL"),
+    q.razon_social,
+    q.rut,
+    sellerName(q.claimed_by),
+    Math.round(saleAmount(q)),
+    Math.round(saleAmount(q) / 1.19),
+    q.commission_amount || 0,
+  ]);
+  // Semicolons + BOM so Excel in Spanish opens it with proper columns and accents.
+  const csv = "﻿" + [header, ...rows].map((r) => r.map(cell).join(";")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `ventas-${ventasMonth === "all" ? "historial" : ventasMonth}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
 // ---------- Quote detail drawer ----------
@@ -2253,9 +2505,9 @@ async function loadCommissionPeriods() {
     .from("megasafety_commission_periods")
     .select("id, label")
     .order("closed_at", { ascending: false });
-  select.innerHTML =
-    `<option value="">Selecciona un periodo...</option>` +
-    (data || []).map((p) => `<option value="${p.id}">${p.label}</option>`).join("");
+  select.innerHTML = (data || []).length
+    ? `<option value="">Selecciona un periodo...</option>` + data.map((p) => `<option value="${p.id}">${p.label}</option>`).join("")
+    : `<option value="">Aún no has cerrado ningún mes</option>`;
 }
 
 document.getElementById("commission-period-select")?.addEventListener("change", async (e) => {

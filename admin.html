@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=24">
-<link rel="stylesheet" href="compra-empresa.css?v=24">
-<link rel="stylesheet" href="admin.css?v=24">
+<link rel="stylesheet" href="styles.css?v=25">
+<link rel="stylesheet" href="compra-empresa.css?v=25">
+<link rel="stylesheet" href="admin.css?v=25">
 </head>
 <body>
 
@@ -49,6 +49,7 @@
       <nav class="admin-tabs" id="admin-tabs">
         <button class="admin-tab is-active" data-section="cotizaciones" type="button">Cotizaciones</button>
         <button class="admin-tab" data-section="clientes" type="button">Clientes</button>
+        <button class="admin-tab" data-section="ventas" type="button" id="tab-ventas" hidden>Ventas</button>
         <button class="admin-tab" data-section="productos" type="button">Productos</button>
         <button class="admin-tab" data-section="equipo" type="button" id="tab-equipo" hidden>Equipo</button>
         <button class="admin-tab" data-section="fotos" type="button" id="tab-fotos" hidden>Fotos del sitio</button>
@@ -99,6 +100,88 @@
         <h3 id="cliente-detail-title" style="margin:0 0 10px;"></h3>
         <div id="cliente-detail-list"></div>
       </div>
+    </section>
+
+    <section id="section-ventas" class="admin-section" hidden>
+      <div class="admin-panel-head">
+        <div>
+          <h1>Ventas</h1>
+          <p class="admin-subtitle">Resumen automático por mes de todo lo vendido (cotizaciones marcadas como vendidas o pagadas)</p>
+        </div>
+        <div class="ventas-actions">
+          <select id="ventas-month" aria-label="Mes"></select>
+          <button class="btn btn--outline" id="ventas-csv-btn" type="button">Descargar Excel (CSV)</button>
+        </div>
+      </div>
+      <div class="admin-stats">
+        <div class="stat-card">
+          <span class="stat-value" id="vstat-total">$0</span>
+          <span class="stat-label">Vendido (con IVA)</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="vstat-neto">$0</span>
+          <span class="stat-label">Neto (sin IVA)</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="vstat-count">0</span>
+          <span class="stat-label">Ventas</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="vstat-ticket">$0</span>
+          <span class="stat-label">Ticket promedio</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="vstat-comision">$0</span>
+          <span class="stat-label">Comisiones</span>
+        </div>
+      </div>
+      <p class="admin-help" id="ventas-compare" hidden></p>
+
+      <div class="ventas-card">
+        <h2 class="ventas-h2">Vendido por mes (con IVA)</h2>
+        <p class="ventas-chart-hint">Toca una barra para ver ese mes.</p>
+        <div class="ventas-chart" id="ventas-chart"></div>
+        <div class="ventas-tooltip" id="ventas-tooltip" hidden></div>
+      </div>
+
+      <div class="ventas-grid">
+        <div>
+          <h2 class="ventas-h2">Por vendedor</h2>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Vendedor</th><th>Ventas</th><th>Vendido</th><th>Comisión</th></tr></thead>
+              <tbody id="ventas-sellers-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h2 class="ventas-h2">Mejores clientes</h2>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Cliente</th><th>Ventas</th><th>Vendido</th></tr></thead>
+              <tbody id="ventas-clients-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="ventas-h2">Productos vendidos</h2>
+      <p class="admin-help" style="margin-top:0;">Unidades según los productos de cada cotización vendida. El monto es el precio neto cotizado (sin IVA); si una venta se registró solo con el monto total, sus productos aparecen sin monto.</p>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Producto</th><th>Unidades</th><th>Monto neto</th><th>En ventas</th></tr></thead>
+          <tbody id="ventas-products-tbody"></tbody>
+        </table>
+      </div>
+
+      <h2 class="ventas-h2">Detalle de ventas</h2>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th>Vendedor</th><th>Vendido</th><th>Comisión</th></tr></thead>
+          <tbody id="ventas-detail-tbody"></tbody>
+        </table>
+      </div>
+      <p class="empty-state" id="ventas-empty" hidden>No hay ventas registradas en este periodo.</p>
     </section>
 
     <section id="section-productos" class="admin-section" hidden>
@@ -288,7 +371,7 @@
       <div class="admin-panel-head" style="margin-top:28px;">
         <div>
           <h1 style="font-size:1.2rem;">Historial de meses cerrados</h1>
-          <p class="admin-subtitle">Revisa las comisiones de cualquier periodo ya cerrado</p>
+          <p class="admin-subtitle">Cada vez que aprietas "Cerrar mes" el periodo queda guardado aquí. Para ver ventas y comisiones por mes calendario de forma automática, usa la pestaña Ventas.</p>
         </div>
         <select id="commission-period-select" style="min-width:220px;">
           <option value="">Selecciona un periodo...</option>
@@ -506,6 +589,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=24"></script>
+<script src="admin.js?v=25"></script>
 </body>
 </html>

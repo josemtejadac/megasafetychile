@@ -440,6 +440,7 @@
   border-top-color: var(--border);
   padding-bottom: 24px;
 }
+.footer-credit .footer-credit-brand { color: #7e22ce; }
 
 @media (max-width: 760px) {
   .b2b-options { grid-template-columns: 1fr; }
