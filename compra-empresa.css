@@ -200,7 +200,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 4/3;
-  background: var(--bg-alt);
+  background: #fff;
   border-radius: var(--radius);
   display: flex;
   align-items: center;
@@ -267,7 +267,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 4/3;
-  background: var(--bg-alt);
+  background: #fff;
   border-radius: 10px;
   display: flex;
   align-items: center;

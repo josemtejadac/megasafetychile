@@ -191,7 +191,7 @@ h1, h2, h3 {
   color: inherit;
 }
 .header-search-item:hover { background: var(--bg-alt); }
-.header-search-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; background: var(--bg-alt); }
+.header-search-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; background: #fff; }
 .header-search-item-name { font-size: 0.85rem; font-weight: 600; color: var(--navy); line-height: 1.25; }
 .header-search-item-brand { font-size: 0.75rem; color: var(--ink-soft); }
 .header-search-empty, .header-search-hint { padding: 10px 4px; font-size: 0.82rem; color: var(--ink-soft); text-align: center; }
@@ -595,7 +595,7 @@ h1, h2, h3 {
 .featured-thumb {
   display: block;
   aspect-ratio: 4/3;
-  background: var(--bg-alt);
+  background: #fff;
   border-radius: 10px;
   overflow: hidden;
 }
