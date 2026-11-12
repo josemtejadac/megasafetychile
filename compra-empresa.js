@@ -137,6 +137,7 @@ function renderChips() {
     if (allChip) allChip.classList.remove("is-active");
     if (targetChip) targetChip.classList.add("is-active");
     renderSubcategoryChips();
+    scrollChipIntoView(targetChip);
     setTimeout(() => {
       document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
     }, 150);
@@ -173,9 +174,9 @@ function renderChips() {
 // require going back to the menu — only shown once a real category (not
 // "Todos") is selected.
 function renderSubcategoryChips() {
-  let row = document.getElementById("subcategory-chips");
+  let wrap = document.getElementById("subcategory-chips");
   if (activeCategory === "all") {
-    if (row) row.remove();
+    if (wrap) wrap.remove();
     return;
   }
 
@@ -183,30 +184,58 @@ function renderSubcategoryChips() {
     new Set(products.filter((p) => p.category_id === activeCategory && p.subcategory).map((p) => p.subcategory))
   ).sort((a, b) => a.localeCompare(b, "es"));
 
-  if (!subs.length) {
-    if (row) row.remove();
+  // The header menu lists every subcategory, including ones with no products
+  // loaded yet — landing on one of those used to show "0 productos" with no
+  // explanation. Show the whole category instead and say why.
+  let notice = "";
+  if (activeSubcategory && !subs.includes(activeSubcategory)) {
+    notice = `Aún no tenemos productos publicados en «${escapeChipText(activeSubcategory)}». Te mostramos toda la categoría ${escapeChipText(CAT_LABEL[activeCategory] || "")}; si buscas algo puntual, cotízalo igual y te lo conseguimos.`;
+    activeSubcategory = null;
+  }
+
+  if (!subs.length && !notice) {
+    if (wrap) wrap.remove();
     return;
   }
 
-  if (!row) {
-    row = document.createElement("div");
-    row.id = "subcategory-chips";
-    row.className = "cat-filter-chips subcategory-chips";
-    chipsEl.insertAdjacentElement("afterend", row);
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "subcategory-chips";
+    wrap.className = "subcategory-wrap";
+    chipsEl.insertAdjacentElement("afterend", wrap);
   }
-  row.innerHTML =
-    `<button type="button" class="chip chip--sub ${!activeSubcategory ? "is-active" : ""}" data-sub="">Todas</button>` +
-    subs
-      .map((s) => `<button type="button" class="chip chip--sub ${activeSubcategory === s ? "is-active" : ""}" data-sub="${s}">${s}</button>`)
-      .join("");
+  wrap.innerHTML =
+    (subs.length
+      ? `<p class="subcategory-label">Subcategoría de <span>${escapeChipText(CAT_LABEL[activeCategory] || "")}</span></p>
+         <div class="cat-filter-chips">
+           <button type="button" class="chip chip--sub ${!activeSubcategory ? "is-active" : ""}" data-sub="">Todas</button>
+           ${subs
+             .map((s) => `<button type="button" class="chip chip--sub ${activeSubcategory === s ? "is-active" : ""}" data-sub="${escapeChipText(s)}">${escapeChipText(s)}</button>`)
+             .join("")}
+         </div>`
+      : "") + (notice ? `<p class="subcategory-notice">${notice}</p>` : "");
 
-  row.querySelectorAll(".chip--sub").forEach((btn) => {
+  wrap.querySelectorAll(".chip--sub").forEach((btn) => {
     btn.addEventListener("click", () => {
       activeSubcategory = btn.dataset.sub || null;
-      row.querySelectorAll(".chip--sub").forEach((c) => c.classList.toggle("is-active", c === btn));
+      wrap.querySelectorAll(".chip--sub").forEach((c) => c.classList.toggle("is-active", c === btn));
+      wrap.querySelector(".subcategory-notice")?.remove();
       renderGrid();
     });
   });
+  scrollChipIntoView(wrap.querySelector(".chip--sub.is-active"));
+}
+
+function escapeChipText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
+// On phones the chip rows scroll sideways — keep the selected one visible
+// without moving the page itself.
+function scrollChipIntoView(chip) {
+  const row = chip?.parentElement;
+  if (!row || row.scrollWidth <= row.clientWidth) return;
+  row.scrollLeft = chip.offsetLeft - row.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
 }
 
 // The price actually charged (after any discount), or null when the

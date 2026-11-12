@@ -637,7 +637,7 @@ h1, h2, h3 {
    drop-zone overlaid on top of its dashed box so the button actually
    works instead of just being a static picture. */
 .upload-banner-img { padding: 24px 0; background: #f4f6fa; }
-.upload-banner-img-inner { position: relative; max-width: 1400px; }
+.upload-banner-img-inner { position: relative; max-width: 1128px; }
 .upload-banner-hotspot {
   position: absolute;
   left: 23%;
@@ -1058,4 +1058,23 @@ h1, h2, h3 {
   .acct-row { grid-template-columns: 1fr; }
   .acct-page-stats { grid-template-columns: 1fr 1fr; }
   .acct-data-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Home hero (owner's designed image + invisible category links) ---------- */
+.home-hero { background: #f4f6fa; }
+.hero-pick { position: relative; margin: 0 auto; }
+.hero-pick img { width: 100%; height: auto; display: block; }
+.hero-hotspot { position: absolute; display: block; }
+.hero-hotspot[hidden] { display: none; }
+.hero-mobile-pick { max-width: 640px; }
+.hero-desktop-pick { display: none; max-width: 1080px; }
+@media (min-width: 900px) {
+  .home-hero { padding: 24px 24px 0; }
+  .hero-mobile-pick { display: none; }
+  .hero-desktop-pick {
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 14px 34px -20px rgba(11, 31, 58, 0.45);
+  }
 }

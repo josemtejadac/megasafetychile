@@ -23,6 +23,9 @@
 
 .b2b-step { padding: 64px 0; }
 .b2b-hero-img-section { padding-top: 28px; padding-bottom: 0; }
+/* The hero graphic scales with width; capped so it doesn't fill the whole
+   first screen on wide monitors and push the catalog out of view. */
+.b2b-hero-img-section .container { max-width: 968px; }
 
 /* "Solicita tu cotización" hero — the owner's own graphic, with invisible
    functional hotspots over the 3 option cards and the drop-zone box. */
@@ -121,9 +124,34 @@
 .chip:hover { border-color: var(--gold); }
 .chip.is-active { background: var(--navy); color: #fff; border-color: var(--navy); }
 
-.subcategory-chips { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.subcategory-wrap { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.subcategory-label { margin: 0 0 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.subcategory-label span { text-transform: none; letter-spacing: 0; color: var(--navy); }
+.subcategory-notice {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff7e0;
+  border: 1px solid #f5d27a;
+  font-size: 0.82rem;
+  color: var(--ink);
+}
 .chip--sub { padding: 6px 14px; font-size: 0.8rem; background: var(--bg-alt); }
 .chip--sub.is-active { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+
+/* Phones: one swipeable row per level instead of a tall wall of wrapped chips. */
+@media (max-width: 760px) {
+  .cat-filter-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -20px;
+    padding: 2px 20px 6px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cat-filter-chips::-webkit-scrollbar { display: none; }
+  .cat-filter-chips .chip { flex-shrink: 0; white-space: nowrap; }
+}
 
 .subcategory-banner {
   display: flex;

@@ -297,3 +297,44 @@ document.addEventListener("keydown", (e) => {
     .on("postgres_changes", { event: "*", schema: "public", table: "megasafety_subcategories" }, refreshExtraCategories)
     .subscribe();
 })();
+
+// ---------- Home hero category links ----------
+// The hero is a designed image the owner can replace from "Fotos del sitio",
+// and each design places its category cards differently — so the invisible
+// links are positioned for whichever image is actually showing (picked by its
+// aspect ratio), re-run every time site-images.js swaps the src.
+const HERO_LAYOUTS = {
+  // assets/img/hero-full.jpg (738×1000, portrait phone design)
+  portrait: {
+    epp: [0, 44, 24, 18], herramientas: [25, 44, 24, 18], soldadura: [50, 44, 24, 18], ropa: [75, 44, 24, 18],
+    vial: [0, 64, 24, 17], loto: [25, 64, 24, 17], iluminacion: [50, 64, 24, 17], insumos: [75, 64, 24, 17],
+    todos: [2, 90, 96, 6.5],
+  },
+  // assets/img/hero-full-desktop.jpg (1600×832)
+  classic: {
+    epp: [0.9, 44.5, 26.5, 20], herramientas: [28, 44.5, 21.5, 20], soldadura: [50.2, 44.5, 21.5, 20], ropa: [72.4, 44.5, 26.8, 20],
+    vial: [0.9, 66.8, 26.5, 19.5], loto: [28, 66.8, 21.5, 19.5], iluminacion: [50.2, 66.8, 21.5, 19.5], insumos: [72.4, 66.8, 26.8, 19.5],
+    todos: [64, 88.3, 35.5, 9],
+  },
+  // Owner's 1851×849 upload: two rows of four cards, no "ver todos" button.
+  wide: {
+    epp: [1.6, 47, 23.9, 22], herramientas: [26, 47, 23.7, 22], soldadura: [50.4, 47, 23.8, 22], ropa: [74.7, 47, 23.8, 22],
+    vial: [1.6, 70.9, 23.9, 22], loto: [26, 70.9, 23.7, 22], iluminacion: [50.4, 70.9, 23.8, 22], insumos: [74.7, 70.9, 23.8, 22],
+  },
+};
+
+function layoutHeroHotspots(img) {
+  const ratio = img.naturalWidth / img.naturalHeight;
+  if (!ratio) return;
+  const layout = ratio < 1.2 ? HERO_LAYOUTS.portrait : ratio < 2.05 ? HERO_LAYOUTS.classic : HERO_LAYOUTS.wide;
+  img.parentElement.querySelectorAll(".hero-hotspot").forEach((a) => {
+    const box = layout[a.dataset.spot];
+    a.hidden = !box;
+    if (box) Object.assign(a.style, { left: `${box[0]}%`, top: `${box[1]}%`, width: `${box[2]}%`, height: `${box[3]}%` });
+  });
+}
+
+document.querySelectorAll(".hero-pick img").forEach((img) => {
+  img.addEventListener("load", () => layoutHeroHotspots(img));
+  if (img.complete) layoutHeroHotspots(img);
+});
