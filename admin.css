@@ -226,3 +226,26 @@
   opacity: 1;
   pointer-events: auto;
 }
+
+.password-field {
+  position: relative;
+  display: block;
+}
+.password-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 92px;
+}
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--navy);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 6px 8px;
+}

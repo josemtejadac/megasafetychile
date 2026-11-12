@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=23">
-<link rel="stylesheet" href="compra-empresa.css?v=23">
-<link rel="stylesheet" href="admin.css?v=23">
+<link rel="stylesheet" href="styles.css?v=24">
+<link rel="stylesheet" href="compra-empresa.css?v=24">
+<link rel="stylesheet" href="admin.css?v=24">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
       <h1>Ingresar al panel</h1>
       <form id="login-form" class="quote-form admin-login-form">
         <label>Correo (admin) o RUT (vendedor)<input type="text" name="identifier" required autocomplete="username"></label>
-        <label>Contraseña<input type="password" name="password" required autocomplete="current-password"></label>
+        <label>Contraseña<span class="password-field"><input type="password" name="password" required autocomplete="current-password"><button type="button" class="password-toggle" aria-label="Mostrar contraseña">Mostrar</button></span></label>
         <label class="checkbox-row"><input type="checkbox" name="remember"> Mantener sesión iniciada en este navegador</label>
         <p class="form-note" id="login-note"></p>
         <button type="submit" class="btn btn--primary">Ingresar</button>
@@ -217,12 +217,16 @@
           <option value="all">Todos los estados</option>
           <option value="pendiente">Sin tomar</option>
           <option value="en_proceso">En proceso</option>
+          <option value="cotizada">Cotización enviada</option>
           <option value="vendida">Vendida</option>
+          <option value="pagada">Pagada</option>
+          <option value="rechazada">Rechazada por cliente</option>
           <option value="perdida">Perdida</option>
         </select>
         <select id="quotes-mine-filter">
           <option value="all">Todas</option>
           <option value="mine">Solo las mías</option>
+          <option value="unclaimed">Sin asignar</option>
         </select>
       </div>
 
@@ -241,7 +245,7 @@
       <form id="staff-form" class="quote-form" style="padding:0; margin-bottom:28px; max-width:600px;">
         <div class="form-row">
           <label>RUT (para iniciar sesión) *<input type="text" name="rut" placeholder="12345678-9" required></label>
-          <label>Contraseña *<input type="password" name="password" minlength="6" required placeholder="mín. 6 caracteres"></label>
+          <label>Contraseña *<span class="password-field"><input type="password" name="password" minlength="6" required placeholder="mín. 6 caracteres" autocomplete="new-password"><button type="button" class="password-toggle" aria-label="Mostrar contraseña">Mostrar</button></span></label>
         </div>
         <div class="form-row">
           <label>Nombre<input type="text" name="name"></label>
@@ -502,6 +506,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=23"></script>
+<script src="admin.js?v=24"></script>
 </body>
 </html>

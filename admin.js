@@ -340,6 +340,17 @@ function setupTabs() {
   });
 }
 
+document.querySelectorAll(".password-toggle").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const input = btn.parentElement.querySelector("input");
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    btn.textContent = show ? "Ocultar" : "Mostrar";
+    btn.setAttribute("aria-label", show ? "Ocultar contraseña" : "Mostrar contraseña");
+  });
+});
+
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const fd = new FormData(loginForm);
@@ -1113,11 +1124,16 @@ const quotesEmpty = document.getElementById("quotes-empty");
 const quotesStatusFilter = document.getElementById("quotes-status-filter");
 const quotesMineFilter = document.getElementById("quotes-mine-filter");
 
-// Only the admin can see every staff member's name (RLS restricts a
-// vendedor's view of megasafety_admins to their own row) — a vendedor
-// still sees "otro vendedor" for quotes claimed by someone else, same as
-// before, which is the intended privacy boundary, not a bug.
 let staffNameById = {};
+
+function populateWorkerFilter(staff) {
+  const current = quotesMineFilter.value;
+  const others = staff.filter((s) => s.user_id !== currentStaff?.user_id);
+  quotesMineFilter.innerHTML =
+    `<option value="all">Todas</option><option value="mine">Solo las mías</option><option value="unclaimed">Sin asignar</option>` +
+    others.map((s) => `<option value="${s.user_id}">De: ${s.name || s.rut || "Sin nombre"}</option>`).join("");
+  quotesMineFilter.value = [...quotesMineFilter.options].some((o) => o.value === current) ? current : "all";
+}
 
 async function loadQuotes() {
   const { data, error } = await sbClient
@@ -1133,10 +1149,9 @@ async function loadQuotes() {
   }
   allQuotes = data;
   currentPeriodStart = (await getLastPeriodEnd()) || "2000-01-01T00:00:00.000Z";
-  if (currentStaff?.role === "admin") {
-    const { data: staff } = await sbClient.from("megasafety_admins").select("user_id, name, rut");
-    staffNameById = Object.fromEntries((staff || []).map((s) => [s.user_id, s.name || s.rut || "Sin nombre"]));
-  }
+  const { data: staff } = await sbClient.rpc("megasafety_staff_directory");
+  staffNameById = Object.fromEntries((staff || []).map((s) => [s.user_id, s.name || s.rut || "Sin nombre"]));
+  populateWorkerFilter(staff || []);
   renderQuoteStats();
   renderQuotesList();
   if (!document.getElementById("section-clientes")?.hidden) renderClientes();
@@ -1179,7 +1194,11 @@ function renderQuotesList() {
   const mineFilter = quotesMineFilter.value;
   const filtered = allQuotes.filter((q) => {
     const matchesStatus = statusFilter === "all" || q.status === statusFilter;
-    const matchesMine = mineFilter === "all" || q.claimed_by === currentStaff?.user_id;
+    const matchesMine =
+      mineFilter === "all" ||
+      (mineFilter === "mine" && q.claimed_by === currentStaff?.user_id) ||
+      (mineFilter === "unclaimed" && !q.claimed_by) ||
+      q.claimed_by === mineFilter;
     return matchesStatus && matchesMine;
   });
 
@@ -1204,9 +1223,7 @@ function renderQuotesList() {
           ? `<p class="quote-card-claimed">Tomada por: ${
               q.claimed_by === currentStaff?.user_id
                 ? "ti"
-                : currentStaff?.role === "admin"
-                  ? staffNameById[q.claimed_by] || "un trabajador"
-                  : "otro vendedor"
+                : staffNameById[q.claimed_by] || "un trabajador (ya no está en el equipo)"
             }</p>`
           : ""
       }
@@ -1416,17 +1433,19 @@ async function openQuoteDetail(q) {
   const isAdmin = currentStaff?.role === "admin";
   const canPrice = q.status !== "pagada";
 
-  // Who the sale/commission is credited to is whoever "claimed" the quote
-  // first — which isn't necessarily who actually closed the sale (e.g. a
-  // secretary takes the request, the owner is the one who seals the deal).
-  // Only the admin can fix this after the fact.
-  let staffList = [];
-  if (isAdmin) {
-    const { data } = await sbClient.from("megasafety_admins").select("user_id, name, rut, commission_rate").eq("active", true).order("name");
-    staffList = data || [];
-  }
+  // Any staff member can pick who actually made the sale (the owner allows
+  // anyone to quote). The list comes from an RPC that exposes only names —
+  // RLS hides other staff rows (and their commission %) from vendedores, and
+  // the commission itself is computed server-side from the seller's rate.
+  const { data: staffDir } = await sbClient.rpc("megasafety_staff_directory");
+  const staffList = (staffDir || []).sort((a, b) => (a.name || a.rut || "").localeCompare(b.name || b.rut || ""));
+  const staffLabel = (s) => s.name || s.rut || "Sin nombre";
   const sellerOptionsHtml = staffList
-    .map((s) => `<option value="${s.user_id}" ${s.user_id === q.claimed_by ? "selected" : ""}>${s.name || s.rut || s.user_id}</option>`)
+    .map((s) => `<option value="${s.user_id}" ${s.user_id === q.claimed_by ? "selected" : ""}>${staffLabel(s)}</option>`)
+    .join("");
+  const defaultSellerId = q.claimed_by || currentStaff?.user_id;
+  const soldSellerOptionsHtml = staffList
+    .map((s) => `<option value="${s.user_id}" ${s.user_id === defaultSellerId ? "selected" : ""}>${staffLabel(s)}${s.user_id === currentStaff?.user_id ? " (yo)" : ""}</option>`)
     .join("");
 
   const priceRowsHtml = items
@@ -1497,6 +1516,11 @@ async function openQuoteDetail(q) {
         q.status !== "vendida" && q.status !== "pagada"
           ? `<div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
                <input type="number" id="sale-amount-input" placeholder="Monto vendido (CLP)" min="0" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--border); border-radius:8px;">
+               <label style="display:block; font-size:0.82rem; font-weight:600; color:var(--navy);">¿Quién hizo la venta? (se lleva la comisión)
+                 <select id="sold-seller-select" style="display:block; width:100%; box-sizing:border-box; margin-top:6px; padding:10px 12px; border:1px solid var(--border); border-radius:8px;">
+                   ${soldSellerOptionsHtml}
+                 </select>
+               </label>
                <button class="btn btn--primary" id="mark-sold-btn" type="button" style="width:100%; white-space:normal;">Marcar vendida (venta manual)</button>
              </div>`
           : ""
@@ -1507,7 +1531,7 @@ async function openQuoteDetail(q) {
           : ""
       }
       ${
-        isAdmin
+        q.claimed_by || q.status === "vendida" || q.status === "pagada"
           ? `<div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
                <label style="display:block; font-size:0.82rem; font-weight:600; color:var(--navy); margin-bottom:6px;">Vendedor asignado (quién se lleva la comisión)</label>
                <p class="admin-help" style="margin:0 0 8px;">Útil si alguien tomó la cotización pero otra persona cerró la venta — al cambiarlo, si ya está vendida se recalcula la comisión con la tasa de la persona nueva.</p>
@@ -1696,32 +1720,16 @@ async function openQuoteDetail(q) {
       note.className = "form-note is-error";
       return;
     }
-    // The commission rate must belong to whoever ends up credited with the
-    // sale (claimed_by) — not necessarily whoever clicks this button. If an
-    // admin marks sold a quote someone else already claimed, the quote
-    // stays credited to that person, so their rate is what applies.
-    const creditedTo = q.claimed_by || currentStaff.user_id;
-    let rate = currentStaff?.commission_rate || 0;
-    if (creditedTo !== currentStaff.user_id) {
-      const { data: claimerRow } = await sbClient.from("megasafety_admins").select("commission_rate").eq("user_id", creditedTo).single();
-      rate = claimerRow?.commission_rate ?? 0;
-    }
-    // Commission is paid on the net amount (excluding IVA) — the customer
-    // still pays/sees the full amount with IVA, only the commission base
-    // is the amount before tax.
-    const netAmount = amount / 1.19;
-    const commission = Math.round((netAmount * rate) / 100);
-    const patch = {
-      status: "vendida",
-      sale_amount: amount,
-      commission_rate_snapshot: rate,
-      commission_amount: commission,
-      sold_at: new Date().toISOString(),
-    };
-    if (!q.claimed_by) { patch.claimed_by = currentStaff.user_id; patch.claimed_at = new Date().toISOString(); }
-    const { error } = await sbClient.from("megasafety_b2b_quotes").update(patch).eq("id", q.id);
-    if (error) { note.textContent = "Error: " + error.message; return; }
-    await logQuoteEvent(q.id, "sold", { sale_amount: amount, commission_amount: commission });
+    const sellerId = document.getElementById("sold-seller-select")?.value || currentStaff.user_id;
+    // Commission (net of IVA × the chosen seller's rate) is computed in the
+    // RPC so the seller's rate never has to be readable by whoever clicks.
+    const { error } = await sbClient.rpc("megasafety_mark_quote_sold", {
+      p_quote_id: q.id,
+      p_seller_id: sellerId,
+      p_sale_amount: Math.round(amount),
+    });
+    if (error) { note.textContent = "Error: " + error.message; note.className = "form-note is-error"; return; }
+    await logQuoteEvent(q.id, "sold", { sale_amount: Math.round(amount), seller: sellerId });
     closeQuotePanel();
     loadQuotes();
   });
@@ -1733,15 +1741,8 @@ async function openQuoteDetail(q) {
       note.textContent = "No hubo cambios — ya estaba asignada a esa persona.";
       return;
     }
-    const patch = { claimed_by: newUserId, claimed_at: newUserId ? new Date().toISOString() : null };
-    if (q.status === "vendida" || q.status === "pagada") {
-      const newRate = newUserId ? staffList.find((s) => s.user_id === newUserId)?.commission_rate || 0 : 0;
-      const netAmount = (q.sale_amount || 0) / 1.19;
-      patch.commission_rate_snapshot = newRate;
-      patch.commission_amount = Math.round((netAmount * newRate) / 100);
-    }
-    const { error } = await sbClient.from("megasafety_b2b_quotes").update(patch).eq("id", q.id);
-    if (error) { note.textContent = "Error: " + error.message; return; }
+    const { error } = await sbClient.rpc("megasafety_reassign_quote_seller", { p_quote_id: q.id, p_seller_id: newUserId });
+    if (error) { note.textContent = "Error: " + error.message; note.className = "form-note is-error"; return; }
     await logQuoteEvent(q.id, "reassigned", { from: q.claimed_by || null, to: newUserId });
     closeQuotePanel();
     loadQuotes();
@@ -1829,7 +1830,7 @@ async function runCustomerLookup(term, dropdown) {
 }
 
 ["razon_social", "rut"].forEach((field) => {
-  const input = document.getElementById(`manual-${field}`);
+  const input = manualQuoteForm.querySelector(`[name="${field}"]`);
   const dropdown = document.getElementById(`customer-lookup-dropdown-${field}`);
   input.addEventListener("input", (e) => {
     clearTimeout(customerLookupTimer);
@@ -2134,10 +2135,26 @@ async function loadStaff() {
       <td><span class="status-dot ${s.active ? "" : "is-off"}"></span></td>
       <td style="display:flex; gap:6px; flex-wrap:wrap;">
         <button class="row-edit-btn save-rate-btn" type="button">Guardar</button>
+        <button class="row-edit-btn edit-name-btn" type="button">Editar nombre</button>
         <button class="row-edit-btn reset-pass-btn" type="button">Restablecer clave</button>
-        <button class="row-edit-btn delete-staff-btn" type="button">Eliminar</button>
+        ${s.user_id === currentStaff?.user_id ? "" : `<button class="row-edit-btn delete-staff-btn" type="button">Eliminar</button>`}
       </td>
     `;
+    tr.querySelector(".edit-name-btn").addEventListener("click", async () => {
+      const newName = prompt(`Nuevo nombre para ${s.name || s.rut}:`, s.name || "");
+      if (newName === null) return;
+      const trimmed = newName.trim();
+      if (!trimmed) { alert("El nombre no puede quedar vacío."); return; }
+      const { error: nameErr } = await sbClient.from("megasafety_admins").update({ name: trimmed }).eq("user_id", s.user_id);
+      if (nameErr) { alert("No se pudo cambiar el nombre: " + nameErr.message); return; }
+      if (s.user_id === currentStaff?.user_id) {
+        currentStaff.name = trimmed;
+        document.getElementById("admin-welcome").textContent =
+          `Hola, ${trimmed} (${currentStaff.role === "admin" ? "Administrador" : "Vendedor"})`;
+      }
+      loadStaff();
+      loadQuotes();
+    });
     tr.querySelector(".save-rate-btn").addEventListener("click", async () => {
       const newRate = Number(tr.querySelector(".staff-rate-input").value) || 0;
       await sbClient.from("megasafety_admins").update({ commission_rate: newRate }).eq("user_id", s.user_id);
@@ -2156,7 +2173,7 @@ async function loadStaff() {
       const data = await res.json();
       alert(data.ok ? "Contraseña actualizada." : "Error: " + data.error);
     });
-    tr.querySelector(".delete-staff-btn").addEventListener("click", async () => {
+    tr.querySelector(".delete-staff-btn")?.addEventListener("click", async () => {
       if (!confirm(`¿Quitar a ${s.name || s.rut} del equipo? Perderá acceso al panel.`)) return;
       await sbClient.from("megasafety_admins").delete().eq("user_id", s.user_id);
       loadStaff();
@@ -2289,6 +2306,8 @@ staffForm.addEventListener("submit", async (e) => {
     staffNote.textContent = "Trabajador creado correctamente.";
     staffNote.className = "form-note";
     staffForm.reset();
+    staffForm.querySelector('[name="password"]').type = "password";
+    staffForm.querySelector(".password-toggle").textContent = "Mostrar";
     loadStaff();
   } catch (err) {
     staffNote.textContent = err.message;
