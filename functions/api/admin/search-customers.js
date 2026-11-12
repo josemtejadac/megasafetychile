@@ -30,7 +30,8 @@ export async function onRequestGet({ request, env }) {
   }
 
   const url = new URL(request.url);
-  const q = (url.searchParams.get("q") || "").trim();
+  // Commas/parentheses would break PostgREST's or=(...) syntax.
+  const q = (url.searchParams.get("q") || "").replace(/[,()*\\]/g, " ").trim();
   if (q.length < 2) {
     return new Response(JSON.stringify({ ok: true, customers: [] }), {
       status: 200,
@@ -38,21 +39,49 @@ export async function onRequestGet({ request, env }) {
     });
   }
 
+  const sbHeaders = { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` };
   const encoded = encodeURIComponent(`*${q}*`);
-  const filter = `or=(rut.ilike.${encoded},razon_social.ilike.${encoded})`;
-  const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/megasafety_b2b_quotes?${filter}&select=razon_social,rut,nombre_contacto,telefono,correo,direccion,comuna,region,created_at&order=created_at.desc&limit=50`,
-    { headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` } }
-  );
+  const quoteFilter = `or=(rut.ilike.${encoded},razon_social.ilike.${encoded})`;
+  const accountFilter = `or=(rut.ilike.${encoded},company_rut.ilike.${encoded},company_name.ilike.${encoded},first_name.ilike.${encoded},last_name.ilike.${encoded},email.ilike.${encoded})`;
+  const [res, accountsRes] = await Promise.all([
+    fetch(
+      `${env.SUPABASE_URL}/rest/v1/megasafety_b2b_quotes?${quoteFilter}&select=razon_social,rut,nombre_contacto,telefono,correo,direccion,comuna,region,created_at&order=created_at.desc&limit=50`,
+      { headers: sbHeaders }
+    ),
+    fetch(
+      `${env.SUPABASE_URL}/rest/v1/megasafety_customers?${accountFilter}&select=first_name,last_name,email,phone,rut,company_name,company_rut,address,comuna,region&order=updated_at.desc&limit=20`,
+      { headers: sbHeaders }
+    ),
+  ]);
   if (!res.ok) {
     return new Response(JSON.stringify({ ok: false, error: await res.text() }), { status: 500 });
   }
   const rows = await res.json();
+  const accounts = accountsRes.ok ? await accountsRes.json() : [];
 
-  // Dedupe by RUT, keeping the most recent quote's data for each client.
+  // Registered accounts first (the customer keeps that data up to date
+  // themselves), then quote history; dedupe by RUT (ignoring dots/dashes).
+  const rutKey = (rut) => String(rut || "").replace(/[^0-9kK]/g, "").toUpperCase();
   const seen = new Map();
+  for (const a of accounts) {
+    const fullName = [a.first_name, a.last_name].filter(Boolean).join(" ");
+    const row = {
+      razon_social: a.company_name || fullName,
+      rut: a.company_rut || a.rut || "",
+      nombre_contacto: fullName,
+      telefono: a.phone || "",
+      correo: a.email || "",
+      direccion: a.address || "",
+      comuna: a.comuna || "",
+      region: a.region || "",
+      source: "cuenta",
+    };
+    const key = rutKey(row.rut) || `email:${(row.correo || "").toLowerCase()}`;
+    if (!seen.has(key)) seen.set(key, row);
+  }
   for (const row of rows) {
-    if (!seen.has(row.rut)) seen.set(row.rut, row);
+    const key = rutKey(row.rut) || `raw:${row.rut}`;
+    if (!seen.has(key)) seen.set(key, row);
   }
   const customers = Array.from(seen.values()).slice(0, 8);
 

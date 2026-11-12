@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=25">
-<link rel="stylesheet" href="compra-empresa.css?v=25">
-<link rel="stylesheet" href="admin.css?v=25">
+<link rel="stylesheet" href="styles.css?v=26">
+<link rel="stylesheet" href="compra-empresa.css?v=26">
+<link rel="stylesheet" href="admin.css?v=26">
 </head>
 <body>
 
@@ -75,11 +75,36 @@
           <span class="stat-value" id="clstat-vendido">$0</span>
           <span class="stat-label">Total vendido</span>
         </div>
+        <div class="stat-card">
+          <span class="stat-value" id="clstat-cuentas">0</span>
+          <span class="stat-label">Cuentas registradas en el sitio</span>
+        </div>
+      </div>
+      <div class="clientes-views" role="tablist">
+        <button class="clientes-view-btn is-active" data-view="rut" type="button">Por empresa / RUT</button>
+        <button class="clientes-view-btn" data-view="cuentas" type="button">Cuentas registradas en el sitio</button>
       </div>
       <div class="admin-controls">
-        <input type="search" id="clientes-search" placeholder="Buscar por RUT, razón social o contacto...">
+        <input type="search" id="clientes-search" placeholder="Buscar por RUT, razón social, nombre o correo...">
       </div>
-      <div class="admin-table-wrap">
+      <div class="admin-table-wrap" id="clientes-cuentas-wrap" hidden>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Correo / Teléfono</th>
+              <th>RUT</th>
+              <th>Empresa</th>
+              <th>Comuna / Región</th>
+              <th>Cotizaciones</th>
+              <th>Registro</th>
+              <th>Ofertas</th>
+            </tr>
+          </thead>
+          <tbody id="cuentas-tbody"></tbody>
+        </table>
+      </div>
+      <div class="admin-table-wrap" id="clientes-rut-wrap">
         <table class="admin-table">
           <thead>
             <tr>
@@ -98,6 +123,7 @@
       <p class="empty-state" id="clientes-empty" hidden>No se encontraron clientes.</p>
       <div id="cliente-detail-wrap" hidden style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
         <h3 id="cliente-detail-title" style="margin:0 0 10px;"></h3>
+        <div id="cliente-detail-info"></div>
         <div id="cliente-detail-list"></div>
       </div>
     </section>
@@ -589,6 +615,6 @@
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="admin.js?v=25"></script>
+<script src="admin.js?v=26"></script>
 </body>
 </html>

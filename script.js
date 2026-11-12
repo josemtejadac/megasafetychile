@@ -27,6 +27,7 @@ const catMenuOverlay = document.getElementById("cat-menu-overlay");
 const catMenuClose = document.getElementById("cat-menu-close");
 
 function openCatMenu() {
+  if (!catMenuPanel) return;
   catMenuPanel.classList.add("is-open");
   catMenuOverlay.classList.add("is-open");
   catMenuPanel.setAttribute("aria-hidden", "false");
@@ -37,6 +38,7 @@ function openCatMenu() {
 }
 
 function closeCatMenu() {
+  if (!catMenuPanel) return;
   catMenuPanel.classList.remove("is-open");
   catMenuOverlay.classList.remove("is-open");
   catMenuPanel.setAttribute("aria-hidden", "true");
@@ -44,9 +46,9 @@ function closeCatMenu() {
   document.body.style.overflow = "";
 }
 
-catMenuBtn.addEventListener("click", openCatMenu);
-catMenuClose.addEventListener("click", closeCatMenu);
-catMenuOverlay.addEventListener("click", closeCatMenu);
+catMenuBtn?.addEventListener("click", openCatMenu);
+catMenuClose?.addEventListener("click", closeCatMenu);
+catMenuOverlay?.addEventListener("click", closeCatMenu);
 
 // Wires link-closes-menu and toggle-expands-submenu behavior within
 // `scope` — called once for the static menu at load, and again (scoped to
@@ -65,7 +67,7 @@ function wireCatMenuScope(scope) {
     });
   });
 }
-wireCatMenuScope(catMenuPanel);
+if (catMenuPanel) wireCatMenuScope(catMenuPanel);
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeCatMenu();

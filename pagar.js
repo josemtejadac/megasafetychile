@@ -120,8 +120,25 @@ function renderQuote(q, items) {
     document.getElementById("account-btn")?.click();
     setTimeout(() => {
       document.querySelector('.account-tab[data-tab="signup"]')?.click();
-      const emailInput = document.querySelector('#account-signup-form [name="email"]');
-      if (emailInput) emailInput.value = q.correo;
+      const signup = document.getElementById("account-signup-form");
+      if (!signup) return;
+      const [first = "", ...rest] = String(q.nombre_contacto || "").trim().split(/\s+/);
+      const values = {
+        email: q.correo,
+        first_name: first,
+        last_name: rest.join(" "),
+        phone: q.telefono,
+        company_name: q.razon_social,
+        company_rut: typeof acctRutIsValid === "function" && acctRutIsValid(q.rut) ? q.rut : "",
+        address: q.direccion,
+        comuna: q.comuna,
+      };
+      for (const [name, value] of Object.entries(values)) {
+        const input = signup.querySelector(`[name="${name}"]`);
+        if (input && !input.value && value) input.value = value;
+      }
+      const region = signup.querySelector('[name="region"]');
+      if (region && q.region && [...region.options].some((o) => o.value === q.region)) region.value = q.region;
     }, 50);
   });
 }

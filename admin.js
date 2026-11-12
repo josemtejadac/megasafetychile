@@ -346,7 +346,7 @@ function setupTabs() {
       if (tab.dataset.section === "equipo") { loadStaff(); loadCommissionPeriods(); }
       if (tab.dataset.section === "cotizaciones") loadQuotes();
       if (tab.dataset.section === "fotos") loadSiteImages();
-      if (tab.dataset.section === "clientes") renderClientes();
+      if (tab.dataset.section === "clientes") { renderClientes(); loadRegisteredCustomers(); }
       if (tab.dataset.section === "ventas") renderVentas();
     });
   });
@@ -1226,17 +1226,17 @@ function renderQuotesList() {
     const itemCount = (q.megasafety_b2b_quote_items || []).reduce((s, i) => s + i.quantity, 0);
     card.innerHTML = `
       <div class="quote-card-top">
-        <span class="quote-code">${q.correlative_code}</span>
+        <span class="quote-code">${escapeHtml(q.correlative_code)}</span>
         <span class="quote-badge st-${q.status}">${STATUS_LABELS[q.status]}</span>
       </div>
-      <p class="quote-card-company">${q.razon_social}</p>
-      <p class="quote-card-meta">${date} · ${itemCount} unidad(es) · ${q.nombre_contacto}</p>
+      <p class="quote-card-company">${escapeHtml(q.razon_social)}</p>
+      <p class="quote-card-meta">${date} · ${itemCount} unidad(es) · ${escapeHtml(q.nombre_contacto)}</p>
       ${
         q.claimed_by
           ? `<p class="quote-card-claimed">Tomada por: ${
               q.claimed_by === currentStaff?.user_id
                 ? "ti"
-                : staffNameById[q.claimed_by] || "un trabajador (ya no está en el equipo)"
+                : escapeHtml(staffNameById[q.claimed_by] || "un trabajador (ya no está en el equipo)")
             }</p>`
           : ""
       }
@@ -1282,6 +1282,22 @@ function buildClientList() {
   return Array.from(byRut.values()).sort((a, b) => new Date(b._lastCreatedAt) - new Date(a._lastCreatedAt));
 }
 
+// Customer accounts created on the public site (megasafety_customers, staff
+// read-only via RLS). Loaded once when the Clientes tab opens — one small query.
+let registeredCustomers = [];
+let clientesView = "rut";
+
+async function loadRegisteredCustomers() {
+  const { data, error } = await sbClient.from("megasafety_customers").select("*").order("created_at", { ascending: false });
+  if (!error) registeredCustomers = data || [];
+  renderClientes();
+}
+
+function quotesOfCustomer(c) {
+  const email = (c.email || "").toLowerCase();
+  return allQuotes.filter((q) => q.customer_user_id === c.user_id || (email && (q.correo || "").toLowerCase() === email));
+}
+
 function renderClientes() {
   const tbody = document.getElementById("clientes-tbody");
   const emptyEl = document.getElementById("clientes-empty");
@@ -1289,35 +1305,79 @@ function renderClientes() {
   if (!tbody) return;
 
   const term = (searchInput.value || "").trim().toLowerCase();
-  const clients = buildClientList().filter((c) => {
-    if (!term) return true;
-    return (
-      (c.razon_social || "").toLowerCase().includes(term) ||
-      (c.rut || "").toLowerCase().includes(term) ||
-      (c.nombre_contacto || "").toLowerCase().includes(term)
-    );
-  });
+  const allClients = buildClientList();
+  const registeredIds = new Set(registeredCustomers.map((c) => c.user_id));
 
-  document.getElementById("clstat-total").textContent = buildClientList().length;
+  document.getElementById("clstat-total").textContent = allClients.length;
   document.getElementById("clstat-cotizaciones").textContent = allQuotes.length;
   const totalVendido = allQuotes
     .filter((q) => q.status === "vendida" || q.status === "pagada")
     .reduce((sum, q) => sum + (q.sale_amount || 0), 0);
   document.getElementById("clstat-vendido").textContent = "$" + totalVendido.toLocaleString("es-CL");
+  document.getElementById("clstat-cuentas").textContent = registeredCustomers.length;
 
+  document.querySelectorAll(".clientes-view-btn").forEach((b) => b.classList.toggle("is-active", b.dataset.view === clientesView));
+  document.getElementById("clientes-rut-wrap").hidden = clientesView !== "rut";
+  document.getElementById("clientes-cuentas-wrap").hidden = clientesView !== "cuentas";
+
+  if (clientesView === "cuentas") {
+    const cuentas = registeredCustomers.filter((c) => {
+      if (!term) return true;
+      return [acctLikeFullName(c), c.email, c.phone, c.rut, c.company_name, c.company_rut, c.comuna]
+        .some((v) => (v || "").toLowerCase().includes(term));
+    });
+    emptyEl.textContent = registeredCustomers.length ? "No se encontraron cuentas." : "Todavía no hay clientes con cuenta registrada en el sitio.";
+    emptyEl.hidden = cuentas.length > 0;
+    const cuentasTbody = document.getElementById("cuentas-tbody");
+    cuentasTbody.innerHTML = cuentas
+      .map((c) => {
+        const place = [c.comuna, c.region].filter(Boolean).join(", ");
+        return `
+        <tr class="cuenta-row" data-id="${c.user_id}" style="cursor:pointer;">
+          <td><strong>${escapeHtml(acctLikeFullName(c) || "-")}</strong>${c.privacy_accepted_at ? "" : `<br><span style="color:var(--ink-soft); font-size:0.78rem;">Perfil incompleto</span>`}</td>
+          <td>${escapeHtml(c.email || "-")}${c.phone ? `<br><span style="color:var(--ink-soft); font-size:0.8rem;">${escapeHtml(c.phone)}</span>` : ""}</td>
+          <td>${escapeHtml(c.rut || "-")}</td>
+          <td>${escapeHtml(c.company_name || "-")}${c.company_rut ? `<br><span style="color:var(--ink-soft); font-size:0.8rem;">${escapeHtml(c.company_rut)}</span>` : ""}</td>
+          <td>${escapeHtml(place || "-")}</td>
+          <td>${quotesOfCustomer(c).length}</td>
+          <td>${new Date(c.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })}</td>
+          <td>${c.marketing_opt_in ? "Sí" : "No"}</td>
+        </tr>`;
+      })
+      .join("");
+    cuentasTbody.querySelectorAll(".cuenta-row").forEach((tr) => {
+      tr.addEventListener("click", () => {
+        const c = registeredCustomers.find((x) => x.user_id === tr.dataset.id);
+        if (c) showCuentaDetail(c);
+      });
+    });
+    return;
+  }
+
+  const clients = allClients.filter((c) => {
+    if (!term) return true;
+    return (
+      (c.razon_social || "").toLowerCase().includes(term) ||
+      (c.rut || "").toLowerCase().includes(term) ||
+      (c.nombre_contacto || "").toLowerCase().includes(term) ||
+      (c.correo || "").toLowerCase().includes(term)
+    );
+  });
+  emptyEl.textContent = "No se encontraron clientes.";
   emptyEl.hidden = clients.length > 0;
   tbody.innerHTML = clients
-    .map((c) => {
+    .map((c, idx) => {
       const vendido = c.quotes
         .filter((q) => q.status === "vendida" || q.status === "pagada")
         .reduce((sum, q) => sum + (q.sale_amount || 0), 0);
       const lastDate = new Date(c._lastCreatedAt).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+      const hasAccount = c.quotes.some((q) => q.customer_user_id && registeredIds.has(q.customer_user_id));
       return `
-      <tr class="cliente-row" data-rut="${c.rut}" style="cursor:pointer;">
-        <td>${c.razon_social || "-"}</td>
-        <td>${c.rut}</td>
-        <td>${c.nombre_contacto || "-"}</td>
-        <td>${c.telefono || "-"}${c.correo ? `<br><span style="color:var(--ink-soft); font-size:0.8rem;">${c.correo}</span>` : ""}</td>
+      <tr class="cliente-row" data-idx="${idx}" style="cursor:pointer;">
+        <td>${escapeHtml(c.razon_social || "-")}${hasAccount ? `<span class="cliente-badge">Con cuenta</span>` : ""}</td>
+        <td>${escapeHtml(c.rut)}</td>
+        <td>${escapeHtml(c.nombre_contacto || "-")}</td>
+        <td>${escapeHtml(c.telefono || "-")}${c.correo ? `<br><span style="color:var(--ink-soft); font-size:0.8rem;">${escapeHtml(c.correo)}</span>` : ""}</td>
         <td>${c.quotes.length}</td>
         <td>$${vendido.toLocaleString("es-CL")}</td>
         <td>${lastDate}</td>
@@ -1327,37 +1387,64 @@ function renderClientes() {
 
   tbody.querySelectorAll(".cliente-row").forEach((tr) => {
     tr.addEventListener("click", () => {
-      const client = clients.find((c) => c.rut === tr.dataset.rut);
+      const client = clients[Number(tr.dataset.idx)];
       if (client) showClienteDetail(client);
     });
   });
 }
 
-function showClienteDetail(client) {
+function acctLikeFullName(c) {
+  return [c.first_name, c.last_name].filter(Boolean).join(" ").trim();
+}
+
+function showCuentaDetail(c) {
+  const info = [
+    ["Correo", c.email],
+    ["Teléfono", c.phone],
+    ["RUT personal", c.rut],
+    ["Empresa", [c.company_name, c.company_rut].filter(Boolean).join(" · ")],
+    ["Dirección", [c.address, c.comuna, c.region].filter(Boolean).join(", ")],
+    ["Registro", new Date(c.created_at).toLocaleDateString("es-CL")],
+    ["Aceptó uso de datos", c.privacy_accepted_at ? new Date(c.privacy_accepted_at).toLocaleDateString("es-CL") : "Aún no (perfil incompleto)"],
+    ["Acepta ofertas por correo", c.marketing_opt_in ? "Sí" : "No"],
+  ];
+  const infoHtml = `<div class="cliente-info-grid">${info
+    .map(([label, value]) => `<div><span>${label}</span>${escapeHtml(value || "-")}</div>`)
+    .join("")}</div>`;
+  showClienteDetail(
+    { razon_social: acctLikeFullName(c) || c.email, rut: c.email, quotes: quotesOfCustomer(c) },
+    infoHtml
+  );
+}
+
+function showClienteDetail(client, infoHtml = "") {
   const wrap = document.getElementById("cliente-detail-wrap");
   const title = document.getElementById("cliente-detail-title");
   const list = document.getElementById("cliente-detail-list");
   title.textContent = `Historial de ${client.razon_social} (${client.rut})`;
+  document.getElementById("cliente-detail-info").innerHTML = infoHtml;
   const sorted = [...client.quotes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  list.innerHTML = sorted
-    .map((q) => {
-      const date = new Date(q.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
-      const montoHtml =
-        q.status === "vendida" || q.status === "pagada"
-          ? `<strong>$${Number(q.sale_amount || 0).toLocaleString("es-CL")}</strong>`
-          : q.total
-            ? `$${Number(q.total).toLocaleString("es-CL")}`
-            : "-";
-      return `
+  list.innerHTML = sorted.length
+    ? sorted
+        .map((q) => {
+          const date = new Date(q.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+          const montoHtml =
+            q.status === "vendida" || q.status === "pagada"
+              ? `<strong>$${Number(q.sale_amount ?? q.total ?? 0).toLocaleString("es-CL")}</strong>`
+              : q.total
+                ? `$${Number(q.total).toLocaleString("es-CL")}`
+                : "-";
+          return `
       <div class="quote-card" style="cursor:pointer;" data-id="${q.id}">
         <div class="quote-card-top">
-          <span class="quote-code">${q.correlative_code}</span>
+          <span class="quote-code">${escapeHtml(q.correlative_code)}</span>
           <span class="quote-badge st-${q.status}">${STATUS_LABELS[q.status]}</span>
         </div>
         <p class="quote-card-meta">${date} · ${montoHtml}</p>
       </div>`;
-    })
-    .join("");
+        })
+        .join("")
+    : `<p style="color:var(--ink-soft);">Todavía no tiene cotizaciones.</p>`;
   list.querySelectorAll(".quote-card").forEach((card) => {
     card.addEventListener("click", () => {
       const q = allQuotes.find((x) => x.id === card.dataset.id);
@@ -1371,6 +1458,14 @@ function showClienteDetail(client) {
 document.getElementById("clientes-search")?.addEventListener("input", () => {
   document.getElementById("cliente-detail-wrap").hidden = true;
   renderClientes();
+});
+
+document.querySelectorAll(".clientes-view-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    clientesView = btn.dataset.view;
+    document.getElementById("cliente-detail-wrap").hidden = true;
+    renderClientes();
+  });
 });
 
 // ---------- Ventas (solo admin; agregado en el navegador sobre allQuotes) ----------
@@ -1704,7 +1799,7 @@ async function openQuoteDetail(q) {
     .map(
       (i) => `
       <div class="price-row" style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-        <span style="flex:1; font-size:0.88rem;">${i.quantity} x ${i.product_name}${i.brand ? ` (${i.brand})` : ""}${i.variant ? ` <strong>[${i.variant}]</strong>` : ""}</span>
+        <span style="flex:1; font-size:0.88rem;">${i.quantity} x ${escapeHtml(i.product_name)}${i.brand ? ` (${escapeHtml(i.brand)})` : ""}${i.variant ? ` <strong>[${escapeHtml(i.variant)}]</strong>` : ""}</span>
         <input type="number" min="0" class="item-price-input" data-item-id="${i.id}" data-qty="${i.quantity}" value="${i.unit_price || ""}" placeholder="Precio unit." style="width:120px;" ${!canPrice ? "disabled" : ""}>
         ${canPrice ? `<button type="button" class="remove-item-btn" data-item-id="${i.id}" title="Quitar producto" style="background:none; border:none; color:#b91c1c; font-size:1.1rem; cursor:pointer; padding:0 4px;">✕</button>` : ""}
       </div>`
@@ -1712,7 +1807,7 @@ async function openQuoteDetail(q) {
     .join("");
 
   const attachmentHtml = q.attachment_url
-    ? `<p class="quote-detail-row"><a href="${q.attachment_url}" target="_blank" rel="noopener" style="color:var(--navy); font-weight:700;">📎 Ver archivo adjunto del cliente</a></p>`
+    ? `<p class="quote-detail-row"><a href="${escapeHtml(q.attachment_url)}" target="_blank" rel="noopener" style="color:var(--navy); font-weight:700;">📎 Ver archivo adjunto del cliente</a></p>`
     : "";
 
   const addItemHtml = canPrice
@@ -1736,17 +1831,17 @@ async function openQuoteDetail(q) {
 
   const rejectedHtml =
     q.status === "rechazada"
-      ? `<p class="quote-detail-row" style="margin-top:6px; color:#b91c1c;"><strong>Rechazada por el cliente${q.rejected_reason ? `:</strong> ${q.rejected_reason}` : "</strong> (sin motivo indicado)"}</p>`
+      ? `<p class="quote-detail-row" style="margin-top:6px; color:#b91c1c;"><strong>Rechazada por el cliente${q.rejected_reason ? `:</strong> ${escapeHtml(q.rejected_reason)}` : "</strong> (sin motivo indicado)"}</p>`
       : "";
 
   quotePanelBody.innerHTML = `
     <div class="quote-detail-section">
       <h4>Empresa</h4>
-      <p class="quote-detail-row"><strong>${q.razon_social}</strong> — ${q.rut}</p>
-      <p class="quote-detail-row">${q.nombre_contacto} · ${q.telefono} · ${q.correo}</p>
+      <p class="quote-detail-row"><strong>${escapeHtml(q.razon_social)}</strong> — ${escapeHtml(q.rut)}</p>
+      <p class="quote-detail-row">${escapeHtml(q.nombre_contacto)} · ${escapeHtml(q.telefono)} · ${escapeHtml(q.correo)}</p>
       <p class="quote-detail-row" style="color:var(--ink-soft); font-size:0.82rem;">Recibida: ${new Date(q.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })} a las ${new Date(q.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</p>
-      <p class="quote-detail-row">${q.direccion || "-"}, ${q.comuna || "-"}, ${q.region || "-"} — Despacho: ${q.requiere_despacho ? "Sí" : "No"}</p>
-      ${q.observaciones ? `<p class="quote-detail-row">Obs: ${q.observaciones}</p>` : ""}
+      <p class="quote-detail-row">${escapeHtml(q.direccion || "-")}, ${escapeHtml(q.comuna || "-")}, ${escapeHtml(q.region || "-")} — Despacho: ${q.requiere_despacho ? "Sí" : "No"}</p>
+      ${q.observaciones ? `<p class="quote-detail-row">Obs: ${escapeHtml(q.observaciones)}</p>` : ""}
       ${attachmentHtml}
     </div>
     <div class="quote-detail-section">
@@ -2070,8 +2165,8 @@ async function runCustomerLookup(term, dropdown) {
     .map(
       (c, idx) => `
       <button type="button" class="customer-lookup-item" data-idx="${idx}" style="display:block; width:100%; text-align:left; padding:8px 10px; border:none; background:none; border-bottom:1px solid var(--border); cursor:pointer; font-size:0.82rem;">
-        <strong style="color:var(--navy);">${c.razon_social}</strong><br>
-        <span style="color:var(--ink-soft);">${c.rut} · ${c.nombre_contacto || ""}</span>
+        <strong style="color:var(--navy);">${escapeHtml(c.razon_social)}</strong>${c.source === "cuenta" ? `<span class="cliente-badge">Cuenta del sitio</span>` : ""}<br>
+        <span style="color:var(--ink-soft);">${escapeHtml(c.rut)} · ${escapeHtml(c.nombre_contacto || "")}</span>
       </button>`
     )
     .join("");

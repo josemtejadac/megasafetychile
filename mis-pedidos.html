@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mis Cotizaciones | Mega Safety Chile</title>
+<title>Mi cuenta | Mega Safety Chile</title>
 <link rel="icon" href="assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=25">
-<link rel="stylesheet" href="compra-empresa.css?v=25">
-<link rel="stylesheet" href="admin.css?v=25">
+<link rel="stylesheet" href="styles.css?v=26">
+<link rel="stylesheet" href="compra-empresa.css?v=26">
+<link rel="stylesheet" href="admin.css?v=26">
 </head>
 <body>
 
@@ -31,30 +31,93 @@
   <div class="container">
 
     <section id="logged-out-view" hidden>
-      <div class="admin-login">
-        <h1>Inicia sesión para ver tus cotizaciones</h1>
-        <p style="text-align:center; color:var(--ink-soft); margin-bottom:20px;">Usa el botón "Ingresar" del menú principal para acceder.</p>
-        <a href="index.html" class="btn btn--primary" style="display:flex; justify-content:center;">Volver al sitio</a>
+      <div class="admin-login acct-page-login">
+        <h1>Ingresa a tu cuenta</h1>
+        <p style="color:var(--ink-soft); margin-bottom:20px;">Revisa tus cotizaciones, tus compras y tus datos en un solo lugar.</p>
+        <button class="btn btn--primary" id="page-login-btn" type="button" style="width:100%; justify-content:center;">Ingresar o crear cuenta</button>
+        <a href="index.html" class="btn btn--outline" style="display:flex; justify-content:center; margin-top:10px;">Volver al sitio</a>
       </div>
     </section>
 
-    <section id="orders-view" hidden>
+    <section id="account-view" hidden>
       <div class="admin-panel-head">
         <div>
-          <h1>Mis cotizaciones</h1>
-          <p class="admin-subtitle">Historial de solicitudes enviadas a Mega Safety Chile</p>
+          <h1 id="acct-page-title">Mi cuenta</h1>
+          <p class="admin-subtitle">Tus cotizaciones, tus compras y tus datos en un solo lugar</p>
         </div>
         <button class="btn btn--outline" id="refresh-orders-btn" type="button">↻ Actualizar</button>
       </div>
-      <div id="orders-list"></div>
-      <p class="empty-state" id="orders-empty" hidden>Todavía no has enviado ninguna cotización.</p>
+
+      <p class="acct-banner" id="acct-page-banner" hidden style="margin-bottom:18px;">Tus datos están incompletos. <a href="#datos">Complétalos aquí</a> para que tus cotizaciones se llenen solas.</p>
+
+      <div class="admin-stats acct-page-stats">
+        <div class="stat-card">
+          <span class="stat-value" id="acct-stat-quotes">0</span>
+          <span class="stat-label">Cotizaciones</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="acct-stat-open">0</span>
+          <span class="stat-label">En curso</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="acct-stat-purchases">0</span>
+          <span class="stat-label">Compras</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="acct-stat-spent">$0</span>
+          <span class="stat-label">Total comprado</span>
+        </div>
+      </div>
+
+      <nav class="admin-tabs" id="acct-tabs">
+        <button class="admin-tab is-active" type="button" data-tab="cotizaciones">Mis cotizaciones</button>
+        <button class="admin-tab" type="button" data-tab="compras">Mis compras</button>
+        <button class="admin-tab" type="button" data-tab="datos">Mis datos</button>
+      </nav>
+
+      <section id="acct-tab-cotizaciones">
+        <div id="orders-list"></div>
+        <p class="empty-state" id="orders-empty" hidden>No tienes cotizaciones en curso. <a href="compra-empresa.html">Cotiza aquí</a>.</p>
+      </section>
+
+      <section id="acct-tab-compras" hidden>
+        <div id="purchases-list"></div>
+        <p class="empty-state" id="purchases-empty" hidden>Aún no tienes compras confirmadas.</p>
+      </section>
+
+      <section id="acct-tab-datos" hidden>
+        <div class="acct-data-grid">
+          <div class="acct-card">
+            <h2>Mis datos</h2>
+            <p>Mantenlos al día: los usamos para completar tus cotizaciones y coordinar tus despachos.</p>
+            <form id="profile-form" class="quote-form" novalidate></form>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:24px;">
+            <div class="acct-card">
+              <h2>Acceso</h2>
+              <p>Correo de ingreso: <strong id="acct-login-email"></strong></p>
+              <form id="password-form" class="quote-form">
+                <label>Nueva contraseña<span class="acct-password"><input type="password" name="password" minlength="6" required autocomplete="new-password"><button type="button" class="acct-pass-toggle" aria-label="Mostrar contraseña">Mostrar</button></span></label>
+                <label>Repite la nueva contraseña<span class="acct-password"><input type="password" name="password2" minlength="6" required autocomplete="new-password"><button type="button" class="acct-pass-toggle" aria-label="Mostrar contraseña">Mostrar</button></span></label>
+                <p class="form-note" id="password-note"></p>
+                <button type="submit" class="btn btn--outline">Cambiar contraseña</button>
+              </form>
+            </div>
+            <div class="acct-card">
+              <h2>Tus derechos sobre tus datos</h2>
+              <p>Puedes ver y corregir tus datos aquí cuando quieras. Para cambiar tu correo de ingreso, pedir una copia de tus datos o solicitar que los eliminemos, escríbenos a <a href="mailto:contacto@megasafetychile.cl" style="color:var(--navy); font-weight:600;">contacto@megasafetychile.cl</a>.</p>
+              <p style="margin-bottom:20px;">Las cotizaciones y ventas ya realizadas se conservan por obligaciones tributarias.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </section>
 
   </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="account.js?v=25"></script>
-<script src="mis-pedidos.js?v=25"></script>
+<script src="account.js?v=26"></script>
+<script src="mis-pedidos.js?v=26"></script>
 </body>
 </html>

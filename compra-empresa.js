@@ -951,6 +951,7 @@ form.addEventListener("submit", async (e) => {
     formPanelCtl.close();
     confirmPanelCtl.open();
     form.reset();
+    prefillQuoteFormFromProfile();
     attachment = null;
     uploadPanel.hidden = true;
     uploadSendBtn.hidden = true;
@@ -965,6 +966,31 @@ form.addEventListener("submit", async (e) => {
     submitBtn.disabled = false;
   }
 });
+
+// Logged-in customers get the quote form pre-filled from their profile —
+// only empty fields, so nothing they already typed is overwritten.
+async function prefillQuoteFormFromProfile() {
+  if (typeof acctGetProfile !== "function") return;
+  const profile = await acctGetProfile();
+  if (!profile) return;
+  const fullName = acctFullName(profile);
+  const values = {
+    razon_social: profile.company_name || fullName,
+    rut: profile.company_rut || profile.rut,
+    nombre_contacto: fullName,
+    telefono: profile.phone,
+    correo: profile.email,
+    direccion: profile.address,
+    comuna: profile.comuna,
+    region: profile.region,
+  };
+  for (const [name, value] of Object.entries(values)) {
+    const input = form.querySelector(`[name="${name}"]`);
+    if (input && !input.value && value) input.value = value;
+  }
+}
+prefillQuoteFormFromProfile();
+window.addEventListener("msc:account-changed", prefillQuoteFormFromProfile);
 
 loadCategories().then(loadProducts);
 
