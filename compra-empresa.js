@@ -896,6 +896,7 @@ uploadSendBtn.addEventListener("click", () => {
 // picker, drag-and-drop works directly on it too.
 const uploadHotspot = document.getElementById("upload-option-hotspot");
 uploadHotspot.addEventListener("click", () => uploadFileInput.click());
+document.getElementById("mobile-upload-btn").addEventListener("click", () => uploadFileInput.click());
 ["dragenter", "dragover"].forEach((evt) => {
   uploadHotspot.addEventListener(evt, (e) => {
     e.preventDefault();
