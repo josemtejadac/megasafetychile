@@ -1078,3 +1078,14 @@ h1, h2, h3 {
     box-shadow: 0 14px 34px -20px rgba(11, 31, 58, 0.45);
   }
 }
+
+/* iOS Safari zooms the whole page in when a form field smaller than 16px
+   gets focus (search, login, quote forms) and leaves it zoomed afterwards.
+   16px on phones/tablets avoids that without disabling pinch-zoom. */
+@media (max-width: 900px), (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
