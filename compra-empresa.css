@@ -481,3 +481,38 @@
   .cart-btn svg { flex-shrink: 0; }
   .cart-btn #cart-count { font-size: 0.75rem; }
 }
+
+/* ---------- Catalog grid on phones/tablets ----------
+   Several products per row (2 on phones, 3 on tablets) instead of one huge
+   card per screen. Description and cert badges are left for the detail view
+   (tap the photo/name); price + quantity + add button sit at the bottom so
+   every card in a row lines up. */
+@media (max-width: 900px) {
+  .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .product-card { padding: 10px; gap: 6px; border-radius: 12px; }
+  .product-thumb { border-radius: 8px; }
+  .product-brand { font-size: 0.66rem; }
+  .product-name {
+    font-size: 0.86rem;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .product-desc, .product-certs { display: none; }
+  .product-card .product-price-note { margin-top: auto; font-size: 0.72rem; }
+  .product-card .product-price-note.has-price { font-size: 0.98rem; }
+  .product-actions { flex-direction: column; align-items: stretch; gap: 6px; }
+  .product-actions .qty-stepper { width: 100%; }
+  .product-actions .qty-stepper .qty-input { flex: 1; width: auto !important; min-width: 0; }
+  .product-actions .add-btn { width: 100%; padding: 9px 6px; font-size: 0.8rem; white-space: normal; line-height: 1.2; }
+}
+@media (max-width: 600px) {
+  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}
+/* Tablets: the header badge has no room next to the buttons and wrapped
+   onto three lines. */
+@media (max-width: 900px) {
+  .b2b-badge { display: none; }
+}
