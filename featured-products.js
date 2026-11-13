@@ -41,14 +41,42 @@
   const baseUrl = `${SUPABASE_URL}/rest/v1/megasafety_products?select=id,sku,name,brand,image_url,price,discount_percent,category_id&active=eq.true&image_url=not.is.null`;
   const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
 
-  // Prefer admin-curated picks (is_featured=true); only fall back to an
-  // arbitrary sort_order sample if nothing has been curated yet.
-  fetch(`${baseUrl}&is_featured=eq.true&order=sort_order.asc&limit=10`, { headers })
-    .then((res) => (res.ok ? res.json() : []))
-    .then((featured) => {
-      if (featured.length) return featured;
-      return fetch(`${baseUrl}&order=sort_order.asc&limit=10`, { headers }).then((res) => (res.ok ? res.json() : []));
-    })
+  // Admin-curated picks (is_featured) first, then the products customers
+  // actually request most in quotes ("Lo más pedido"), then any other
+  // product with a photo — so the carousel always has enough cards to
+  // scroll (with only the 5 curated ones the arrows had nothing to move).
+  const LIMIT = 12;
+  const getJson = (url, opts) => fetch(url, opts).then((res) => (res.ok ? res.json() : [])).catch(() => []);
+
+  async function loadCarouselProducts() {
+    const [featured, top] = await Promise.all([
+      getJson(`${baseUrl}&is_featured=eq.true&order=sort_order.asc&limit=${LIMIT}`, { headers }),
+      getJson(`${SUPABASE_URL}/rest/v1/rpc/megasafety_top_requested_products`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_limit: LIMIT }),
+      }),
+    ]);
+    const list = [...featured];
+    const seen = new Set(list.map((p) => p.id));
+    const topIds = (Array.isArray(top) ? top : []).map((r) => r.product_id).filter((pid) => pid && !seen.has(pid));
+    if (topIds.length && list.length < LIMIT) {
+      const rows = await getJson(`${baseUrl}&id=in.(${topIds.join(",")})`, { headers });
+      topIds.forEach((pid) => {
+        const p = rows.find((r) => r.id === pid);
+        if (p && list.length < LIMIT) { list.push(p); seen.add(pid); }
+      });
+    }
+    if (list.length < LIMIT) {
+      const filler = await getJson(`${baseUrl}&order=sort_order.asc&limit=${LIMIT * 2}`, { headers });
+      filler.forEach((p) => {
+        if (!seen.has(p.id) && list.length < LIMIT) { list.push(p); seen.add(p.id); }
+      });
+    }
+    return list;
+  }
+
+  loadCarouselProducts()
     .then((products) => {
       if (!products.length) {
         document.getElementById("featured-carousel")?.setAttribute("hidden", "");
@@ -101,24 +129,37 @@
     const prevBtn = document.getElementById("featured-prev");
     const nextBtn = document.getElementById("featured-next");
 
+    // Distance between two cards' left edges (card width + the real gap).
     function cardStep() {
-      const card = track.querySelector(".featured-card");
-      return card ? card.getBoundingClientRect().width + 20 : 260;
+      const cards = track.querySelectorAll(".featured-card");
+      if (cards.length > 1) return cards[1].offsetLeft - cards[0].offsetLeft;
+      return cards[0] ? cards[0].offsetWidth + 18 : 250;
     }
+    const canScroll = () => container.scrollWidth > container.clientWidth + 4;
 
     function scrollNext() {
-      const step = cardStep();
-      const atEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - step / 2;
-      container.scrollTo({ left: atEnd ? 0 : container.scrollLeft + step, behavior: "smooth" });
+      if (!canScroll()) return;
+      const atEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 4;
+      container.scrollTo({ left: atEnd ? 0 : container.scrollLeft + cardStep(), behavior: "smooth" });
     }
     function scrollPrev() {
-      container.scrollBy({ left: -cardStep(), behavior: "smooth" });
+      if (!canScroll()) return;
+      const atStart = container.scrollLeft <= 4;
+      container.scrollTo({ left: atStart ? container.scrollWidth : container.scrollLeft - cardStep(), behavior: "smooth" });
     }
 
-    let timer = setInterval(scrollNext, 3000);
+    // Arrows only when there is actually something to scroll to.
+    function updateArrows() {
+      const show = canScroll();
+      prevBtn.style.display = nextBtn.style.display = show ? "" : "none";
+    }
+    updateArrows();
+    window.addEventListener("resize", updateArrows);
+
+    let timer = setInterval(scrollNext, 3500);
     const restart = () => {
       clearInterval(timer);
-      timer = setInterval(scrollNext, 3000);
+      timer = setInterval(scrollNext, 3500);
     };
     nextBtn.addEventListener("click", () => { scrollNext(); restart(); });
     prevBtn.addEventListener("click", () => { scrollPrev(); restart(); });
